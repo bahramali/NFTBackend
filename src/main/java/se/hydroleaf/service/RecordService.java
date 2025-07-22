@@ -28,6 +28,7 @@ public class RecordService {
             record.setTimestamp(Instant.parse(node.path("timestamp").asText()));
             record.setLocation(node.path("location").asText());
             record.setTopic(topic);
+            record.setPayload(json);
             record.setSensors(node.path("sensors").toString());
             record.setHealth(node.path("health").toString());
             repository.save(record);

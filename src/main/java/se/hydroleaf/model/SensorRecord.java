@@ -77,6 +77,7 @@ public class SensorRecord {
         this.payload = payload;
     }
 
+
     public String getSensors() {
         return sensors;
     }

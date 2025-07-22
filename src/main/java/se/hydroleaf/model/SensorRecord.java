@@ -18,6 +18,8 @@ public class SensorRecord {
     private Instant timestamp;
     private String location;
 
+    private String topic;
+
     @Lob
     private String sensors;
 
@@ -54,6 +56,14 @@ public class SensorRecord {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
     }
 
     public String getSensors() {

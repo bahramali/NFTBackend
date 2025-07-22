@@ -20,13 +20,14 @@ public class RecordService {
         this.objectMapper = objectMapper;
     }
 
-    public void saveMessage(String json) {
+    public void saveMessage(String topic, String json) {
         try {
             JsonNode node = objectMapper.readTree(json);
             SensorRecord record = new SensorRecord();
             record.setDeviceId(node.path("deviceId").asText());
             record.setTimestamp(Instant.parse(node.path("timestamp").asText()));
             record.setLocation(node.path("location").asText());
+            record.setTopic(topic);
             record.setSensors(node.path("sensors").toString());
             record.setHealth(node.path("health").toString());
             repository.save(record);

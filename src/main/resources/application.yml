@@ -19,7 +19,7 @@ spring:
       ddl-auto: update
     show-sql: true
 mqtt:
-  broker: ${MQTT_BROKER:tcp://localhost:1883}
+  broker: ${MQTT_BROKER:tcp://100.113.16.30:1883}
   enabled: true
 
 ---
@@ -41,5 +41,5 @@ spring:
     show-sql: true
 
 mqtt:
-  broker: ${MQTT_BROKER:tcp://localhost:1883}
+  broker: ${MQTT_BROKER:tcp://100.113.16.30:1883}
   enabled: false

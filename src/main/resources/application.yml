@@ -18,14 +18,8 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-  kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: nft-backend
-      auto-offset-reset: earliest
-
 mqtt:
-  broker: tcp://192.168.8.3:1883
+  broker: ${MQTT_BROKER:tcp://localhost:1883}
   enabled: true
 
 ---
@@ -45,12 +39,7 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
-  kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: nft-backend
-      auto-offset-reset: earliest
 
 mqtt:
-  broker: tcp://192.168.8.3:1883
+  broker: ${MQTT_BROKER:tcp://localhost:1883}
   enabled: false

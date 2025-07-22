@@ -1,6 +1,6 @@
 # NFTBackend
 
-This project is a simple Spring Boot application that listens to Kafka topics and stores the received data in a PostgreSQL database.
+This project is a Spring Boot application that connects to an MQTT broker and stores incoming messages in a PostgreSQL database. It also forwards the data to WebSocket subscribers.
 
 ## Building and running with Docker
 
@@ -10,7 +10,7 @@ This project is a simple Spring Boot application that listens to Kafka topics an
 docker build -t nft-backend .
 ```
 
-2. Run the container (adjust environment variables as needed for your database and Kafka configuration):
+2. Run the container (adjust environment variables as needed for your database and MQTT configuration):
 
 ```bash
 docker run -p 8080:8080 nft-backend

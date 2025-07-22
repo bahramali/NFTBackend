@@ -24,6 +24,8 @@ spring:
     consumer:
       group-id: nft-backend
       auto-offset-reset: earliest
+  mqtt:
+    broker: tcp://192.168.8.3:1883
 
 ---
 spring:
@@ -47,3 +49,6 @@ spring:
     consumer:
       group-id: nft-backend
       auto-offset-reset: earliest
+
+  mqtt:
+    broker: tcp://192.168.8.3:1883

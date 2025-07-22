@@ -21,6 +21,9 @@ public class SensorRecord {
     private String topic;
 
     @Lob
+    private String payload;
+
+    @Lob
     private String sensors;
 
     @Lob
@@ -65,6 +68,15 @@ public class SensorRecord {
     public void setTopic(String topic) {
         this.topic = topic;
     }
+
+    public String getPayload() {
+        return payload;
+    }
+
+    public void setPayload(String payload) {
+        this.payload = payload;
+    }
+
 
     public String getSensors() {
         return sensors;

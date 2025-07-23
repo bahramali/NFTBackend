@@ -21,6 +21,13 @@ spring:
 mqtt:
   broker: ${MQTT_BROKER:tcp://100.113.16.30:1883}
   enabled: true
+server:
+  ssl:
+    enabled: ${SSL_ENABLED:false}
+    key-store: ${SSL_KEY_STORE:}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD:}
+    key-store-type: ${SSL_KEY_STORE_TYPE:PKCS12}
+    key-alias: ${SSL_KEY_ALIAS:}
 
 ---
 spring:

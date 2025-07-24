@@ -60,13 +60,48 @@ public class RecordService {
             // Parse sensors
             List<SensorData> sensors = new ArrayList<>();
             for (JsonNode sensorNode : node.path("sensors")) {
-                SensorData sd = new SensorData();
-                sd.setSensorId(sensorNode.path("sensorId").asText());
-                sd.setType(sensorNode.path("type").asText());
-                sd.setUnit(sensorNode.path("unit").asText());
-                sd.setValue(sensorNode.path("value").toString());
-                sd.setRecord(record);
-                sensors.add(sd);
+                String sensorId = sensorNode.path("sensorId").asText();
+                String type = sensorNode.path("type").asText();
+                String unit = sensorNode.path("unit").asText();
+                JsonNode valueNode = sensorNode.path("value");
+
+                // If the value contains spectral information, split it into
+                // blue light, red light, clear and NIR sensor data items
+                if (valueNode.isObject()
+                        && valueNode.has("415nm")
+                        && valueNode.has("445nm")
+                        && valueNode.has("480nm")
+                        && valueNode.has("515nm")
+                        && valueNode.has("555nm")
+                        && valueNode.has("590nm")
+                        && valueNode.has("630nm")
+                        && valueNode.has("680nm")
+                        && valueNode.has("clear")
+                        && valueNode.has("nir")) {
+                    double blue = (valueNode.path("415nm").asDouble()
+                            + valueNode.path("445nm").asDouble()
+                            + valueNode.path("480nm").asDouble()
+                            + valueNode.path("515nm").asDouble()) / 4.0;
+                    double red = (valueNode.path("555nm").asDouble()
+                            + valueNode.path("590nm").asDouble()
+                            + valueNode.path("630nm").asDouble()
+                            + valueNode.path("680nm").asDouble()) / 4.0;
+                    double clear = valueNode.path("clear").asDouble();
+                    double nir = valueNode.path("nir").asDouble();
+
+                    sensors.add(createSensorData(sensorId, "blueLight", unit, blue, record));
+                    sensors.add(createSensorData(sensorId, "redLight", unit, red, record));
+                    sensors.add(createSensorData(sensorId, "clear", unit, clear, record));
+                    sensors.add(createSensorData(sensorId, "nir", unit, nir, record));
+                } else {
+                    SensorData sd = new SensorData();
+                    sd.setSensorId(sensorId);
+                    sd.setType(type);
+                    sd.setUnit(unit);
+                    sd.setValue(valueNode.toString());
+                    sd.setRecord(record);
+                    sensors.add(sd);
+                }
             }
             record.setSensors(sensors);
 
@@ -89,4 +124,16 @@ public class RecordService {
             throw new RuntimeException("Failed to parse and save message", e);
         }
     }
+
+    private SensorData createSensorData(String sensorId, String type, String unit,
+                                        double value, SensorRecord record) {
+        SensorData sd = new SensorData();
+        sd.setSensorId(sensorId);
+        sd.setType(type);
+        sd.setUnit(unit);
+        sd.setValue(Double.toString(value));
+        sd.setRecord(record);
+        return sd;
+    }
 }
+

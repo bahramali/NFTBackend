@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Service
 public class RecordService {
 
@@ -88,5 +89,10 @@ public class RecordService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse and save message", e);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<SensorRecord> getRecords(String deviceId, Instant from, Instant to) {
+        return recordRepository.findByDevice_IdAndTimestampBetween(deviceId, from, to);
     }
 }

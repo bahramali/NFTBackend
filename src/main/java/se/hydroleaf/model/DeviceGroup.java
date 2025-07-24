@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 @Entity
+@Table(name = "device_group")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

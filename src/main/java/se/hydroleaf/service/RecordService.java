@@ -4,12 +4,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import se.hydroleaf.dto.SensorDataResponse;
+import se.hydroleaf.dto.SensorRecordResponse;
 import se.hydroleaf.model.*;
 import se.hydroleaf.repository.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+
 
 @Service
 public class RecordService {
@@ -88,5 +91,36 @@ public class RecordService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse and save message", e);
         }
+    }
+
+    private SensorDataResponse mapSensorData(SensorData data) {
+        Object value;
+        try {
+            value = objectMapper.readValue(data.getValue(), Object.class);
+        } catch (Exception e) {
+            value = data.getValue();
+        }
+        return new SensorDataResponse(
+                data.getSensorId(),
+                data.getType(),
+                value,
+                data.getUnit(),
+                null
+        );
+    }
+
+    private SensorRecordResponse mapRecord(SensorRecord record) {
+        List<SensorDataResponse> sensorDtos = record.getSensors().stream()
+                .map(this::mapSensorData)
+                .toList();
+        return new SensorRecordResponse(record.getTimestamp(), sensorDtos);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SensorRecordResponse> getRecords(String deviceId, Instant from, Instant to) {
+        return recordRepository.findByDevice_IdAndTimestampBetween(deviceId, from, to)
+                .stream()
+                .map(this::mapRecord)
+                .toList();
     }
 }

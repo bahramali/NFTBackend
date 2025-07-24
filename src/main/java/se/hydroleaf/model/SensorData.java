@@ -22,7 +22,7 @@ public class SensorData {
     private String type;
     private String unit;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String value; // can be number, string, or JSON structure
 
     // Each sensor data belongs to one sensor record

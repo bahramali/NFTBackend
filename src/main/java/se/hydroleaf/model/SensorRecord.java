@@ -20,6 +20,7 @@ public class SensorRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "record_time")
     private Instant timestamp;
 
     // Each record belongs to one device

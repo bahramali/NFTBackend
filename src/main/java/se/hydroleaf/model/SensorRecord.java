@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Entity
+@Table(name = "sensor_record")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

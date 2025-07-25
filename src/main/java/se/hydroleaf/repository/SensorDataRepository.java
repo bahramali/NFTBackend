@@ -28,8 +28,10 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
             JOIN sensor_record sr ON sd.record_id = sr.id
             WHERE sr.device_id = :deviceId
               AND sr.record_time BETWEEN :from AND :to
-            GROUP BY sd.sensor_id, sd.type, sd.unit, to_timestamp(floor(extract(epoch FROM sr.record_time) / :interval) * :interval)
-            ORDER BY sd.sensor_id, sd.type, sd.unit, bucketTime
+            GROUP BY sd.sensor_id, sd.type, sd.unit,
+                     to_timestamp(floor(extract(epoch FROM sr.record_time) / :interval) * :interval)
+            ORDER BY sd.sensor_id, sd.type, sd.unit,
+                     to_timestamp(floor(extract(epoch FROM sr.record_time) / :interval) * :interval)
             """,
             nativeQuery = true)
     List<BucketAggregation> aggregateByDeviceAndInterval(

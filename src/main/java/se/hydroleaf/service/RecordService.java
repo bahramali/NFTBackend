@@ -106,6 +106,23 @@ public class RecordService {
     private static final long SAMPLE_INTERVAL_MS = 5_000L;
     private static final int TARGET_POINTS = 300;
 
+    private boolean isZero(Object value) {
+        if (value == null) {
+            return true;
+        }
+        if (value instanceof Number n) {
+            return n.doubleValue() == 0.0;
+        }
+        if (value instanceof String s) {
+            try {
+                return Double.parseDouble(s) == 0.0;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
     @Transactional(readOnly = true)
     public AggregatedHistoryResponse getAggregatedRecords(String deviceId, Instant from, Instant to) {
         List<SensorRecord> records = recordRepository.findByDevice_IdAndTimestampBetween(deviceId, from, to);
@@ -137,7 +154,14 @@ public class RecordService {
                 java.util.Map<Long, TimestampValue> buckets = new java.util.LinkedHashMap<>();
                 for (TimestampValue tv : data) {
                     long bucket = tv.timestamp().toEpochMilli() / approxIntervalMs;
-                    buckets.putIfAbsent(bucket, tv);
+                    TimestampValue existing = buckets.get(bucket);
+                    if (existing == null) {
+                        if (!isZero(tv.value())) {
+                            buckets.put(bucket, tv);
+                        }
+                    } else if (isZero(existing.value()) && !isZero(tv.value())) {
+                        buckets.put(bucket, tv);
+                    }
                 }
                 data.clear();
                 data.addAll(buckets.values());

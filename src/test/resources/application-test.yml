@@ -10,4 +10,5 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
 mqtt:
+  broker: test-broker
   enabled: false

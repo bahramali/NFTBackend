@@ -11,9 +11,7 @@ import se.hydroleaf.model.*;
 import se.hydroleaf.repository.*;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-
+import java.util.*;
 
 @Service
 public class RecordService {
@@ -24,11 +22,10 @@ public class RecordService {
     private final SensorDataRepository sensorDataRepository;
     private final ObjectMapper objectMapper;
 
-    public RecordService(DeviceRepository deviceRepository,
-                         DeviceGroupRepository deviceGroupRepository,
-                         SensorRecordRepository recordRepository,
-                         SensorDataRepository sensorDataRepository,
-                         ObjectMapper objectMapper) {
+    private static final long TARGET_POINTS = 300;
+    private static final long SAMPLE_INTERVAL_MS = 5000;
+
+    public RecordService(DeviceRepository deviceRepository, DeviceGroupRepository deviceGroupRepository, SensorRecordRepository recordRepository, SensorDataRepository sensorDataRepository, ObjectMapper objectMapper) {
         this.deviceRepository = deviceRepository;
         this.deviceGroupRepository = deviceGroupRepository;
         this.recordRepository = recordRepository;
@@ -97,64 +94,22 @@ public class RecordService {
         }
     }
 
-
-    private Object parseValue(SensorData data) {
-        try {
-            return objectMapper.readValue(data.getValue(), Object.class);
-        } catch (Exception e) {
-            return data.getValue();
-        }
-    }
-
-    private static final long SAMPLE_INTERVAL_MS = 5_000L;
-    private static final int TARGET_POINTS = 300;
-
-    private boolean isZero(Object value) {
-        if (value == null) {
-            return true;
-        }
-        if (value instanceof Number n) {
-            return n.doubleValue() == 0.0;
-        }
-        if (value instanceof String s) {
-            try {
-                return Double.parseDouble(s) == 0.0;
-            } catch (NumberFormatException e) {
-                return false;
-            }
-        }
-        return false;
-    }
-
     @Transactional(readOnly = true)
     public AggregatedHistoryResponse getAggregatedRecords(String deviceId, Instant from, Instant to) {
         long durationMs = to.toEpochMilli() - from.toEpochMilli();
         long approxIntervalMs = Math.max(SAMPLE_INTERVAL_MS, durationMs / TARGET_POINTS);
-        long intervalSec = Math.max(1L, approxIntervalMs / 1000L);
 
-        List<SensorDataRepository.BucketAggregation> rows = sensorDataRepository.aggregateByDeviceAndInterval(
-                deviceId, from, to, intervalSec);
+        List<SensorAggregateResult> results = sensorDataRepository.aggregateSensorData(deviceId, from, to, approxIntervalMs);
 
-        java.util.Map<String, AggregatedSensorData> map = new java.util.LinkedHashMap<>();
-        for (SensorDataRepository.BucketAggregation row : rows) {
-            String key = row.getSensorId() + "|" + row.getType();
-            AggregatedSensorData agg = map.get(key);
-            if (agg == null) {
-                agg = new AggregatedSensorData(
-                        row.getSensorId(),
-                        row.getType(),
-                        row.getUnit(),
-                        new java.util.ArrayList<>()
-                );
-                map.put(key, agg);
-            }
-            agg.data().add(new TimestampValue(row.getBucketTime(), row.getAvgValue()));
+        Map<String, AggregatedSensorData> map = new LinkedHashMap<>();
+        for (SensorAggregateResult r : results) {
+            String key = r.getSensorId() + "|" + r.getType();
+            AggregatedSensorData agg = map.computeIfAbsent(key, k ->
+                    new AggregatedSensorData(r.getSensorId(), r.getType(), r.getUnit(), new ArrayList<>())
+            );
+            agg.data().add(new TimestampValue(r.getBucketTime(), r.getAvgValue()));
         }
 
-        return new AggregatedHistoryResponse(
-                from,
-                to,
-                new java.util.ArrayList<>(map.values())
-        );
+        return new AggregatedHistoryResponse(from, to, new ArrayList<>(map.values()));
     }
 }

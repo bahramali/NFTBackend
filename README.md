@@ -41,3 +41,8 @@ docker run -p 8080:8080 \
   nft-backend
 ```
 
+
+## REST Endpoints
+
+* `GET /api/sensors/history` - returns sensor records in chronological order.
+* `GET /api/sensors/history/aggregated` - groups values by sensor and lists timestamp/value pairs.

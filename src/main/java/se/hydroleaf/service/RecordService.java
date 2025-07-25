@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import se.hydroleaf.dto.SensorDataResponse;
-import se.hydroleaf.dto.SensorRecordResponse;
 import se.hydroleaf.dto.TimestampValue;
 import se.hydroleaf.dto.AggregatedHistoryResponse;
 import se.hydroleaf.dto.AggregatedSensorData;
@@ -96,28 +94,6 @@ public class RecordService {
         }
     }
 
-    private SensorDataResponse mapSensorData(SensorData data) {
-        Object value;
-        try {
-            value = objectMapper.readValue(data.getValue(), Object.class);
-        } catch (Exception e) {
-            value = data.getValue();
-        }
-        return new SensorDataResponse(
-                data.getSensorId(),
-                data.getType(),
-                value,
-                data.getUnit(),
-                null
-        );
-    }
-
-    private SensorRecordResponse mapRecord(SensorRecord record) {
-        List<SensorDataResponse> sensorDtos = record.getSensors().stream()
-                .map(this::mapSensorData)
-                .toList();
-        return new SensorRecordResponse(record.getTimestamp(), sensorDtos);
-    }
 
     private Object parseValue(SensorData data) {
         try {
@@ -127,13 +103,8 @@ public class RecordService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public List<SensorRecordResponse> getRecords(String deviceId, Instant from, Instant to) {
-        return recordRepository.findByDevice_IdAndTimestampBetween(deviceId, from, to)
-                .stream()
-                .map(this::mapRecord)
-                .toList();
-    }
+    private static final long SAMPLE_INTERVAL_MS = 5_000L;
+    private static final int TARGET_POINTS = 300;
 
     @Transactional(readOnly = true)
     public AggregatedHistoryResponse getAggregatedRecords(String deviceId, Instant from, Instant to) {
@@ -154,6 +125,22 @@ public class RecordService {
                     map.put(key, agg);
                 }
                 agg.data().add(new TimestampValue(record.getTimestamp(), parseValue(data)));
+            }
+        }
+
+        long durationMs = to.toEpochMilli() - from.toEpochMilli();
+        long approxIntervalMs = Math.max(SAMPLE_INTERVAL_MS, durationMs / TARGET_POINTS);
+        if (approxIntervalMs > SAMPLE_INTERVAL_MS) {
+            for (AggregatedSensorData agg : map.values()) {
+                java.util.List<TimestampValue> data = agg.data();
+                data.sort(java.util.Comparator.comparing(TimestampValue::timestamp));
+                java.util.Map<Long, TimestampValue> buckets = new java.util.LinkedHashMap<>();
+                for (TimestampValue tv : data) {
+                    long bucket = tv.timestamp().toEpochMilli() / approxIntervalMs;
+                    buckets.putIfAbsent(bucket, tv);
+                }
+                data.clear();
+                data.addAll(buckets.values());
             }
         }
 

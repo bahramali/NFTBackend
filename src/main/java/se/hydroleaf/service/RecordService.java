@@ -6,6 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.dto.SensorDataResponse;
 import se.hydroleaf.dto.SensorRecordResponse;
+import se.hydroleaf.dto.TimestampValue;
+import se.hydroleaf.dto.AggregatedHistoryResponse;
+import se.hydroleaf.dto.AggregatedSensorData;
 import se.hydroleaf.model.*;
 import se.hydroleaf.repository.*;
 
@@ -116,11 +119,48 @@ public class RecordService {
         return new SensorRecordResponse(record.getTimestamp(), sensorDtos);
     }
 
+    private Object parseValue(SensorData data) {
+        try {
+            return objectMapper.readValue(data.getValue(), Object.class);
+        } catch (Exception e) {
+            return data.getValue();
+        }
+    }
+
     @Transactional(readOnly = true)
     public List<SensorRecordResponse> getRecords(String deviceId, Instant from, Instant to) {
         return recordRepository.findByDevice_IdAndTimestampBetween(deviceId, from, to)
                 .stream()
                 .map(this::mapRecord)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public AggregatedHistoryResponse getAggregatedRecords(String deviceId, Instant from, Instant to) {
+        List<SensorRecord> records = recordRepository.findByDevice_IdAndTimestampBetween(deviceId, from, to);
+
+        java.util.Map<String, AggregatedSensorData> map = new java.util.LinkedHashMap<>();
+        for (SensorRecord record : records) {
+            for (SensorData data : record.getSensors()) {
+                String key = data.getSensorId() + "|" + data.getType();
+                AggregatedSensorData agg = map.get(key);
+                if (agg == null) {
+                    agg = new AggregatedSensorData(
+                            data.getSensorId(),
+                            data.getType(),
+                            data.getUnit(),
+                            new java.util.ArrayList<>()
+                    );
+                    map.put(key, agg);
+                }
+                agg.data().add(new TimestampValue(record.getTimestamp(), parseValue(data)));
+            }
+        }
+
+        return new AggregatedHistoryResponse(
+                from,
+                to,
+                new java.util.ArrayList<>(map.values())
+        );
     }
 }

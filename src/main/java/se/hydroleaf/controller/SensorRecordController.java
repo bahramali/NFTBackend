@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.hydroleaf.dto.SensorRecordResponse;
+import se.hydroleaf.dto.AggregatedHistoryResponse;
 import se.hydroleaf.service.RecordService;
 
 import java.time.Instant;
@@ -27,5 +28,13 @@ public class SensorRecordController {
             @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
             @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
         return recordService.getRecords(espId, from, to);
+    }
+
+    @GetMapping("/history/aggregated")
+    public AggregatedHistoryResponse getHistoryAggregated(
+            @RequestParam("espId") String espId,
+            @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+        return recordService.getAggregatedRecords(espId, from, to);
     }
 }

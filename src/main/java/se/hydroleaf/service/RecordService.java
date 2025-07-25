@@ -21,15 +21,18 @@ public class RecordService {
     private final DeviceRepository deviceRepository;
     private final DeviceGroupRepository deviceGroupRepository;
     private final SensorRecordRepository recordRepository;
+    private final SensorDataRepository sensorDataRepository;
     private final ObjectMapper objectMapper;
 
     public RecordService(DeviceRepository deviceRepository,
                          DeviceGroupRepository deviceGroupRepository,
                          SensorRecordRepository recordRepository,
+                         SensorDataRepository sensorDataRepository,
                          ObjectMapper objectMapper) {
         this.deviceRepository = deviceRepository;
         this.deviceGroupRepository = deviceGroupRepository;
         this.recordRepository = recordRepository;
+        this.sensorDataRepository = sensorDataRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -125,47 +128,27 @@ public class RecordService {
 
     @Transactional(readOnly = true)
     public AggregatedHistoryResponse getAggregatedRecords(String deviceId, Instant from, Instant to) {
-        List<SensorRecord> records = recordRepository.findByDevice_IdAndTimestampBetween(deviceId, from, to);
-
-        java.util.Map<String, AggregatedSensorData> map = new java.util.LinkedHashMap<>();
-        for (SensorRecord record : records) {
-            for (SensorData data : record.getSensors()) {
-                String key = data.getSensorId() + "|" + data.getType();
-                AggregatedSensorData agg = map.get(key);
-                if (agg == null) {
-                    agg = new AggregatedSensorData(
-                            data.getSensorId(),
-                            data.getType(),
-                            data.getUnit(),
-                            new java.util.ArrayList<>()
-                    );
-                    map.put(key, agg);
-                }
-                agg.data().add(new TimestampValue(record.getTimestamp(), parseValue(data)));
-            }
-        }
-
         long durationMs = to.toEpochMilli() - from.toEpochMilli();
         long approxIntervalMs = Math.max(SAMPLE_INTERVAL_MS, durationMs / TARGET_POINTS);
-        if (approxIntervalMs > SAMPLE_INTERVAL_MS) {
-            for (AggregatedSensorData agg : map.values()) {
-                java.util.List<TimestampValue> data = agg.data();
-                data.sort(java.util.Comparator.comparing(TimestampValue::timestamp));
-                java.util.Map<Long, TimestampValue> buckets = new java.util.LinkedHashMap<>();
-                for (TimestampValue tv : data) {
-                    long bucket = tv.timestamp().toEpochMilli() / approxIntervalMs;
-                    TimestampValue existing = buckets.get(bucket);
-                    if (existing == null) {
-                        if (!isZero(tv.value())) {
-                            buckets.put(bucket, tv);
-                        }
-                    } else if (isZero(existing.value()) && !isZero(tv.value())) {
-                        buckets.put(bucket, tv);
-                    }
-                }
-                data.clear();
-                data.addAll(buckets.values());
+        long intervalSec = Math.max(1L, approxIntervalMs / 1000L);
+
+        List<SensorDataRepository.BucketAggregation> rows = sensorDataRepository.aggregateByDeviceAndInterval(
+                deviceId, from, to, intervalSec);
+
+        java.util.Map<String, AggregatedSensorData> map = new java.util.LinkedHashMap<>();
+        for (SensorDataRepository.BucketAggregation row : rows) {
+            String key = row.getSensorId() + "|" + row.getType();
+            AggregatedSensorData agg = map.get(key);
+            if (agg == null) {
+                agg = new AggregatedSensorData(
+                        row.getSensorId(),
+                        row.getType(),
+                        row.getUnit(),
+                        new java.util.ArrayList<>()
+                );
+                map.put(key, agg);
             }
+            agg.data().add(new TimestampValue(row.getBucketTime(), row.getAvgValue()));
         }
 
         return new AggregatedHistoryResponse(

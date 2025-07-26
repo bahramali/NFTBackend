@@ -26,7 +26,6 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
         GROUP BY sd.sensor_id, sd.type, sd.unit, bucketTime
         ORDER BY sd.sensor_id, sd.type, sd.unit, bucketTime
         """, nativeQuery = true)
-//    List<BucketAggregation> aggregateByDeviceAndInterval(
     List<SensorAggregateResult> aggregateSensorData(
             @Param("deviceId") String deviceId,
             @Param("from") Instant from,

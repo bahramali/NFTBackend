@@ -64,13 +64,35 @@ public class RecordService {
             // Parse sensors
             List<SensorData> sensors = new ArrayList<>();
             for (JsonNode sensorNode : node.path("sensors")) {
-                SensorData sd = new SensorData();
-                sd.setSensorId(sensorNode.path("sensorId").asText());
-                sd.setType(sensorNode.path("type").asText());
-                sd.setUnit(sensorNode.path("unit").asText());
-                sd.setSensorValue(sensorNode.path("value").toString());
-                sd.setRecord(record);
-                sensors.add(sd);
+                String sensorId = sensorNode.path("sensorId").asText();
+                String type = sensorNode.path("type").asText();
+                String unit = sensorNode.path("unit").asText();
+                JsonNode valueNode = sensorNode.path("value");
+
+                if (valueNode.isObject() && valueNode.has("spectrum")) {
+                    JsonNode spectrum = valueNode.path("spectrum");
+                    spectrum.fields().forEachRemaining(entry -> {
+                        SensorData sd = new SensorData();
+                        sd.setSensorId(sensorId);
+                        sd.setType("color_" + entry.getKey() + "nm");
+                        sd.setUnit(unit);
+                        sd.setNumericValue(entry.getValue().asDouble());
+                        sd.setRecord(record);
+                        sensors.add(sd);
+                    });
+                } else {
+                    SensorData sd = new SensorData();
+                    sd.setSensorId(sensorId);
+                    sd.setType(type);
+                    sd.setUnit(unit);
+                    if (valueNode.isNumber()) {
+                        sd.setNumericValue(valueNode.asDouble());
+                    } else {
+                        sd.setSensorValue(valueNode.toString());
+                    }
+                    sd.setRecord(record);
+                    sensors.add(sd);
+                }
             }
             record.setSensors(sensors);
 

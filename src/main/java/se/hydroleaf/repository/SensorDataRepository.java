@@ -18,7 +18,7 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
               sd.type AS type,
               sd.unit AS unit,
             to_timestamp(floor(extract(epoch FROM sr.record_time) / :bucketSize) * :bucketSize) AS bucketTime,
-              AVG(CAST(sd.value AS double precision)) AS avgValue
+              AVG(sd.numeric_value) AS avgValue
             FROM sensor_data sd
             JOIN sensor_record sr ON sd.record_id = sr.id
         WHERE sr.device_id = :deviceId

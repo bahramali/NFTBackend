@@ -5,10 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
-import java.util.Map;
 
 @Entity
 @Table(name = "sensor_data")
@@ -24,11 +21,9 @@ public class SensorData {
     private String sensorId;
     private String type;
     private String unit;
-    private Double numericValue;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "spectrum_json", columnDefinition = "jsonb")
-    private Map<String, Integer> spectrumJson;
+    @Column(name = "numeric_value")
+    private Double numericValue;
 
     @Column(name = "value", columnDefinition = "text")  // can be number, string, or JSON structure
     private String sensorValue;

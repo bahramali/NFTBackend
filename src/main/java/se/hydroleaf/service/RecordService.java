@@ -104,7 +104,7 @@ public class RecordService {
     public AggregatedHistoryResponse getAggregatedRecords(String deviceId, Instant from, Instant to) {
         long durationMs = to.toEpochMilli() - from.toEpochMilli();
         long approxIntervalMs = Math.max(SAMPLE_INTERVAL_MS, durationMs / TARGET_POINTS);
-
+        log.info("strat to search in sensorDataRepository.aggregateSensorData(deviceId, from, to, approxIntervalMs);");
         List<SensorAggregateResult> results = sensorDataRepository.aggregateSensorData(deviceId, from, to, approxIntervalMs);
 
         Map<String, AggregatedSensorData> map = new LinkedHashMap<>();

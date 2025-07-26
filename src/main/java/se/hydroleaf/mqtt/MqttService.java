@@ -70,10 +70,10 @@ public class MqttService implements MqttCallback {
     @Override
     public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload());
-        log.info("1- Received MQTT message from topic: {}: with payload: {}", topic, payload);
+        log.debug("1- Received MQTT message from topic: {}: with payload: {}", topic, payload);
         recordService.saveMessage(topic, payload);
         messagingTemplate.convertAndSend("/topic/" + topic, payload);
-        log.info("3- payload is sent");
+        log.debug("3- payload is sent");
     }
 
     @Override

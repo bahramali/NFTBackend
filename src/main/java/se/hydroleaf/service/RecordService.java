@@ -69,27 +69,13 @@ public class RecordService {
                 String unit = sensorNode.path("unit").asText();
                 JsonNode valueNode = sensorNode.path("value");
 
-                if (valueNode.isObject() && valueNode.has("spectrum")) {
-                    JsonNode spectrum = valueNode.path("spectrum");
-                    spectrum.fields().forEachRemaining(entry -> {
-                        SensorData sd = new SensorData();
-                        sd.setSensorId(sensorId);
-                        sd.setType("color_" + entry.getKey() + "nm");
-                        sd.setUnit(unit);
-                        sd.setData(entry.getValue().asDouble());
-                        sd.setRecord(record);
-                        sensors.add(sd);
-                    });
-                } else {
-                    SensorData sd = new SensorData();
-                    sd.setSensorId(sensorId);
-                    sd.setType(type);
-                    sd.setUnit(unit);
-                    sd.setData(valueNode.asDouble());
-
-                    sd.setRecord(record);
-                    sensors.add(sd);
-                }
+                SensorData sd = new SensorData();
+                sd.setSensorId(sensorId);
+                sd.setType(type);
+                sd.setUnit(unit);
+                sd.setData(valueNode.asDouble());
+                sd.setRecord(record);
+                sensors.add(sd);
             }
             record.setSensors(sensors);
 

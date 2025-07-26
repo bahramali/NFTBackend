@@ -76,7 +76,7 @@ public class RecordService {
                         sd.setSensorId(sensorId);
                         sd.setType("color_" + entry.getKey() + "nm");
                         sd.setUnit(unit);
-                        sd.setNumericValue(entry.getValue().asDouble());
+                        sd.setData(entry.getValue().asDouble());
                         sd.setRecord(record);
                         sensors.add(sd);
                     });
@@ -85,11 +85,8 @@ public class RecordService {
                     sd.setSensorId(sensorId);
                     sd.setType(type);
                     sd.setUnit(unit);
-                    if (valueNode.isNumber()) {
-                        sd.setNumericValue(valueNode.asDouble());
-                    } else {
-                        sd.setSensorValue(valueNode.toString());
-                    }
+                    sd.setData(valueNode.asDouble());
+
                     sd.setRecord(record);
                     sensors.add(sd);
                 }

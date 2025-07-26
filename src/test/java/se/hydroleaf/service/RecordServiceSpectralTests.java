@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.model.SensorData;
 import se.hydroleaf.model.SensorRecord;
 import se.hydroleaf.repository.SensorRecordRepository;
@@ -26,6 +27,7 @@ class RecordServiceSpectralTests {
 
 
     @Test
+    @Transactional
     void spectrumValuesAreStoredAsSeparateRows() {
         String json = """
             {
@@ -56,12 +58,11 @@ class RecordServiceSpectralTests {
 
         for (SensorData sd : sensors) {
             if ("color_445nm".equals(sd.getType())) {
-                assertEquals(10.0, sd.getNumericValue());
+                assertEquals(10.0, sd.getData());
             }
             if ("color_480nm".equals(sd.getType())) {
-                assertEquals(20.0, sd.getNumericValue());
+                assertEquals(20.0, sd.getData());
             }
-            assertNull(sd.getSensorValue());
         }
     }
 

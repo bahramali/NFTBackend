@@ -22,12 +22,9 @@ public class SensorData {
     private String type;
     private String unit;
 
-    @Column(name = "numeric_value")
-    private Double numericValue;
+    @Column(name = "data")
+    private Double data;
 
-    @Column(name = "value", columnDefinition = "text")  // can be number, string, or JSON structure
-    private String sensorValue;
-    // Each sensor data belongs to one sensor record
     @ManyToOne
     @JoinColumn(name = "record_id")
     private SensorRecord record;

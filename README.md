@@ -45,3 +45,21 @@ docker run -p 8080:8080 \
 ## REST Endpoints
 
 * `GET /api/sensors/history/aggregated` - groups values by sensor and lists timestamp/value pairs. Results are automatically downsampled to roughly 300 points based on the requested time range, discarding zero values when possible.
+
+## Local development
+
+A separate `application-local.yaml` allows running the service with a Postgres instance on your machine. Start the app using the `local` profile:
+
+```bash
+SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run
+```
+
+Start the database and MQTT broker required for local development using Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+This brings up a Postgres instance and an MQTT broker on the default ports (`5432` and `1883`).
+
+Modify the values in `src/main/resources/application-local.yaml` if your database settings differ.

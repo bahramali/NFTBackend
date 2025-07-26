@@ -68,7 +68,7 @@ public class RecordService {
                 sd.setSensorId(sensorNode.path("sensorId").asText());
                 sd.setType(sensorNode.path("type").asText());
                 sd.setUnit(sensorNode.path("unit").asText());
-                sd.setValue(sensorNode.path("value").toString());
+                sd.setSensorValue(sensorNode.path("value").toString());
                 sd.setRecord(record);
                 sensors.add(sd);
             }

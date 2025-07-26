@@ -2,6 +2,7 @@ package se.hydroleaf.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.dto.TimestampValue;
@@ -13,6 +14,7 @@ import se.hydroleaf.repository.*;
 import java.time.Instant;
 import java.util.*;
 
+@Slf4j
 @Service
 public class RecordService {
 
@@ -92,7 +94,6 @@ public class RecordService {
                 });
                 record.setHealth(healthItems);
             }
-
             recordRepository.save(record);
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse and save message", e);

@@ -13,4 +13,11 @@ services:
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
     ports:
-      - "1883:1883"
+      - "1884:1884"
+      - "9001:9001"
+  mqtt-ui:
+    image: smeagolworms4/mqtt-explorer
+    container_name: mqtt-ui
+    restart: unless-stopped
+    ports:
+      - "4000:4000"

@@ -2,6 +2,7 @@ package se.hydroleaf.mqtt;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,11 +12,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import se.hydroleaf.service.RecordService;
 
+@Slf4j
 @Service
 @ConditionalOnProperty(name = "mqtt.enabled", havingValue = "true", matchIfMissing = true)
 public class MqttService implements MqttCallback {
-
-    private static final Logger logger = LoggerFactory.getLogger(MqttService.class);
 
     private final RecordService recordService;
     private final SimpMessagingTemplate messagingTemplate;
@@ -45,9 +45,9 @@ public class MqttService implements MqttCallback {
             client.subscribe("rootImages");
             client.subscribe("waterOutput");
             client.subscribe("waterTank");
-            logger.info("Connected to MQTT broker {}", broker);
+            log.info("Connected to MQTT broker {}", broker);
         } catch (MqttException e) {
-            logger.warn("Failed to connect to MQTT broker {}", broker, e);
+            log.warn("Failed to connect to MQTT broker {}", broker, e);
         }
     }
 
@@ -57,22 +57,23 @@ public class MqttService implements MqttCallback {
             try {
                 client.disconnect();
             } catch (MqttException e) {
-                logger.warn("Error disconnecting MQTT client", e);
+                log.warn("Error disconnecting MQTT client", e);
             }
         }
     }
 
     @Override
     public void connectionLost(Throwable cause) {
-        logger.warn("MQTT connection lost", cause);
+        log.warn("MQTT connection lost", cause);
     }
 
     @Override
     public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload());
-        logger.debug("Received MQTT message on {}: {}", topic, payload);
+        log.info("1- Received MQTT message from topic: {}: with payload: {}", topic, payload);
         recordService.saveMessage(topic, payload);
         messagingTemplate.convertAndSend("/topic/" + topic, payload);
+        log.info("3- payload is sent");
     }
 
     @Override

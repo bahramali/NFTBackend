@@ -13,7 +13,7 @@ spring:
     show-sql: true
 
 mqtt:
-  broker: ${MQTT_BROKER:tcp://localhost:1883}
+  broker: ${MQTT_BROKER:tcp://localhost:1884}
   enabled: true
 server:
   ssl:

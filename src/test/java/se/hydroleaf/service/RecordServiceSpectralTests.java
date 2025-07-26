@@ -37,9 +37,15 @@ class RecordServiceSpectralTests {
               "sensors": [
                 {
                   "sensorId": "spec1",
-                  "type": "color",
+                  "type": "445nm",
                   "unit": "count",
-                  "value": {"spectrum": {"445": 10, "480": 20}}
+                  "value": 10
+                },
+                {
+                  "sensorId": "spec1",
+                  "type": "480nm",
+                  "unit": "count",
+                  "value": 20
                 }
               ]
             }
@@ -53,14 +59,14 @@ class RecordServiceSpectralTests {
         assertEquals(2, sensors.size());
 
         Set<String> types = sensors.stream().map(SensorData::getType).collect(Collectors.toSet());
-        assertTrue(types.contains("color_445nm"));
-        assertTrue(types.contains("color_480nm"));
+        assertTrue(types.contains("445nm"));
+        assertTrue(types.contains("480nm"));
 
         for (SensorData sd : sensors) {
-            if ("color_445nm".equals(sd.getType())) {
+            if ("445nm".equals(sd.getType())) {
                 assertEquals(10.0, sd.getData());
             }
-            if ("color_480nm".equals(sd.getType())) {
+            if ("480nm".equals(sd.getType())) {
                 assertEquals(20.0, sd.getData());
             }
         }

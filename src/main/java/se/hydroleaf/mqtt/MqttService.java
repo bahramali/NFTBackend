@@ -68,7 +68,11 @@ public class MqttService implements MqttCallback {
     @Override
     public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload());
-        recordService.saveMessage(topic, payload);
+        try {
+            recordService.saveMessage(topic, payload);
+        } catch (Exception e) {
+            log.error("Failed to store MQTT message for topic {} with payload {}", topic, payload, e);
+        }
         messagingTemplate.convertAndSend("/topic/" + topic, payload);
         log.info("Message sent to: /topic/{}: with payload: {}", topic, payload);
 

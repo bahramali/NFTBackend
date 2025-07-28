@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 
@@ -25,6 +26,7 @@ public class SensorData {
     @Column(name = "data")
     private Double data;
 
+    @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "record_id")
     private SensorRecord record;

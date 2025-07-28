@@ -98,6 +98,7 @@ log.info("device: {}", device);
                 record.setHealth(healthItems);
             }
             recordRepository.save(record);
+            log.info("saved in database record: {}",record);
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse and save message", e);
         }

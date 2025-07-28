@@ -48,7 +48,7 @@ public class RecordService {
                         g.setMqttTopic(topic);
                         return deviceGroupRepository.save(g);
                     });
-
+log.info("DeviceGroup: {}", group);
             // Find or create device
             String deviceId = node.path("deviceId").asText();
             Device device = deviceRepository.findById(deviceId).orElseGet(() -> {
@@ -57,6 +57,8 @@ public class RecordService {
                 d.setGroup(group);
                 return deviceRepository.save(d);
             });
+log.info("device: {}", device);
+
             device.setLocation(node.path("location").asText());
 
             // Create sensor record

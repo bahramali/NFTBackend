@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -20,6 +21,7 @@ public class SensorHealthItem {
     private String sensorType;  // e.g. "sht3x", "veml7700"
     private Boolean status;
 
+    @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "record_id")
     private SensorRecord record;

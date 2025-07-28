@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
@@ -20,11 +21,13 @@ public class Device {
     private String location;
 
     // Each device belongs to one device group
+    @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "group_id")
     private DeviceGroup group;
 
     // One device can have many sensor records
+    @ToString.Exclude
     @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
     private List<SensorRecord> sensorRecords;
 }

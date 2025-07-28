@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class DeviceGroup {
     private String mqttTopic;
 
     // One device group contains many devices
+    @ToString.Exclude
     @OneToMany(mappedBy = "group")
     private List<Device> devices;
 }

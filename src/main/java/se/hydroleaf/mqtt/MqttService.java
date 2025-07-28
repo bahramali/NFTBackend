@@ -4,8 +4,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -72,8 +70,10 @@ public class MqttService implements MqttCallback {
         String payload = new String(message.getPayload());
         log.debug("1- Received MQTT message from topic: {}: with payload: {}", topic, payload);
         recordService.saveMessage(topic, payload);
-        log.info("Sending to topic:{} ,payload: {}",topic, payload);
+        log.info("Sending to topic:{} ,payload: {}", topic, payload);
         messagingTemplate.convertAndSend("/topic/" + topic, payload);
+        log.info("Message sent to /topic/growSensors and it is equal to: /topic/{}" , topic);
+
     }
 
     @Override

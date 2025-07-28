@@ -10,6 +10,7 @@ import se.hydroleaf.dto.AggregatedHistoryResponse;
 import se.hydroleaf.dto.AggregatedSensorData;
 import se.hydroleaf.model.*;
 import se.hydroleaf.repository.*;
+import se.hydroleaf.util.InstantUtil;
 
 import java.time.Instant;
 import java.util.*;
@@ -60,7 +61,7 @@ public class RecordService {
 
             // Create sensor record
             SensorRecord record = new SensorRecord();
-            record.setTimestamp(Instant.parse(node.path("timestamp").asText()));
+            record.setTimestamp(InstantUtil.parse(node.path("timestamp").asText()));
             record.setDevice(device);
 
             // Parse sensors

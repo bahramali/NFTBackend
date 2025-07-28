@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.hydroleaf.dto.AggregatedHistoryResponse;
 import se.hydroleaf.service.RecordService;
+import se.hydroleaf.util.InstantUtil;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -27,20 +28,8 @@ public class SensorRecordController {
             @RequestParam("espId") String espId,
             @RequestParam("from") String from,
             @RequestParam("to") String to) {
-        Instant fromInst = parseInstant(from);
-        Instant toInst = parseInstant(to);
+        Instant fromInst = InstantUtil.parse(from);
+        Instant toInst = InstantUtil.parse(to);
         return recordService.getAggregatedRecords(espId, fromInst, toInst);
-    }
-
-    private Instant parseInstant(String s) {
-        try {
-            return Instant.parse(s);
-        } catch (DateTimeParseException e) {
-            DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                    .appendPattern("yyyy-MM-dd'T'H:mm:ss")
-                    .appendOffsetId()
-                    .toFormatter();
-            return OffsetDateTime.parse(s, formatter).toInstant();
-        }
     }
 }

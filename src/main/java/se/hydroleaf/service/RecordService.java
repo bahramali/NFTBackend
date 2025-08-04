@@ -118,7 +118,9 @@ log.info("device: {}", device);
 
         Map<String, AggregatedSensorData> map = new LinkedHashMap<>();
         for (SensorAggregateResult r : results) {
-            String key = r.getSensorName() + "|" + r.getValueType();
+            // Include unit in the aggregation key to avoid mixing data from sensors
+            // that may share name and value type but report values in different units
+            String key = r.getSensorName() + "|" + r.getValueType() + "|" + r.getUnit();
             AggregatedSensorData agg = map.computeIfAbsent(key, k ->
                     new AggregatedSensorData(r.getSensorName(), r.getValueType(), r.getUnit(), new ArrayList<>())
             );

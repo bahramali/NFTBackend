@@ -14,17 +14,17 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
 
     @Query(value = """
             SELECT
-              sd.sensor_id AS sensorId,
-              sd.type AS type,
+              sd.sensor_name AS sensorName,
+              sd.value_type AS valueType,
               sd.unit AS unit,
             to_timestamp(floor(extract(epoch FROM sr.record_time) / :bucketSize) * :bucketSize) AS bucketTime,
-              AVG(sd.data) AS avgValue
+              AVG(sd.value) AS avgValue
             FROM sensor_data sd
             JOIN sensor_record sr ON sd.record_id = sr.id
         WHERE sr.device_id = :deviceId
               AND sr.record_time BETWEEN :from AND :to
-        GROUP BY sd.sensor_id, sd.type, sd.unit, bucketTime
-        ORDER BY sd.sensor_id, sd.type, sd.unit, bucketTime
+        GROUP BY sd.sensor_name, sd.value_type, sd.unit, bucketTime
+        ORDER BY sd.sensor_name, sd.value_type, sd.unit, bucketTime
         """, nativeQuery = true)
     List<SensorAggregateResult> aggregateSensorData(
             @Param("deviceId") String deviceId,

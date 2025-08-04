@@ -19,12 +19,19 @@ public class SensorData {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String sensorId;
-    private String type;
+    @Column(name = "sensor_name")
+    private String sensorName;
+
+    @Column(name = "value_type")
+    private String valueType;
+
     private String unit;
 
-    @Column(name = "data")
-    private Double data;
+    @Column(name = "value")
+    private Double value;
+
+    @Column(name = "source")
+    private String source;
 
     @ToString.Exclude
     @ManyToOne

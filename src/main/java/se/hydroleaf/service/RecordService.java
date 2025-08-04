@@ -69,16 +69,20 @@ log.info("device: {}", device);
             // Parse sensors
             List<SensorData> sensors = new ArrayList<>();
             for (JsonNode sensorNode : node.path("sensors")) {
-                String sensorId = sensorNode.path("sensorId").asText();
-                String type = sensorNode.path("type").asText();
+                String sensorName = sensorNode.path("sensorName").asText();
+                String valueType = sensorNode.path("valueType").asText();
                 String unit = sensorNode.path("unit").asText();
                 JsonNode valueNode = sensorNode.path("value");
+                JsonNode sourceNode = sensorNode.path("source");
 
                 SensorData sd = new SensorData();
-                sd.setSensorId(sensorId);
-                sd.setType(type);
+                sd.setSensorName(sensorName);
+                sd.setValueType(valueType);
                 sd.setUnit(unit);
-                sd.setData(valueNode.asDouble());
+                sd.setValue(valueNode.asDouble());
+                if (!sourceNode.isMissingNode()) {
+                    sd.setSource(sourceNode.asText());
+                }
                 sd.setRecord(record);
                 sensors.add(sd);
             }
@@ -114,9 +118,9 @@ log.info("device: {}", device);
 
         Map<String, AggregatedSensorData> map = new LinkedHashMap<>();
         for (SensorAggregateResult r : results) {
-            String key = r.getSensorId() + "|" + r.getType();
+            String key = r.getSensorName() + "|" + r.getValueType();
             AggregatedSensorData agg = map.computeIfAbsent(key, k ->
-                    new AggregatedSensorData(r.getSensorId(), r.getType(), r.getUnit(), new ArrayList<>())
+                    new AggregatedSensorData(r.getSensorName(), r.getValueType(), r.getUnit(), new ArrayList<>())
             );
             agg.data().add(new TimestampValue(r.getBucketTime(), r.getAvgValue()));
         }

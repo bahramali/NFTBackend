@@ -60,6 +60,7 @@ log.info("DeviceGroup: {}", group);
 log.info("device: {}", device);
 
             device.setLocation(node.path("location").asText());
+            device.setSystem(node.path("system").asText());
 
             // Create sensor record
             SensorRecord record = new SensorRecord();

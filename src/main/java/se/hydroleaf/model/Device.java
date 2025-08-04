@@ -20,6 +20,9 @@ public class Device {
 
     private String location;
 
+    @Column(name = "system")
+    private String system;
+
     // Each device belongs to one device group
     @ToString.Exclude
     @ManyToOne

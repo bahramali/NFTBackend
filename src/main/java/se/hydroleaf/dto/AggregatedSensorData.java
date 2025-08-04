@@ -3,8 +3,8 @@ package se.hydroleaf.dto;
 import java.util.List;
 
 public record AggregatedSensorData(
-        String sensorId,
-        String type,
+        String sensorName,
+        String valueType,
         String unit,
         List<TimestampValue> data
 ) {}

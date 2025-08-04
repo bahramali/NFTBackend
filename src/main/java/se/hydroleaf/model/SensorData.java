@@ -27,7 +27,10 @@ public class SensorData {
 
     private String unit;
 
-    @Column(name = "value")
+    // 'value' is a reserved keyword in some databases (e.g. H2).
+    // Map the Java field 'value' to a column with a safer name to
+    // ensure schema generation works across different database vendors.
+    @Column(name = "sensor_value")
     private Double value;
 
     @Column(name = "source")

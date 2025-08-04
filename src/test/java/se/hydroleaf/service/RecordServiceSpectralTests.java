@@ -29,6 +29,10 @@ class RecordServiceSpectralTests {
     @Test
     @Transactional
     void spectrumValuesAreStoredAsSeparateRows() {
+        String sensorName = "spec1";
+        String valueType1 = "445nm";
+        String valueType2 = "480nm";
+
         String json = """
             {
               "deviceId": "esp-1",
@@ -36,20 +40,20 @@ class RecordServiceSpectralTests {
               "location": "test",
               "sensors": [
                 {
-                  "sensorName": "spec1",
-                  "valueType": "445nm",
+                  "sensorName": "%s",
+                  "valueType": "%s",
                   "unit": "count",
                   "value": 10
                 },
                 {
-                  "sensorName": "spec1",
-                  "valueType": "480nm",
+                  "sensorName": "%s",
+                  "valueType": "%s",
                   "unit": "count",
                   "value": 20
                 }
               ]
             }
-            """;
+            """.formatted(sensorName, valueType1, sensorName, valueType2);
 
         recordService.saveMessage("growSensors", json);
 
@@ -59,17 +63,55 @@ class RecordServiceSpectralTests {
         assertEquals(2, sensors.size());
 
         Set<String> types = sensors.stream().map(SensorData::getValueType).collect(Collectors.toSet());
-        assertTrue(types.contains("445nm"));
-        assertTrue(types.contains("480nm"));
+        assertTrue(types.contains(valueType1));
+        assertTrue(types.contains(valueType2));
 
         for (SensorData sd : sensors) {
-            if ("445nm".equals(sd.getValueType())) {
+            if (valueType1.equals(sd.getValueType())) {
                 assertEquals(10.0, sd.getValue());
             }
-            if ("480nm".equals(sd.getValueType())) {
+            if (valueType2.equals(sd.getValueType())) {
                 assertEquals(20.0, sd.getValue());
             }
         }
+    }
+
+    @Test
+    @Transactional
+    void waterTankMessageIsStored() {
+        String sensorName = "tank1";
+        String json = """
+            {
+              "deviceId": "tank-1",
+              "timestamp": "2024-01-01T00:00:00Z",
+              "location": "test",
+              "sensors": [
+                {
+                  "sensorName": "%s",
+                  "valueType": "level",
+                  "unit": "percent",
+                  "value": 70
+                },
+                {
+                  "sensorName": "%s",
+                  "valueType": "temperature",
+                  "unit": "C",
+                  "value": 22
+                }
+              ]
+            }
+            """.formatted(sensorName, sensorName);
+
+        recordService.saveMessage("waterTank", json);
+
+        List<SensorRecord> records = recordRepository.findAll();
+        assertEquals(1, records.size());
+        List<SensorData> sensors = records.get(0).getSensors();
+        assertEquals(2, sensors.size());
+
+        Set<String> types = sensors.stream().map(SensorData::getValueType).collect(Collectors.toSet());
+        assertTrue(types.contains("level"));
+        assertTrue(types.contains("temperature"));
     }
 
 }

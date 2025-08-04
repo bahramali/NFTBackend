@@ -12,12 +12,14 @@ import java.util.List;
 @Repository
 public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
 
+    // Aggregates sensor data using the explicit column names `sensor_name` and `value_type`
+    // to match the fields in AggregatedSensorData and SensorData entities.
     @Query(value = """
             SELECT
               sd.sensor_name AS sensorName,
               sd.value_type AS valueType,
               sd.unit AS unit,
-            to_timestamp(floor(extract(epoch FROM sr.record_time) / :bucketSize) * :bucketSize) AS bucketTime,
+              to_timestamp(floor(extract(epoch FROM sr.record_time) / :bucketSize) * :bucketSize) AS bucketTime,
               AVG(sd.value) AS avgValue
             FROM sensor_data sd
             JOIN sensor_record sr ON sd.record_id = sr.id

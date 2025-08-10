@@ -57,6 +57,7 @@ public class RecordService {
 
             device.setLocation(node.path("location").asText());
             device.setSystem(node.path("system").asText());
+            device.setCompositeId(node.path("compositeId").asText());
 
             // Create sensor record
             SensorRecord record = new SensorRecord();

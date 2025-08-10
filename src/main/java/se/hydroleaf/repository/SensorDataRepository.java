@@ -36,17 +36,24 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
     );
 
     @Query(value = """
-            SELECT AVG(latest_value) AS average, COUNT(*) AS count
-            FROM (
-                SELECT DISTINCT ON (d.id) sd.sensor_value AS latest_value
-                FROM device d
-                JOIN sensor_record sr ON sr.device_id = d.id
-                JOIN sensor_data sd ON sd.record_id = sr.id
-                WHERE LOWER(d.system) = LOWER(:system)
-                  AND LOWER(d.location) = LOWER(:layer)
-                  AND LOWER(sd.value_type) = LOWER(:sensorType)
-                ORDER BY d.id, sr.record_time DESC
-            ) latest
+            WITH dev AS (
+              SELECT id
+              FROM device
+              WHERE system=:system AND location=:layer
+            )
+            SELECT AVG(sd.sensor_value::double precision) AS average,
+                   COUNT(*) AS count
+            FROM dev d
+            JOIN LATERAL (
+              SELECT sr.id
+              FROM sensor_record sr
+              WHERE sr.device_id = d.id
+              ORDER BY sr.record_time DESC
+              LIMIT 1
+            ) lr ON true
+            JOIN sensor_data sd
+              ON sd.record_id = lr.id
+            WHERE sd.value_type = :sensorType;
             """, nativeQuery = true)
     AverageResult getLatestAverage(
             @Param("system") String system,

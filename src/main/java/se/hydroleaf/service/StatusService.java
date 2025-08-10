@@ -1,10 +1,15 @@
 package se.hydroleaf.service;
 
 import org.springframework.stereotype.Service;
+import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
 import se.hydroleaf.repository.AverageResult;
 import se.hydroleaf.repository.OxygenPumpStatusRepository;
 import se.hydroleaf.repository.SensorDataRepository;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class StatusService {
@@ -19,22 +24,38 @@ public class StatusService {
     }
 
     public StatusAverageResponse getAverage(String system, String layer, String sensorType) {
+        String normalizedType = sensorType != null ? sensorType.toLowerCase() : null;
         AverageResult result;
-        if (isOxygenPump(sensorType)) {
+        if (isOxygenPump(normalizedType)) {
             result = oxygenPumpStatusRepository.getLatestAverage(system, layer);
         } else {
-            result = sensorDataRepository.getLatestAverage(system, layer, sensorType);
+            result = sensorDataRepository.getLatestAverage(system, layer, normalizedType);
         }
         Double avg = result != null ? result.getAverage() : null;
         long count = result != null && result.getCount() != null ? result.getCount() : 0L;
         return new StatusAverageResponse(avg, count);
     }
 
+    public StatusAllAverageResponse getAllAverages(String system, String layer) {
+        List<String> sensorTypes = List.of("lux", "humidity", "temperature", "do", "airpump");
+        Map<String, StatusAverageResponse> responses = new HashMap<>();
+        for (String type : sensorTypes) {
+            responses.put(type, getAverage(system, layer, type));
+        }
+        return new StatusAllAverageResponse(
+                responses.get("lux"),
+                responses.get("humidity"),
+                responses.get("temperature"),
+                responses.get("do"),
+                responses.get("airpump")
+        );
+    }
+
     private boolean isOxygenPump(String sensorType) {
         if (sensorType == null) {
             return false;
         }
-        String type = sensorType.toLowerCase();
-        return type.equals("oxygenpump") || type.equals("oxygen-pump") || type.equals("oxygenpumpstatus");
+        return sensorType.equals("oxygenpump") || sensorType.equals("oxygen-pump") ||
+                sensorType.equals("oxygenpumpstatus") || sensorType.equals("airpump");
     }
 }

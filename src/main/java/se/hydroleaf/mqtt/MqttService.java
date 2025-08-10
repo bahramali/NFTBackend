@@ -43,6 +43,7 @@ public class MqttService implements MqttCallback {
             client.subscribe("rootImages");
             client.subscribe("waterOutput");
             client.subscribe("waterTank");
+            client.subscribe("actuator/oxygenPum");
             log.info("Connected to MQTT broker {}", broker);
         } catch (MqttException e) {
             log.warn("Failed to connect to MQTT broker {}", broker, e);
@@ -68,13 +69,15 @@ public class MqttService implements MqttCallback {
     @Override
     public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload());
-        try {
-            recordService.saveMessage(topic, payload);
-        } catch (Exception e) {
-            log.error("Failed to store MQTT message for topic {}", topic, e);
+
+        if (!"actuator/oxygenPum".equals(topic)) {
+            try {
+                recordService.saveMessage(topic, payload);
+            } catch (Exception e) {
+                log.error("Failed to store MQTT message for topic {}", topic, e);
+            }
         }
         messagingTemplate.convertAndSend("/topic/" + topic, payload);
-
     }
 
     @Override

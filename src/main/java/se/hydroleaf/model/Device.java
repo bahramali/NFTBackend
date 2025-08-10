@@ -16,7 +16,7 @@ import java.util.List;
 @Data
 public class Device {
     @Id
-    private String id; // e.g., esp32-01
+    private String id;
 
     private String location;
 

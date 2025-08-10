@@ -103,7 +103,7 @@ public class MqttService implements MqttCallback {
             lastSaveTimestamps.put(topic, now);
         }
         messagingTemplate.convertAndSend("/topic/" + topic, payload);
-        messagingTemplate.convertAndSend("/topic/live_now", statusService.getAllAverages("s01", "l01"));
+        messagingTemplate.convertAndSend("/topic/live_now", statusService.getAllAverages("S01", "L01"));
     }
 
     @Override

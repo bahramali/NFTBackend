@@ -10,14 +10,11 @@ import se.hydroleaf.model.OxygenPumpStatus;
 public interface OxygenPumpStatusRepository extends JpaRepository<OxygenPumpStatus, Long> {
 
     @Query(value = """
-            SELECT AVG(val) AS average, COUNT(*) AS count
-            FROM (
-                SELECT (CASE WHEN status THEN 1 ELSE 0 END) AS val
-                FROM oxygen_pump_status
-                WHERE LOWER(system) = LOWER(:system) AND LOWER(layer) = LOWER(:layer)
-                ORDER BY status_time DESC
-                LIMIT 1
-            ) latest
+            SELECT status
+            FROM oxygen_pump_status
+            WHERE LOWER(system)= LOWER(:system) AND LOWER(layer)= LOWER(:layer)
+            ORDER BY status_time DESC
+            LIMIT 1;
             """, nativeQuery = true)
     AverageResult getLatestAverage(
             @Param("system") String system,

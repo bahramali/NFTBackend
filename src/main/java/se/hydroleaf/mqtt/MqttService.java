@@ -1,5 +1,9 @@
 package se.hydroleaf.mqtt;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.ConcurrentHashMap;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +23,8 @@ public class MqttService implements MqttCallback {
     private final RecordService recordService;
     private final ActuatorService actuatorService;
     private final SimpMessagingTemplate messagingTemplate;
+
+    private final ConcurrentHashMap<String, Instant> lastSaveTimestamps = new ConcurrentHashMap<>();
 
     @Value("${mqtt.broker}")
     private String broker;
@@ -73,18 +79,24 @@ public class MqttService implements MqttCallback {
     public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload());
         log.info("Topic is {}", topic);
-        if ("actuator/oxygenPum".equals(topic)) {
-            try {
-                actuatorService.saveOxygenPumpStatus(payload);
-            } catch (Exception e) {
-                log.error("Failed to store MQTT actuator message for topic {}", topic, e);
+        Instant now = Instant.now();
+        Instant lastSaved = lastSaveTimestamps.get(topic);
+        boolean shouldPersist = lastSaved == null || Duration.between(lastSaved, now).getSeconds() >= 5;
+        if (shouldPersist) {
+            if ("actuator/oxygenPum".equals(topic)) {
+                try {
+                    actuatorService.saveOxygenPumpStatus(payload);
+                } catch (Exception e) {
+                    log.error("Failed to store MQTT actuator message for topic {}", topic, e);
+                }
+            } else {
+                try {
+                    recordService.saveMessage(topic, payload);
+                } catch (Exception e) {
+                    log.error("Failed to store MQTT message for topic {}", topic, e);
+                }
             }
-        } else {
-            try {
-                recordService.saveMessage(topic, payload);
-            } catch (Exception e) {
-                log.error("Failed to store MQTT message for topic {}", topic, e);
-            }
+            lastSaveTimestamps.put(topic, now);
         }
         messagingTemplate.convertAndSend("/topic/" + topic, payload);
     }

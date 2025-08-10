@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import se.hydroleaf.service.ActuatorService;
 import se.hydroleaf.service.RecordService;
 
 @Slf4j
@@ -16,6 +17,7 @@ import se.hydroleaf.service.RecordService;
 public class MqttService implements MqttCallback {
 
     private final RecordService recordService;
+    private final ActuatorService actuatorService;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Value("${mqtt.broker}")
@@ -23,8 +25,9 @@ public class MqttService implements MqttCallback {
 
     private IMqttClient client;
 
-    public MqttService(RecordService recordService, SimpMessagingTemplate messagingTemplate) {
+    public MqttService(RecordService recordService, ActuatorService actuatorService, SimpMessagingTemplate messagingTemplate) {
         this.recordService = recordService;
+        this.actuatorService = actuatorService;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -70,7 +73,13 @@ public class MqttService implements MqttCallback {
     public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload());
         log.info("Topic is {}", topic);
-        if (!"actuator/oxygenPum".equals(topic)) {
+        if ("actuator/oxygenPum".equals(topic)) {
+            try {
+                actuatorService.saveOxygenPumpStatus(payload);
+            } catch (Exception e) {
+                log.error("Failed to store MQTT actuator message for topic {}", topic, e);
+            }
+        } else {
             try {
                 recordService.saveMessage(topic, payload);
             } catch (Exception e) {

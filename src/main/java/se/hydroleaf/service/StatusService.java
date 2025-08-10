@@ -55,6 +55,7 @@ public class StatusService {
         if (sensorType == null) {
             return false;
         }
+
         return sensorType.equals("oxygenpump") || sensorType.equals("oxygen-pump") ||
                 sensorType.equals("oxygenpumpstatus") || sensorType.equals("airpump");
     }

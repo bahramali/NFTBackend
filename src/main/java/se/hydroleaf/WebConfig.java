@@ -9,13 +9,13 @@ public class WebConfig implements WebMvcConfigurer {
 
       @Override
       public void addViewControllers(ViewControllerRegistry registry) {
-        // Any single-segment track without a dot
+        // Single-segment paths without dots (e.g. /reports)
         registry.addViewController("/{path:[^\\.]*}")
                 .setViewName("forward:/index.html");
-    
-        // Any multi-segment path whose last segment has no dots
-        registry.addViewController("/**/{path:[^\\.]*}")
-                .setViewName("forward:/index.html");
+            
+      // multi-segment paths without dots (e.g. /dashboard/layer/L01)
+        registry.addViewController("/{path:[^\\.]*}/**")
+            .setViewName("forward:/index.html");
       }
     
     @Override

@@ -32,6 +32,12 @@ public class ActuatorService {
             if (!node.path("layer").isMissingNode()) {
                 status.setLayer(node.path("layer").asText());
             }
+            if (!node.path("deviceId").isMissingNode()) {
+                status.setDeviceId(node.path("deviceId").asText());
+            }
+            if (!node.path("compositeId").isMissingNode()) {
+                status.setCompositeId(node.path("compositeId").asText());
+            }
             oxygenPumpStatusRepository.save(status);
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse and save oxygen pump status", e);

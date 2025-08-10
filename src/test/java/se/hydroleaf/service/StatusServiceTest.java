@@ -36,6 +36,8 @@ class StatusServiceTest {
         assertEquals(10.0, response.average());
         assertEquals(3L, response.deviceCount());
         verify(sensorDataRepository).getLatestAverage("Sys", "Layer", "lux");
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "lux"))
+                .thenReturn(avg);
         verifyNoInteractions(oxygenPumpStatusRepository);
     }
 

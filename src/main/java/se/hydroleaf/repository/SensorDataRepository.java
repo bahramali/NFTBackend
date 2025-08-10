@@ -15,19 +15,19 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
     // Aggregates sensor data using the explicit column names `sensor_name` and `value_type`
     // to match the fields in AggregatedSensorData and SensorData entities.
     @Query(value = """
-            SELECT
-              sd.sensor_name AS sensorName,
-              sd.value_type AS valueType,
-              sd.unit AS unit,
-              to_timestamp(floor(extract(epoch FROM sr.record_time) / :bucketSize) * :bucketSize) AS bucketTime,
-              AVG(sd.sensor_value) AS avgValue
-            FROM sensor_data sd
-            JOIN sensor_record sr ON sd.record_id = sr.id
-        WHERE sr.device_id = :deviceId
-              AND sr.record_time BETWEEN :from AND :to
-        GROUP BY sd.sensor_name, sd.value_type, sd.unit, bucketTime
-        ORDER BY sd.sensor_name, sd.value_type, sd.unit, bucketTime
-        """, nativeQuery = true)
+                SELECT
+                  sd.sensor_name AS sensorName,
+                  sd.value_type AS valueType,
+                  sd.unit AS unit,
+                  to_timestamp(floor(extract(epoch FROM sr.record_time) / :bucketSize) * :bucketSize) AS bucketTime,
+                  AVG(sd.sensor_value) AS avgValue
+                FROM sensor_data sd
+                JOIN sensor_record sr ON sd.record_id = sr.id
+            WHERE sr.device_id = :deviceId
+                  AND sr.record_time BETWEEN :from AND :to
+            GROUP BY sd.sensor_name, sd.value_type, sd.unit, bucketTime
+            ORDER BY sd.sensor_name, sd.value_type, sd.unit, bucketTime
+            """, nativeQuery = true)
     List<SensorAggregateResult> aggregateSensorData(
             @Param("deviceId") String deviceId,
             @Param("from") Instant from,
@@ -39,7 +39,7 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
             WITH dev AS (
               SELECT id
               FROM device
-              WHERE system=:system AND location=:layer
+              WHERE system = LOWER(:system) AND location = LOWER(:layer)
             )
             SELECT AVG(sd.sensor_value::double precision) AS average,
                    COUNT(*) AS count
@@ -53,7 +53,7 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
             ) lr ON true
             JOIN sensor_data sd
               ON sd.record_id = lr.id
-            WHERE sd.value_type = :sensorType;
+            WHERE sd.value_type = LOWER(:sensorType);
             """, nativeQuery = true)
     AverageResult getLatestAverage(
             @Param("system") String system,

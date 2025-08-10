@@ -3,9 +3,9 @@ package se.hydroleaf.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record StatusAllAverageResponse(
-        StatusAverageResponse lux,
+        StatusAverageResponse light,
         StatusAverageResponse humidity,
         StatusAverageResponse temperature,
-        @JsonProperty("do") StatusAverageResponse dissolvedOxygen,
+        StatusAverageResponse dissolvedOxygen,
         StatusAverageResponse airpump
 ) {}

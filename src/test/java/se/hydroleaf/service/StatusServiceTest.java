@@ -29,13 +29,13 @@ class StatusServiceTest {
     @Test
     void getAverageUsesSensorDataRepository() {
         AverageResult avg = simpleResult(10.0, 3L);
-        when(sensorDataRepository.getLatestAverage("Sys", "Layer", "lux"))
+        when(sensorDataRepository.getLatestAverage("Sys", "Layer", "light"))
                 .thenReturn(avg);
 
-        StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "Lux");
+        StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "light");
         assertEquals(10.0, response.average());
         assertEquals(3L, response.deviceCount());
-        verify(sensorDataRepository).getLatestAverage("Sys", "Layer", "lux");
+        verify(sensorDataRepository).getLatestAverage("Sys", "Layer", "light");
         verifyNoInteractions(oxygenPumpStatusRepository);
     }
 
@@ -55,20 +55,20 @@ class StatusServiceTest {
 
     @Test
     void getAllAveragesAggregatesAllSensorTypes() {
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "lux"))
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "light"))
                 .thenReturn(simpleResult(1.0, 1L));
         when(sensorDataRepository.getLatestAverage("sys", "layer", "humidity"))
                 .thenReturn(simpleResult(2.0, 2L));
         when(sensorDataRepository.getLatestAverage("sys", "layer", "temperature"))
                 .thenReturn(simpleResult(3.0, 3L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "do"))
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedoxygen"))
                 .thenReturn(simpleResult(4.0, 4L));
         when(oxygenPumpStatusRepository.getLatestAverage("sys", "layer"))
                 .thenReturn(simpleResult(5.0, 5L));
 
         StatusAllAverageResponse response = statusService.getAllAverages("sys", "layer");
 
-        assertEquals(1.0, response.lux().average());
+        assertEquals(1.0, response.light().average());
         assertEquals(2.0, response.humidity().average());
         assertEquals(3.0, response.temperature().average());
         assertEquals(4.0, response.dissolvedOxygen().average());

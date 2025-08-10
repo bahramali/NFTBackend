@@ -23,6 +23,9 @@ public class Device {
     @Column(name = "system")
     private String system;
 
+    @Column(name = "composite_id")
+    private String compositeId;
+
     // Each device belongs to one device group
     @ToString.Exclude
     @ManyToOne

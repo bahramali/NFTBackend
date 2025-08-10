@@ -5,8 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import se.hydroleaf.model.Device;
 import se.hydroleaf.model.SensorData;
 import se.hydroleaf.model.SensorRecord;
+import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorRecordRepository;
 
 import java.util.List;
@@ -24,6 +26,9 @@ class RecordServiceSpectralTests {
 
     @Autowired
     private SensorRecordRepository recordRepository;
+
+    @Autowired
+    private DeviceRepository deviceRepository;
 
 
     @Test
@@ -112,6 +117,28 @@ class RecordServiceSpectralTests {
         Set<String> types = sensors.stream().map(SensorData::getValueType).collect(Collectors.toSet());
         assertTrue(types.contains("level"));
         assertTrue(types.contains("temperature"));
+    }
+
+    @Test
+    @Transactional
+    void compositeIdIsStored() {
+        String compositeId = "S01-L01-G02";
+        String json = """
+            {
+              "system": "S01",
+              "deviceId": "G02",
+              "location": "L01",
+              "compositeId": "%s",
+              "timestamp": "2024-01-01T00:00:00Z",
+              "sensors": []
+            }
+            """.formatted(compositeId);
+
+        recordService.saveMessage("growSensors", json);
+
+        List<Device> devices = deviceRepository.findAll();
+        assertEquals(1, devices.size());
+        assertEquals(compositeId, devices.get(0).getCompositeId());
     }
 
 }

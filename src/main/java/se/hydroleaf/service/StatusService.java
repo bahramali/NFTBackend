@@ -24,11 +24,12 @@ public class StatusService {
     }
 
     public StatusAverageResponse getAverage(String system, String layer, String sensorType) {
+        String normalizedType = sensorType != null ? sensorType.toLowerCase() : null;
         AverageResult result;
-        if (isOxygenPump(sensorType)) {
+        if (isOxygenPump(normalizedType)) {
             result = oxygenPumpStatusRepository.getLatestAverage(system, layer);
         } else {
-            result = sensorDataRepository.getLatestAverage(system, layer, sensorType);
+            result = sensorDataRepository.getLatestAverage(system, layer, normalizedType);
         }
         Double avg = result != null ? result.getAverage() : null;
         long count = result != null && result.getCount() != null ? result.getCount() : 0L;
@@ -54,8 +55,8 @@ public class StatusService {
         if (sensorType == null) {
             return false;
         }
-        String type = sensorType.toLowerCase();
-        return type.equals("oxygenpump") || type.equals("oxygen-pump") ||
-                type.equals("oxygenpumpstatus") || type.equals("airpump");
+
+        return sensorType.equals("oxygenpump") || sensorType.equals("oxygen-pump") ||
+                sensorType.equals("oxygenpumpstatus") || sensorType.equals("airpump");
     }
 }

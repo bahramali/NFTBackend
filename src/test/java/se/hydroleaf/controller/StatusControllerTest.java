@@ -39,10 +39,9 @@ class StatusControllerTest {
 
     @Test
     void getAverageEndpointAcceptsDifferentCase() throws Exception {
-        when(statusService.getAverage("sys", "layer", "Lux"))
+        when(statusService.getAverage("SYS", "LAYER", "Lux"))
                 .thenReturn(new StatusAverageResponse(8.0, 1L));
-
-        mockMvc.perform(get("/api/status/sys/layer/Lux/average"))
+        mockMvc.perform(get("/api/status/SYS/LAYER/Lux/average"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.average").value(8.0))
                 .andExpect(jsonPath("$.deviceCount").value(1));

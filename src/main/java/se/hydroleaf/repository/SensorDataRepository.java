@@ -42,9 +42,9 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
                 FROM device d
                 JOIN sensor_record sr ON sr.device_id = d.id
                 JOIN sensor_data sd ON sd.record_id = sr.id
-                WHERE d.system = :system
-                  AND d.location = :layer
-                  AND LOWER(sd.value_type) = :sensorType
+                WHERE LOWER(d.system) = LOWER(:system)
+                  AND LOWER(d.location) = LOWER(:layer)
+                  AND LOWER(sd.value_type) = LOWER(:sensorType)
                 ORDER BY d.id, sr.record_time DESC
             ) latest
             """, nativeQuery = true)

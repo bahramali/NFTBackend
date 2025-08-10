@@ -29,26 +29,28 @@ class StatusServiceTest {
     @Test
     void getAverageUsesSensorDataRepository() {
         AverageResult avg = simpleResult(10.0, 3L);
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "lux"))
+        when(sensorDataRepository.getLatestAverage("Sys", "Layer", "lux"))
                 .thenReturn(avg);
 
-        StatusAverageResponse response = statusService.getAverage("sys", "layer", "Lux");
+        StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "Lux");
         assertEquals(10.0, response.average());
         assertEquals(3L, response.deviceCount());
-        verify(sensorDataRepository).getLatestAverage("sys", "layer", "lux");
+        verify(sensorDataRepository).getLatestAverage("Sys", "Layer", "lux");
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "lux"))
+                .thenReturn(avg);
         verifyNoInteractions(oxygenPumpStatusRepository);
     }
 
     @Test
     void getAverageUsesOxygenPumpRepositoryForAirpump() {
         AverageResult avg = simpleResult(1.5, 2L);
-        when(oxygenPumpStatusRepository.getLatestAverage("sys", "layer"))
+        when(oxygenPumpStatusRepository.getLatestAverage("Sys", "Layer"))
                 .thenReturn(avg);
 
-        StatusAverageResponse response = statusService.getAverage("sys", "layer", "AirPump");
+        StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "AirPump");
         assertEquals(1.5, response.average());
         assertEquals(2L, response.deviceCount());
-        verify(oxygenPumpStatusRepository).getLatestAverage("sys", "layer");
+        verify(oxygenPumpStatusRepository).getLatestAverage("Sys", "Layer");
         verifyNoMoreInteractions(oxygenPumpStatusRepository);
         verifyNoInteractions(sensorDataRepository);
     }

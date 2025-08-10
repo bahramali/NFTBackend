@@ -14,7 +14,7 @@ public interface OxygenPumpStatusRepository extends JpaRepository<OxygenPumpStat
             FROM (
                 SELECT (CASE WHEN status THEN 1 ELSE 0 END) AS val
                 FROM oxygen_pump_status
-                WHERE system = :system AND layer = :layer
+                WHERE LOWER(system) = LOWER(:system) AND LOWER(layer) = LOWER(:layer)
                 ORDER BY status_time DESC
                 LIMIT 1
             ) latest

@@ -10,7 +10,8 @@ import se.hydroleaf.model.OxygenPumpStatus;
 public interface OxygenPumpStatusRepository extends JpaRepository<OxygenPumpStatus, Long> {
 
     @Query(value = """
-            SELECT status
+            SELECT status::double precision AS average,
+                   1 AS count
             FROM oxygen_pump_status
             WHERE LOWER(system)= LOWER(:system) AND LOWER(layer)= LOWER(:layer)
             ORDER BY status_time DESC

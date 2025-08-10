@@ -60,10 +60,10 @@ class StatusControllerTest {
 
         mockMvc.perform(get("/api/status/sys/layer/all/average"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.lux.average").value(1.0))
+                .andExpect(jsonPath("$.light.average").value(1.0))
                 .andExpect(jsonPath("$.humidity.average").value(2.0))
                 .andExpect(jsonPath("$.temperature.average").value(3.0))
-                .andExpect(jsonPath("$.do.average").value(4.0))
+                .andExpect(jsonPath("$.dissolvedOxygen.average").value(4.0))
                 .andExpect(jsonPath("$.airpump.average").value(5.0));
     }
 }

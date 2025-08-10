@@ -34,4 +34,23 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
             @Param("to") Instant to,
             @Param("bucketSize") long bucketSizeInSeconds
     );
+
+    @Query(value = """
+            SELECT AVG(latest_value) AS average, COUNT(*) AS count
+            FROM (
+                SELECT DISTINCT ON (d.id) sd.sensor_value AS latest_value
+                FROM device d
+                JOIN sensor_record sr ON sr.device_id = d.id
+                JOIN sensor_data sd ON sd.record_id = sr.id
+                WHERE d.system = :system
+                  AND d.location = :layer
+                  AND sd.value_type = :sensorType
+                ORDER BY d.id, sr.record_time DESC
+            ) latest
+            """, nativeQuery = true)
+    AverageResult getLatestAverage(
+            @Param("system") String system,
+            @Param("layer") String layer,
+            @Param("sensorType") String sensorType
+    );
 }

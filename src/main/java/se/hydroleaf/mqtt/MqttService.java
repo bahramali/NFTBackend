@@ -14,6 +14,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import se.hydroleaf.service.ActuatorService;
 import se.hydroleaf.service.RecordService;
+import se.hydroleaf.service.StatusService;
 
 @Slf4j
 @Service
@@ -23,6 +24,7 @@ public class MqttService implements MqttCallback {
     private final RecordService recordService;
     private final ActuatorService actuatorService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final StatusService statusService;
 
     private final ConcurrentHashMap<String, Instant> lastSaveTimestamps = new ConcurrentHashMap<>();
 
@@ -31,10 +33,12 @@ public class MqttService implements MqttCallback {
 
     private IMqttClient client;
 
-    public MqttService(RecordService recordService, ActuatorService actuatorService, SimpMessagingTemplate messagingTemplate) {
+    public MqttService(RecordService recordService, ActuatorService actuatorService,
+                       SimpMessagingTemplate messagingTemplate, StatusService statusService) {
         this.recordService = recordService;
         this.actuatorService = actuatorService;
         this.messagingTemplate = messagingTemplate;
+        this.statusService = statusService;
     }
 
     @PostConstruct
@@ -99,6 +103,7 @@ public class MqttService implements MqttCallback {
             lastSaveTimestamps.put(topic, now);
         }
         messagingTemplate.convertAndSend("/topic/" + topic, payload);
+        messagingTemplate.convertAndSend("/topic/live_now", statusService.getAllAverages("s01", "l01"));
     }
 
     @Override

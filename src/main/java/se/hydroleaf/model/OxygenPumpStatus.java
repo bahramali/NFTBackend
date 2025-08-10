@@ -28,4 +28,10 @@ public class OxygenPumpStatus {
     private String system;
 
     private String layer;
+
+    @Column(name = "device_id")
+    private String deviceId;
+
+    @Column(name = "composite_id")
+    private String compositeId;
 }

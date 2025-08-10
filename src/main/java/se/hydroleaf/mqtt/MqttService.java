@@ -69,7 +69,7 @@ public class MqttService implements MqttCallback {
     @Override
     public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload());
-
+        log.info("Topic is {}", topic);
         if (!"actuator/oxygenPum".equals(topic)) {
             try {
                 recordService.saveMessage(topic, payload);

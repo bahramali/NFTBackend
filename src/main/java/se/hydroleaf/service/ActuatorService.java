@@ -23,7 +23,8 @@ public class ActuatorService {
     public void saveOxygenPumpStatus(String json) {
         try {
             JsonNode node = objectMapper.readTree(json);
-            OxygenPumpStatus status = new OxygenPumpStatus();
+            OxygenPumpStatus status = oxygenPumpStatusRepository.findTopByOrderByIdAsc()
+                    .orElseGet(OxygenPumpStatus::new);
             status.setTimestamp(InstantUtil.parse(node.path("timestamp").asText()));
             status.setStatus(node.path("status").asBoolean());
             if (!node.path("system").isMissingNode()) {

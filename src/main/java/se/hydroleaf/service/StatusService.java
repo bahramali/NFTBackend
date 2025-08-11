@@ -37,6 +37,7 @@ public class StatusService {
         }
         Double avg = result != null ? result.getAverage() : null;
         long count = result != null && result.getCount() != null ? result.getCount() : 0L;
+        log.info("avg: {}, count: {}", avg, count);
         return new StatusAverageResponse(avg, count);
     }
 

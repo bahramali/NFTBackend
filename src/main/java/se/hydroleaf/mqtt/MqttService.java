@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.service.ActuatorService;
 import se.hydroleaf.service.RecordService;
 import se.hydroleaf.service.StatusService;
@@ -103,7 +104,9 @@ public class MqttService implements MqttCallback {
             lastSaveTimestamps.put(topic, now);
         }
         messagingTemplate.convertAndSend("/topic/" + topic, payload);
-        messagingTemplate.convertAndSend("/topic/live_now", statusService.getAllAverages("S01", "L01"));
+        StatusAllAverageResponse allAverages = statusService.getAllAverages("S01", "L01");
+        log.info("statusService.getAllAverages(\"S01\", \"L01\")= {}", allAverages);
+        messagingTemplate.convertAndSend("/topic/live_now", allAverages);
     }
 
     @Override

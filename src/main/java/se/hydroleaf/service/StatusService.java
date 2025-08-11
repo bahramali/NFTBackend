@@ -1,5 +1,6 @@
 package se.hydroleaf.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class StatusService {
 
@@ -28,6 +30,7 @@ public class StatusService {
         AverageResult result;
         if (isOxygenPump(normalizedType)) {
             result = oxygenPumpStatusRepository.getLatestAverage(system, layer);
+            log.info("oxygenPumpStatusRepository.getLatestAverage({}, {})= {}",system,layer,result);
         } else {
             result = sensorDataRepository.getLatestAverage(system, layer, normalizedType);
         }

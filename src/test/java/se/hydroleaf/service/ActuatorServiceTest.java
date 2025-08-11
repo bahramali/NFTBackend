@@ -60,4 +60,19 @@ class ActuatorServiceTest {
         assertEquals(InstantUtil.parse("2023-01-01T00:00:00Z"), saved.getTimestamp());
         assertFalse(saved.getStatus());
     }
+
+    @Test
+    void parsesNumericStatusValues() {
+        when(oxygenPumpStatusRepository.findTopByOrderByIdAsc()).thenReturn(Optional.empty());
+
+        String json = "{\"timestamp\":\"2023-01-01T00:00:00Z\",\"status\":\"1\"}";
+        actuatorService.saveOxygenPumpStatus(json);
+
+        ArgumentCaptor<OxygenPumpStatus> captor = ArgumentCaptor.forClass(OxygenPumpStatus.class);
+        verify(oxygenPumpStatusRepository).save(captor.capture());
+        OxygenPumpStatus saved = captor.getValue();
+        assertNull(saved.getId());
+        assertEquals(InstantUtil.parse("2023-01-01T00:00:00Z"), saved.getTimestamp());
+        assertTrue(saved.getStatus());
+    }
 }

@@ -26,7 +26,10 @@ public class ActuatorService {
             OxygenPumpStatus status = oxygenPumpStatusRepository.findTopByOrderByIdAsc()
                     .orElseGet(OxygenPumpStatus::new);
             status.setTimestamp(InstantUtil.parse(node.path("timestamp").asText()));
-            status.setStatus(node.path("status").asBoolean());
+
+            JsonNode statusNode = node.path("status");
+            boolean parsedStatus = statusNode.asBoolean() || statusNode.asInt() == 1;
+            status.setStatus(parsedStatus);
             if (!node.path("system").isMissingNode()) {
                 status.setSystem(node.path("system").asText());
             }

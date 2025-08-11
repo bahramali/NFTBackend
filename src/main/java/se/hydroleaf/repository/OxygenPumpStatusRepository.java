@@ -6,6 +6,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import se.hydroleaf.model.OxygenPumpStatus;
 
+import java.util.Optional;
+
 @Repository
 public interface OxygenPumpStatusRepository extends JpaRepository<OxygenPumpStatus, Long> {
 
@@ -20,4 +22,6 @@ public interface OxygenPumpStatusRepository extends JpaRepository<OxygenPumpStat
             @Param("system") String system,
             @Param("layer") String layer
     );
+
+    Optional<OxygenPumpStatus> findTopByOrderByIdAsc();
 }

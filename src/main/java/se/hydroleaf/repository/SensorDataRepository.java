@@ -39,7 +39,7 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
             WITH dev AS (
               SELECT id
               FROM device
-              WHERE system = LOWER(:system) AND location = LOWER(:layer)
+              WHERE system = UPPER(:system) AND location = UPPER(:layer)
             )
             SELECT AVG(sd.sensor_value::double precision) AS average,
                    COUNT(*) AS count

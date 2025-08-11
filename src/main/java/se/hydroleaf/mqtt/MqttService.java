@@ -83,7 +83,6 @@ public class MqttService implements MqttCallback {
     @Override
     public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload());
-        log.info("Topic is {}", topic);
         Instant now = Instant.now();
         Instant lastSaved = lastSaveTimestamps.get(topic);
         boolean shouldPersist = lastSaved == null || Duration.between(lastSaved, now).getSeconds() >= 5;

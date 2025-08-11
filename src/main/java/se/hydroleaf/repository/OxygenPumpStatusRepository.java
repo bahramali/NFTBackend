@@ -14,7 +14,7 @@ public interface OxygenPumpStatusRepository extends JpaRepository<OxygenPumpStat
     @Query(value = """
             SELECT status
             FROM oxygen_pump_status
-            WHERE LOWER(system)= LOWER(:system) AND LOWER(layer)= LOWER(:layer)
+            WHERE system= UPPER(:system) AND layer= UPPER(:layer)
             ORDER BY status_time DESC
             LIMIT 1;
             """, nativeQuery = true)

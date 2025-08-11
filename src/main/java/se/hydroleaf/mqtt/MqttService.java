@@ -83,6 +83,8 @@ public class MqttService implements MqttCallback {
     @Override
     public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload());
+        messagingTemplate.convertAndSend("/topic/" + topic, payload);
+        messagingTemplate.convertAndSend("/topic/live_now", statusService.getAllAverages("S01", "L01"));
         Instant now = Instant.now();
         Instant lastSaved = lastSaveTimestamps.get(topic);
         boolean shouldPersist = lastSaved == null || Duration.between(lastSaved, now).getSeconds() >= 5;
@@ -102,10 +104,7 @@ public class MqttService implements MqttCallback {
             }
             lastSaveTimestamps.put(topic, now);
         }
-        messagingTemplate.convertAndSend("/topic/" + topic, payload);
-        StatusAllAverageResponse allAverages = statusService.getAllAverages("S01", "L01");
-        log.info("statusService.getAllAverages(\"S01\", \"L01\")= {}", allAverages);
-        messagingTemplate.convertAndSend("/topic/live_now", allAverages);
+
     }
 
     @Override

@@ -30,14 +30,11 @@ public class StatusService {
         AverageResult result;
         if (isOxygenPump(normalizedType)) {
             result = oxygenPumpStatusRepository.getLatestAverage(system, layer);
-            log.info("oxygenPumpStatusRepository.getLatestAverage({}, {})= {}",system,layer,result);
         } else {
             result = sensorDataRepository.getLatestAverage(system, layer, normalizedType);
-            log.info("sensorDataRepository.getLatestAverage({}, {},{})= {}",system,layer,normalizedType,result);
         }
         Double avg = result != null ? result.getAverage() : null;
         long count = result != null && result.getCount() != null ? result.getCount() : 0L;
-        log.info("avg: {}, count: {}", avg, count);
         return new StatusAverageResponse(avg, count);
     }
 

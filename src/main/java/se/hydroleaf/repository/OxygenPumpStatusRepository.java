@@ -12,11 +12,10 @@ import java.util.Optional;
 public interface OxygenPumpStatusRepository extends JpaRepository<OxygenPumpStatus, Long> {
 
     @Query(value = """
-            SELECT status
+            SELECT CASE WHEN status = TRUE THEN 1 ELSE 0 END AS average, 1 AS count
             FROM oxygen_pump_status
-            WHERE system= UPPER(:system) AND layer= UPPER(:layer)
-            ORDER BY status_time DESC
-            LIMIT 1;
+            WHERE system = UPPER(:system) AND layer = UPPER(:layer)
+            LIMIT 1
             """, nativeQuery = true)
     AverageResult getLatestAverage(
             @Param("system") String system,

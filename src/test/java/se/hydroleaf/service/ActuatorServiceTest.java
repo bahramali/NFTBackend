@@ -35,7 +35,7 @@ class ActuatorServiceTest {
         existing.setId(1L);
         when(oxygenPumpStatusRepository.findTopByOrderByIdAsc()).thenReturn(Optional.of(existing));
 
-        String json = "{\"timestamp\":\"2023-01-01T00:00:00Z\",\"status\":true}";
+        String json = "{\"timestamp\":\"2023-01-01T00:00:00Z\",\"status\":\"on\"}";
         actuatorService.saveOxygenPumpStatus(json);
 
         ArgumentCaptor<OxygenPumpStatus> captor = ArgumentCaptor.forClass(OxygenPumpStatus.class);
@@ -65,7 +65,7 @@ class ActuatorServiceTest {
     void parsesNumericStatusValues() {
         when(oxygenPumpStatusRepository.findTopByOrderByIdAsc()).thenReturn(Optional.empty());
 
-        String json = "{\"timestamp\":\"2023-01-01T00:00:00Z\",\"status\":\"1\"}";
+        String json = "{\"timestamp\":\"2023-01-01T00:00:00Z\",\"status\":\"on\"}";
         actuatorService.saveOxygenPumpStatus(json);
 
         ArgumentCaptor<OxygenPumpStatus> captor = ArgumentCaptor.forClass(OxygenPumpStatus.class);

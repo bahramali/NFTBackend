@@ -27,8 +27,8 @@ public class ActuatorService {
                     .orElseGet(OxygenPumpStatus::new);
             status.setTimestamp(InstantUtil.parse(node.path("timestamp").asText()));
 
-            JsonNode statusNode = node.path("status");
-            boolean parsedStatus = statusNode.asBoolean() || statusNode.asInt() == 1;
+            String statusString = node.path("status").asText();
+            boolean parsedStatus = "on".equalsIgnoreCase(statusString);
             status.setStatus(parsedStatus);
             if (!node.path("system").isMissingNode()) {
                 status.setSystem(node.path("system").asText());

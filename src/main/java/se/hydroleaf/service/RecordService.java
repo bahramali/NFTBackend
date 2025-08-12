@@ -55,7 +55,7 @@ public class RecordService {
                 return deviceRepository.save(d);
             });
 
-            device.setLocation(node.path("location").asText());
+            device.setLocation(node.path("layer").asText());
             device.setSystem(node.path("system").asText());
             device.setCompositeId(node.path("compositeId").asText());
 

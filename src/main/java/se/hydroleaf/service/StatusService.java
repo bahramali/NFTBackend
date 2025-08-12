@@ -32,7 +32,7 @@ public class StatusService {
         } else {
             result = sensorDataRepository.getLatestAverage(system, layer, sensorType);
         }
-        Double avg = result != null ? (double) Math.round(result.getAverage()*10)/10 : null;
+        Double avg = (result != null & result.getAverage() != null) ? (double) Math.round(result.getAverage()*10)/10 : null;
         long count = result != null && result.getCount() != null ? result.getCount() : 0L;
         return new StatusAverageResponse(avg, count);
     }

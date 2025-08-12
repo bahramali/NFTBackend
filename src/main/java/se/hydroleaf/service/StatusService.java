@@ -26,14 +26,13 @@ public class StatusService {
     }
 
     public StatusAverageResponse getAverage(String system, String layer, String sensorType) {
-        String normalizedType = sensorType != null ? sensorType.toLowerCase() : null;
         AverageResult result;
-        if (isOxygenPump(normalizedType)) {
+        if (isOxygenPump(sensorType)) {
             result = oxygenPumpStatusRepository.getLatestAverage(system, layer);
         } else {
-            result = sensorDataRepository.getLatestAverage(system, layer, normalizedType);
+            result = sensorDataRepository.getLatestAverage(system, layer, sensorType);
         }
-        Double avg = result != null ? result.getAverage() : null;
+        Double avg = result != null ? (double) Math.round(result.getAverage()*10)/10 : null;
         long count = result != null && result.getCount() != null ? result.getCount() : 0L;
         return new StatusAverageResponse(avg, count);
     }

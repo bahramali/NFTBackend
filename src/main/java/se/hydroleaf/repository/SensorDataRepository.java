@@ -53,7 +53,7 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
             ) lr ON true
             JOIN sensor_data sd
               ON sd.record_id = lr.id
-            WHERE sd.value_type = LOWER(:sensorType);
+            WHERE sd.value_type = :sensorType;
             """, nativeQuery = true)
     AverageResult getLatestAverage(
             @Param("system") String system,

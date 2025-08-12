@@ -45,7 +45,7 @@ class StatusServiceTest {
         when(oxygenPumpStatusRepository.getLatestAverage("Sys", "Layer"))
                 .thenReturn(avg);
 
-        StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "AirPump");
+        StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "airpump");
         assertEquals(1.5, response.average());
         assertEquals(2L, response.deviceCount());
         verify(oxygenPumpStatusRepository).getLatestAverage("Sys", "Layer");
@@ -61,7 +61,7 @@ class StatusServiceTest {
                 .thenReturn(simpleResult(2.0, 2L));
         when(sensorDataRepository.getLatestAverage("sys", "layer", "temperature"))
                 .thenReturn(simpleResult(3.0, 3L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedoxygen"))
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedOxygen"))
                 .thenReturn(simpleResult(4.0, 4L));
         when(oxygenPumpStatusRepository.getLatestAverage("sys", "layer"))
                 .thenReturn(simpleResult(5.0, 5L));

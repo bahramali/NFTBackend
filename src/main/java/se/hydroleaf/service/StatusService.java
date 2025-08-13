@@ -67,6 +67,9 @@ public class StatusService {
             if (system == null || system.isBlank()) {
                 continue;
             }
+            if (layer == null || layer.isBlank()) {
+                continue;
+            }
 
             result.computeIfAbsent(system, s -> new HashMap<>())
                     .computeIfAbsent(layer, l -> getAllAverages(system, layer));

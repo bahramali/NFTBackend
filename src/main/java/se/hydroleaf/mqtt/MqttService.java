@@ -11,8 +11,8 @@ import org.eclipse.paho.client.mqttv3.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.service.ActuatorService;
 import se.hydroleaf.service.RecordService;
 import se.hydroleaf.service.StatusService;
@@ -84,7 +84,6 @@ public class MqttService implements MqttCallback {
     public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload());
         messagingTemplate.convertAndSend("/topic/" + topic, payload);
-        messagingTemplate.convertAndSend("/topic/live_now", statusService.getAllSystemLayerAverages());
         Instant now = Instant.now();
         Instant lastSaved = lastSaveTimestamps.get(topic);
         boolean shouldPersist = lastSaved == null || Duration.between(lastSaved, now).getSeconds() >= 5;
@@ -110,5 +109,10 @@ public class MqttService implements MqttCallback {
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
         // not used since we only subscribe
+    }
+
+    @Scheduled(fixedRate = 2000)
+    public void sendLiveNow() {
+        messagingTemplate.convertAndSend("/topic/live_now", statusService.getAllSystemLayerAverages());
     }
 }

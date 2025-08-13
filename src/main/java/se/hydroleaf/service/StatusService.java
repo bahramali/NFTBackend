@@ -63,6 +63,11 @@ public class StatusService {
         for (Device device : devices) {
             String system = device.getSystem();
             String layer = device.getLocation();
+
+            if (system == null || system.isBlank() || layer == null || layer.isBlank()) {
+                continue;
+            }
+
             result
                     .computeIfAbsent(system, s -> new HashMap<>())
                     .computeIfAbsent(layer, l -> getAllAverages(system, layer));

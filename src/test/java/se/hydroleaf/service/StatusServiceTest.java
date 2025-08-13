@@ -108,6 +108,24 @@ class StatusServiceTest {
         verify(statusService).getAllAverages("S02", "L01");
     }
 
+    @Test
+    void getAllSystemLayerAveragesSkipsBlankSystemOrLayer() {
+        Device d1 = Device.builder().id("1").system("").location("L01").build();
+        Device d2 = Device.builder().id("2").system("S01").location(" ").build();
+        Device d3 = Device.builder().id("3").system(null).location("L02").build();
+        Device valid = Device.builder().id("4").system("S01").location("L01").build();
+        when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2, d3, valid));
+
+        StatusAllAverageResponse r = new StatusAllAverageResponse(null, null, null, null, null);
+        doReturn(r).when(statusService).getAllAverages("S01", "L01");
+
+        var result = statusService.getAllSystemLayerAverages();
+
+        assertEquals(1, result.size());
+        assertEquals(r, result.get("S01").get("L01"));
+        verify(statusService).getAllAverages("S01", "L01");
+    }
+
     private AverageResult simpleResult(Double avg, Long count) {
         return new AverageResult() {
             @Override

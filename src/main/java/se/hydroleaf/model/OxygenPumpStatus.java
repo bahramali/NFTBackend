@@ -9,27 +9,37 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 @Entity
-@Table(name = "oxygen_pump_status")
+@Table(
+        name = "oxygen_pump_status",
+        indexes = {
+                @Index(name = "ix_ops_device_time", columnList = "composite_id, status_time DESC")
+        }
+)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 public class OxygenPumpStatus {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "status_time")
+    /**
+     * Time when this status was recorded. Keep NOT NULL at DB level as well.
+     */
+    @Column(name = "status_time", nullable = false)
     private Instant timestamp;
 
+    /**
+     * Pump on/off.
+     */
+    @Column(name = "status", nullable = false)
     private Boolean status;
 
-    private String system;
-
-    private String layer;
-
-    @ManyToOne
-    @JoinColumn(name = "composite_id", referencedColumnName = "composite_id")
+    /**
+     * Foreign key to Device via composite_id (no parallel free-text fields).
+     */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "composite_id", referencedColumnName = "composite_id", nullable = false)
     private Device device;
 }

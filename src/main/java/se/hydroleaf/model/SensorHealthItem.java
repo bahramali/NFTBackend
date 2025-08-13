@@ -8,7 +8,16 @@ import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "sensor_health_item")
+@Table(
+        name = "sensor_health_item",
+        uniqueConstraints = {
+                // One health item per (record, sensor_type).
+                @UniqueConstraint(name = "ux_health_record_type", columnNames = {"record_id", "sensor_type"})
+        },
+        indexes = {
+                @Index(name = "ix_health_record", columnList = "record_id")
+        }
+)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,11 +27,22 @@ public class SensorHealthItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String sensorType;  // e.g. "sht3x", "veml7700"
-    private Boolean status;
-
-    @ToString.Exclude
-    @ManyToOne
-    @JoinColumn(name = "record_id")
+    /**
+     * Parent record.
+     */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "record_id", nullable = false)
     private SensorRecord record;
+
+    /**
+     * Sensor type, e.g., "temperature","ph"...
+     */
+    @Column(name = "sensor_type", nullable = false, length = 64)
+    private String sensorType;
+
+    /**
+     * Health status: true = healthy, false = out-of-range/fault.
+     */
+    @Column(name = "status", nullable = false)
+    private Boolean status;
 }

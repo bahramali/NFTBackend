@@ -33,7 +33,7 @@ public class StatusService {
     public StatusAverageResponse getAverage(String system, String layer, String sensorType) {
         AverageResult result;
         if (isOxygenPump(sensorType)) {
-            result = oxygenPumpStatusRepository.getLatestAverage(system, layer);
+            result = oxygenPumpStatusRepository.getLatestPumpAverage(system, layer);
         } else {
             result = sensorDataRepository.getLatestAverage(system, layer, sensorType);
         }

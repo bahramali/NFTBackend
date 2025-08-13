@@ -9,35 +9,60 @@ import lombok.NoArgsConstructor;
 
 
 @Entity
-@Table(name = "sensor_data")
+@Table(
+        name = "sensor_data",
+        uniqueConstraints = {
+                // Prevent duplicate (record, sensor_name) rows.
+                @UniqueConstraint(name = "ux_data_record_sensor", columnNames = {"record_id", "sensor_name"})
+        },
+        indexes = {
+                @Index(name = "ix_data_record", columnList = "record_id")
+        }
+)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 public class SensorData {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "sensor_name")
+    /**
+     * Parent record.
+     */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "record_id", nullable = false)
+    private SensorRecord record;
+
+    /**
+     * Logical sensor name: e.g. "light", "temperature", "humidity", "ph", "ec", "do", "air_pump".
+     */
+    @Column(name = "sensor_name", nullable = false, length = 64)
     private String sensorName;
 
-    @Column(name = "value_type")
+    /**
+     * Value type hint if you store mixed value kinds (e.g., "number","boolean","string").
+     */
+    @Column(name = "value_type", length = 32)
     private String valueType;
 
-    private String unit;
-
-    // 'value' is a reserved keyword in some databases (e.g. H2).
-    // Map the Java field 'value' to a column with a safer name to
-    // ensure schema generation works across different database vendors.
+    /**
+     * Numeric value for most sensors. Column name avoids the reserved word "value".
+     */
     @Column(name = "sensor_value")
     private Double value;
 
-    @Column(name = "source")
-    private String source;
+    /**
+     * Optional unit (e.g., "lx","°C","%","mg/L","mS/cm").
+     */
+    @Column(name = "unit", length = 32)
+    private String unit;
 
-    @ToString.Exclude
-    @ManyToOne
-    @JoinColumn(name = "record_id")
-    private SensorRecord record;
+    /**
+     * Optional source tag (e.g., "avg", "raw", "composite").
+     */
+    @Column(name = "source", length = 64)
+    private String source;
 }

@@ -36,28 +36,30 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
     );
 
     @Query(value = """
-            WITH dev AS (
-              SELECT composite_id
-              FROM device
-              WHERE system = UPPER(:system) AND layer = UPPER(:layer)
-            )
-            SELECT AVG(sd.sensor_value::double precision) AS average,
-                   COUNT(*) AS count
-            FROM dev d
-            JOIN LATERAL (
-              SELECT sr.id
+            WITH last_rec AS (
+              SELECT
+                sr.id,
+                sr.device_composite_id,
+                ROW_NUMBER() OVER (
+                  PARTITION BY sr.device_composite_id
+                  ORDER BY sr.record_time DESC
+                ) AS rn
               FROM sensor_record sr
-              WHERE sr.device_composite_id = d.composite_id
-              ORDER BY sr.record_time DESC
-              LIMIT 1
-            ) lr ON true
-            JOIN sensor_data sd
-              ON sd.record_id = lr.id
-            WHERE sd.value_type = :sensorType;
+              JOIN device d ON d.composite_id = sr.device_composite_id
+              WHERE d.system = :system AND d.layer = :layer
+            )
+            SELECT
+              COALESCE(AVG(sd.sensor_value), 0)                     AS average,
+              CAST(COUNT(sd.sensor_value) AS INTEGER)               AS count
+            FROM last_rec lr
+            JOIN sensor_data sd ON sd.record_id = lr.id
+            WHERE lr.rn = 1                                         -- latest per device
+              AND sd.sensor_name = :sensorName
             """, nativeQuery = true)
     AverageResult getLatestAverage(
             @Param("system") String system,
             @Param("layer") String layer,
-            @Param("sensorType") String sensorType
+            @Param("sensorName") String sensorName
     );
+
 }

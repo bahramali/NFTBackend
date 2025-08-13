@@ -8,34 +8,57 @@ import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+
 @Entity
-@Table(name = "device")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Table(
+        name = "device",
+        indexes = {
+                // Helpful when filtering by system/layer; keep them if you store these columns.
+                @Index(name = "ix_device_system", columnList = "system"),
+                @Index(name = "ix_device_layer", columnList = "layer")
+        }
+)
 public class Device {
+    /**
+     * Primary identifier, e.g. "S01-L01-esp32-01". This is the single source of truth.
+     */
+    @Id
+    @Column(name = "composite_id", nullable = false, updatable = false)
+    private String compositeId;
 
+    /**
+     * Optional raw device id (e.g. chip id). Not a PK.
+     */
     @Column(name = "device_id")
     private String deviceId;
 
-    private String layer;
-
+    /**
+     * Optional denormalized fields. Keep only if you enforce consistency with compositeId.
+     */
     @Column(name = "system")
     private String system;
 
-    @Id
-    @Column(name = "composite_id")
-    private String compositeId;
+    @Column(name = "layer")
+    private String layer;
 
-    // Each device belongs to one device group
-    @ToString.Exclude
-    @ManyToOne
-    @JoinColumn(name = "group_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "group_id", nullable = false)
     private DeviceGroup group;
 
-    // One device can have many sensor records
-    @ToString.Exclude
-    @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
-    private List<SensorRecord> sensorRecords;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Device d)) return false;
+        return compositeId != null && compositeId.equals(d.compositeId);
+    }
+
+    @Override
+    public int hashCode() {
+        return compositeId != null ? compositeId.hashCode() : 0;
+    }
+
 }

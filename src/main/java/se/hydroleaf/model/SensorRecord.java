@@ -8,35 +8,48 @@ import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "sensor_record")
+@Table(
+        name = "sensor_record",
+        indexes = {
+                @Index(name = "ix_record_device_time", columnList = "device_composite_id, record_time DESC")
+        }
+)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 public class SensorRecord {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "record_time")
-    private Instant timestamp;
-
-    // Each record belongs to one device
-    @ToString.Exclude
-    @ManyToOne
-    @JoinColumn(name = "device_composite_id", referencedColumnName = "composite_id")
+    /**
+     * Device foreign key via composite_id.
+     */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "device_composite_id", referencedColumnName = "composite_id", nullable = false)
     private Device device;
 
-    // One record contains many sensor data items
-    @ToString.Exclude
-    @OneToMany(mappedBy = "record", cascade = CascadeType.ALL)
-    private List<SensorData> sensors;
+    /**
+     * When this record was captured. Set default at DB, but keep it non-null here too.
+     */
+    @Column(name = "record_time", nullable = false)
+    private Instant timestamp;
 
-    // One SensorRecord contains many health
-    @ToString.Exclude
-    @OneToMany(mappedBy = "record", cascade = CascadeType.ALL)
-    private List<SensorHealthItem> health;
+    /**
+     * Record contains many values (measurements).
+     */
+    @OneToMany(mappedBy = "record", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SensorData> values = new ArrayList<>();
+
+    /**
+     * Record can also contain health items.
+     */
+    @OneToMany(mappedBy = "record", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SensorHealthItem> healthItems = new ArrayList<>();
 }

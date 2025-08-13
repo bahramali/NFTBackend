@@ -48,7 +48,7 @@ class RecordServiceDeviceTests {
 
         recordService.saveMessage("growSensors", json);
 
-        Device device = deviceRepository.findById("G01").orElseThrow();
+        Device device = deviceRepository.findById("S02-L02-G01").orElseThrow();
         assertEquals("S02", device.getSystem());
         assertEquals("L02", device.getLayer());
         assertEquals("S02-L02-G01", device.getCompositeId());

@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import se.hydroleaf.model.OxygenPumpStatus;
 import se.hydroleaf.repository.OxygenPumpStatusRepository;
+import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.util.InstantUtil;
 
 import java.util.Optional;
@@ -22,11 +23,14 @@ class ActuatorServiceTest {
     @Mock
     private OxygenPumpStatusRepository oxygenPumpStatusRepository;
 
+    @Mock
+    private DeviceRepository deviceRepository;
+
     private ActuatorService actuatorService;
 
     @BeforeEach
     void setUp() {
-        actuatorService = new ActuatorService(oxygenPumpStatusRepository, new ObjectMapper());
+        actuatorService = new ActuatorService(oxygenPumpStatusRepository, deviceRepository, new ObjectMapper());
     }
 
     @Test

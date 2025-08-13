@@ -84,9 +84,9 @@ class StatusServiceTest {
 
     @Test
     void getAllSystemLayerAveragesAggregatesByDevice() {
-        Device d1 = Device.builder().id("1").system("S01").layer("L01").build();
-        Device d2 = Device.builder().id("2").system("S01").layer("L02").build();
-        Device d3 = Device.builder().id("3").system("S02").layer("L01").build();
+        Device d1 = Device.builder().compositeId("1").system("S01").layer("L01").build();
+        Device d2 = Device.builder().compositeId("2").system("S01").layer("L02").build();
+        Device d3 = Device.builder().compositeId("3").system("S02").layer("L01").build();
         when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2, d3));
 
         StatusAllAverageResponse r1 = new StatusAllAverageResponse(null, null, null, null, null);
@@ -110,11 +110,11 @@ class StatusServiceTest {
 
     @Test
     void getAllSystemLayerAveragesSkipsBlankSystemOrLayer() {
-        Device d1 = Device.builder().id("1").system("").layer("L01").build();
-        Device d2 = Device.builder().id("2").system("S01").layer(" ").build();
-        Device d3 = Device.builder().id("3").system(null).layer("L02").build();
-        Device d4 = Device.builder().id("4").system("S01").layer(null).build();
-        Device valid = Device.builder().id("5").system("S01").layer("L01").build();
+        Device d1 = Device.builder().compositeId("1").system("").layer("L01").build();
+        Device d2 = Device.builder().compositeId("2").system("S01").layer(" ").build();
+        Device d3 = Device.builder().compositeId("3").system(null).layer("L02").build();
+        Device d4 = Device.builder().compositeId("4").system("S01").layer(null).build();
+        Device valid = Device.builder().compositeId("5").system("S01").layer("L01").build();
         when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2, d3, d4, valid));
 
         StatusAllAverageResponse r = new StatusAllAverageResponse(null, null, null, null, null);

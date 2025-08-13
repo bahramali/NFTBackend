@@ -29,9 +29,7 @@ public class OxygenPumpStatus {
 
     private String layer;
 
-    @Column(name = "device_id")
-    private String deviceId;
-
-    @Column(name = "composite_id")
-    private String compositeId;
+    @ManyToOne
+    @JoinColumn(name = "composite_id", referencedColumnName = "composite_id")
+    private Device device;
 }

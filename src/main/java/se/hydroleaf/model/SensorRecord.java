@@ -27,7 +27,7 @@ public class SensorRecord {
     // Each record belongs to one device
     @ToString.Exclude
     @ManyToOne
-    @JoinColumn(name = "device_id")
+    @JoinColumn(name = "device_composite_id", referencedColumnName = "composite_id")
     private Device device;
 
     // One record contains many sensor data items

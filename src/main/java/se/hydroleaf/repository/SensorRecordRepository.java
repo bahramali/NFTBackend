@@ -7,5 +7,5 @@ import java.time.Instant;
 import java.util.List;
 
 public interface SensorRecordRepository extends JpaRepository<SensorRecord, Long> {
-    List<SensorRecord> findByDevice_IdAndTimestampBetween(String deviceId, Instant from, Instant to);
+    List<SensorRecord> findByDevice_CompositeIdAndTimestampBetween(String compositeId, Instant from, Instant to);
 }

@@ -47,17 +47,18 @@ public class RecordService {
                         return deviceGroupRepository.save(g);
                     });
             // Find or create device
-            String deviceId = node.path("deviceId").asText();
-            Device device = deviceRepository.findById(deviceId).orElseGet(() -> {
+            String compositeId = node.path("compositeId").asText();
+            Device device = deviceRepository.findById(compositeId).orElseGet(() -> {
                 Device d = new Device();
-                d.setId(deviceId);
+                d.setCompositeId(compositeId);
                 d.setGroup(group);
                 return d;
             });
 
+            device.setDeviceId(node.path("deviceId").asText());
             device.setLayer(node.path("layer").asText());
             device.setSystem(node.path("system").asText());
-            device.setCompositeId(node.path("compositeId").asText());
+            device.setCompositeId(compositeId);
             deviceRepository.save(device);
 
             // Create sensor record
@@ -107,11 +108,11 @@ public class RecordService {
     }
 
     @Transactional(readOnly = true)
-    public AggregatedHistoryResponse getAggregatedRecords(String deviceId, Instant from, Instant to) {
+    public AggregatedHistoryResponse getAggregatedRecords(String compositeId, Instant from, Instant to) {
         long durationMs = to.toEpochMilli() - from.toEpochMilli();
         long approxIntervalMs = Math.max(SAMPLE_INTERVAL_MS, durationMs / TARGET_POINTS);
         long bucketSizeSeconds = approxIntervalMs / 1000;
-        List<SensorAggregateResult> results = sensorDataRepository.aggregateSensorData(deviceId, from, to, bucketSizeSeconds);
+        List<SensorAggregateResult> results = sensorDataRepository.aggregateSensorData(compositeId, from, to, bucketSizeSeconds);
 
         Map<String, AggregatedSensorData> map = new LinkedHashMap<>();
         for (SensorAggregateResult r : results) {

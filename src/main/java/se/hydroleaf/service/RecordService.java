@@ -52,12 +52,13 @@ public class RecordService {
                 Device d = new Device();
                 d.setId(deviceId);
                 d.setGroup(group);
-                return deviceRepository.save(d);
+                return d;
             });
 
             device.setLayer(node.path("layer").asText());
             device.setSystem(node.path("system").asText());
             device.setCompositeId(node.path("compositeId").asText());
+            deviceRepository.save(device);
 
             // Create sensor record
             SensorRecord record = new SensorRecord();

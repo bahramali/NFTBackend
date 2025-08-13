@@ -16,8 +16,6 @@ import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorRecordRepository;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 

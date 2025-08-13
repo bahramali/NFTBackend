@@ -6,9 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Table(
         name = "device_group",
@@ -32,9 +29,4 @@ public class DeviceGroup {
     @Column(name = "mqtt_topic", unique = true)
     private String mqttTopic;
 
-    /**
-     * One group can contain many devices.
-     */
-    @OneToMany(mappedBy = "group", orphanRemoval = false)
-    private List<Device> devices = new ArrayList<>();
 }

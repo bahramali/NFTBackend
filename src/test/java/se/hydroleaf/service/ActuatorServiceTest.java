@@ -11,7 +11,6 @@ import se.hydroleaf.model.Device;
 import se.hydroleaf.model.OxygenPumpStatus;
 import se.hydroleaf.repository.OxygenPumpStatusRepository;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.util.InstantUtil;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -22,7 +21,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ActuatorServiceTest {
 
-    @Mock ObjectMapper objectMapper; // not strictly needed, but kept for parity
     @Mock OxygenPumpStatusRepository pumpRepo;
     @Mock DeviceRepository deviceRepo;
 

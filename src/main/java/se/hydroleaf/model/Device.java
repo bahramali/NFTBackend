@@ -4,10 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.ToString;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Entity
 @Builder
@@ -29,12 +26,6 @@ public class Device {
     @Id
     @Column(name = "composite_id", nullable = false, updatable = false)
     private String compositeId;
-
-    /**
-     * Optional raw device id (e.g. chip id). Not a PK.
-     */
-    @Column(name = "device_id")
-    private String deviceId;
 
     /**
      * Optional denormalized fields. Keep only if you enforce consistency with compositeId.

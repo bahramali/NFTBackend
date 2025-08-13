@@ -5,9 +5,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Spy;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
+import se.hydroleaf.model.Device;
 import se.hydroleaf.repository.AverageResult;
+import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.OxygenPumpStatusRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 
@@ -23,6 +26,10 @@ class StatusServiceTest {
     @Mock
     private OxygenPumpStatusRepository oxygenPumpStatusRepository;
 
+    @Mock
+    private DeviceRepository deviceRepository;
+
+    @Spy
     @InjectMocks
     private StatusService statusService;
 
@@ -73,6 +80,32 @@ class StatusServiceTest {
         assertEquals(3.0, response.temperature().average());
         assertEquals(4.0, response.dissolvedOxygen().average());
         assertEquals(5.0, response.airpump().average());
+    }
+
+    @Test
+    void getAllSystemLayerAveragesAggregatesByDevice() {
+        Device d1 = Device.builder().id("1").system("S01").location("L01").build();
+        Device d2 = Device.builder().id("2").system("S01").location("L02").build();
+        Device d3 = Device.builder().id("3").system("S02").location("L01").build();
+        when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2, d3));
+
+        StatusAllAverageResponse r1 = new StatusAllAverageResponse(null, null, null, null, null);
+        StatusAllAverageResponse r2 = new StatusAllAverageResponse(null, null, null, null, null);
+        StatusAllAverageResponse r3 = new StatusAllAverageResponse(null, null, null, null, null);
+
+        doReturn(r1).when(statusService).getAllAverages("S01", "L01");
+        doReturn(r2).when(statusService).getAllAverages("S01", "L02");
+        doReturn(r3).when(statusService).getAllAverages("S02", "L01");
+
+        var result = statusService.getAllSystemLayerAverages();
+
+        assertEquals(r1, result.get("S01").get("L01"));
+        assertEquals(r2, result.get("S01").get("L02"));
+        assertEquals(r3, result.get("S02").get("L01"));
+
+        verify(statusService).getAllAverages("S01", "L01");
+        verify(statusService).getAllAverages("S01", "L02");
+        verify(statusService).getAllAverages("S02", "L01");
     }
 
     private AverageResult simpleResult(Double avg, Long count) {

@@ -4,7 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
+import se.hydroleaf.model.Device;
 import se.hydroleaf.repository.AverageResult;
+import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.OxygenPumpStatusRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 
@@ -18,11 +20,14 @@ public class StatusService {
 
     private final SensorDataRepository sensorDataRepository;
     private final OxygenPumpStatusRepository oxygenPumpStatusRepository;
+    private final DeviceRepository deviceRepository;
 
     public StatusService(SensorDataRepository sensorDataRepository,
-                         OxygenPumpStatusRepository oxygenPumpStatusRepository) {
+                         OxygenPumpStatusRepository oxygenPumpStatusRepository,
+                         DeviceRepository deviceRepository) {
         this.sensorDataRepository = sensorDataRepository;
         this.oxygenPumpStatusRepository = oxygenPumpStatusRepository;
+        this.deviceRepository = deviceRepository;
     }
 
     public StatusAverageResponse getAverage(String system, String layer, String sensorType) {
@@ -50,6 +55,19 @@ public class StatusService {
                 responses.get("dissolvedOxygen"),
                 responses.get("airpump")
         );
+    }
+
+    public Map<String, Map<String, StatusAllAverageResponse>> getAllSystemLayerAverages() {
+        Map<String, Map<String, StatusAllAverageResponse>> result = new HashMap<>();
+        List<Device> devices = deviceRepository.findAll();
+        for (Device device : devices) {
+            String system = device.getSystem();
+            String layer = device.getLocation();
+            result
+                    .computeIfAbsent(system, s -> new HashMap<>())
+                    .computeIfAbsent(layer, l -> getAllAverages(system, layer));
+        }
+        return result;
     }
 
     private boolean isOxygenPump(String sensorType) {

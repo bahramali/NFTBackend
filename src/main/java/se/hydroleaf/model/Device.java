@@ -18,7 +18,7 @@ public class Device {
     @Id
     private String id;
 
-    private String location;
+    private String layer;
 
     @Column(name = "system")
     private String system;

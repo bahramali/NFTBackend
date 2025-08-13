@@ -37,7 +37,7 @@ public class StatusService {
         } else {
             result = sensorDataRepository.getLatestAverage(system, layer, sensorType);
         }
-        Double avg = (result != null && result.getAverage() != null) ? (double) Math.round(result.getAverage()*10)/10 : null;
+        Double avg = (result != null && result.getAverage() != null) ? (double) Math.round(result.getAverage() * 10) / 10 : null;
         long count = result != null && result.getCount() != null ? result.getCount() : 0L;
         return new StatusAverageResponse(avg, count);
     }
@@ -62,14 +62,13 @@ public class StatusService {
         List<Device> devices = deviceRepository.findAll();
         for (Device device : devices) {
             String system = device.getSystem();
-            String layer = device.getLocation();
+            String layer = device.getLayer();
 
-            if (system == null || system.isBlank() || layer == null || layer.isBlank()) {
+            if (system == null || system.isBlank()) {
                 continue;
             }
 
-            result
-                    .computeIfAbsent(system, s -> new HashMap<>())
+            result.computeIfAbsent(system, s -> new HashMap<>())
                     .computeIfAbsent(layer, l -> getAllAverages(system, layer));
         }
         return result;

@@ -42,7 +42,7 @@ class RecordServiceSpectralTests {
             {
               "deviceId": "esp-1",
               "timestamp": "2024-01-01T00:00:00Z",
-              "location": "test",
+              "layer": "test",
               "sensors": [
                 {
                   "sensorName": "%s",
@@ -89,7 +89,7 @@ class RecordServiceSpectralTests {
             {
               "deviceId": "tank-1",
               "timestamp": "2024-01-01T00:00:00Z",
-              "location": "test",
+              "layer": "test",
               "sensors": [
                 {
                   "sensorName": "%s",
@@ -127,7 +127,7 @@ class RecordServiceSpectralTests {
             {
               "system": "S01",
               "deviceId": "G02",
-              "location": "L01",
+              "layer": "L01",
               "compositeId": "%s",
               "timestamp": "2024-01-01T00:00:00Z",
               "sensors": []

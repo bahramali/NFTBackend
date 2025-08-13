@@ -12,7 +12,7 @@ Sensor data is published as JSON where each entry in the `sensors` array include
 {
   "deviceId": "esp-1",
   "timestamp": "2024-01-01T00:00:00Z",
-  "location": "test",
+  "layer": "test",
   "sensors": [
     { "sensorName": "spec1", "valueType": "445nm", "unit": "count", "value": 10 },
     { "sensorName": "spec1", "valueType": "480nm", "unit": "count", "value": 20 }
@@ -26,7 +26,7 @@ Sensor data is published as JSON where each entry in the `sensors` array include
 {
   "deviceId": "tank-1",
   "timestamp": "2024-01-01T00:00:00Z",
-  "location": "test",
+  "layer": "test",
   "sensors": [
     { "sensorName": "tank1", "valueType": "level", "unit": "percent", "value": 70 },
     { "sensorName": "tank1", "valueType": "temperature", "unit": "C", "value": 22 }

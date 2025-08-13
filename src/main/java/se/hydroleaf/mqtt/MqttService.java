@@ -39,15 +39,21 @@ public class MqttService implements MqttCallback {
     @Value("${mqtt.clientId:hydroleaf-backend}")
     private String clientId;
 
-    /** Comma-separated topic filters, e.g. "sensors/#,devices/+/+/+" */
+    /**
+     * Comma-separated topic filters, e.g. "sensors/#,devices/+/+/+"
+     */
     @Value("${mqtt.topics:sensors/#}")
     private String topics;
 
-    /** MQTT QoS for subscriptions (0,1,2). */
+    /**
+     * MQTT QoS for subscriptions (0,1,2).
+     */
     @Value("${mqtt.qos:1}")
     private int qos;
 
-    /** Optional string prefix for topics, ignored if blank. */
+    /**
+     * Optional string prefix for topics, ignored if blank.
+     */
     @Value("${mqtt.topicPrefix:}")
     private String topicPrefix;
 
@@ -85,7 +91,7 @@ public class MqttService implements MqttCallback {
         opts.setConnectionTimeout(10);
         opts.setKeepAliveInterval(20);
 
-            client.setCallback(this);
+        client.setCallback(this);
         client.connect(opts);
 
         for (String t : splitTopics(topics)) {
@@ -101,13 +107,16 @@ public class MqttService implements MqttCallback {
     public void stop() {
         shuttingDown = true;
         try {
-        if (client != null && client.isConnected()) {
+            if (client != null && client.isConnected()) {
                 client.disconnectForcibly(1000, 1000);
             }
         } catch (Exception e) {
             log.warn("MQTT disconnect error: {}", e.getMessage());
         } finally {
-            try { if (client != null) client.close(); } catch (Exception ignore) {}
+            try {
+                if (client != null) client.close();
+            } catch (Exception ignore) {
+            }
         }
     }
 
@@ -122,7 +131,8 @@ public class MqttService implements MqttCallback {
     @Override
     public void messageArrived(String topic, MqttMessage message) {
         final String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
-                try {
+        messagingTemplate.convertAndSend("/topic/" + topic, payload);
+        try {
             JsonNode json = objectMapper.readTree(payload);
 
             // 1) Try to get composite_id from payload
@@ -131,7 +141,7 @@ public class MqttService implements MqttCallback {
             // 2) If not present, try to derive from topic segments
             if (compositeId == null) {
                 compositeId = deriveCompositeIdFromTopic(topic);
-                }
+            }
 
             if (compositeId == null) {
                 log.debug("Skip message (no composite_id) topic={} payload={}", topic, shrink(payload));
@@ -176,28 +186,36 @@ public class MqttService implements MqttCallback {
         return prefix + "/" + tail;
     }
 
-    /** Try to read composite_id / compositeId from JSON payload. */
+    /**
+     * Try to read composite_id / compositeId from JSON payload.
+     */
     private String findCompositeIdInPayload(JsonNode json) {
         if (json == null) return null;
         if (json.hasNonNull("composite_id")) return json.get("composite_id").asText();
-        if (json.hasNonNull("compositeId"))  return json.get("compositeId").asText();
+        if (json.hasNonNull("compositeId")) return json.get("compositeId").asText();
         return null;
     }
 
     /**
      * Try to derive Sxx-Lxx-device from topic parts.
      * Examples this method understands:
-     *  - sensors/S01/L02/esp32-01
-     *  - hydroleaf/S02/L01/dev123/values
-     *  - S03/L04/gw-7
+     * - sensors/S01/L02/esp32-01
+     * - hydroleaf/S02/L01/dev123/values
+     * - S03/L04/gw-7
      */
     private String deriveCompositeIdFromTopic(String topic) {
         if (topic == null) return null;
         String[] parts = topic.split("/");
         String s = null, l = null, dev = null;
         for (String p : parts) {
-            if (s == null && p.matches("S\\d+")) { s = p; continue; }
-            if (l == null && p.matches("L\\d+")) { l = p; continue; }
+            if (s == null && p.matches("S\\d+")) {
+                s = p;
+                continue;
+            }
+            if (l == null && p.matches("L\\d+")) {
+                l = p;
+                continue;
+            }
             // pick the first non-empty, non wild-card token as device id after we saw S and L
             if (s != null && l != null && dev == null && !p.isBlank() && !p.equals("#") && !p.equals("+")) {
                 dev = p;
@@ -206,7 +224,7 @@ public class MqttService implements MqttCallback {
         }
         if (s != null && l != null && dev != null) return s + "-" + l + "-" + dev;
         return null;
-        }
+    }
 
     private static String shrink(String s) {
         if (s == null) return null;

@@ -6,16 +6,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.model.OxygenPumpStatus;
 import se.hydroleaf.repository.OxygenPumpStatusRepository;
+import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.util.InstantUtil;
 
 @Service
 public class ActuatorService {
 
     private final OxygenPumpStatusRepository oxygenPumpStatusRepository;
+    private final DeviceRepository deviceRepository;
     private final ObjectMapper objectMapper;
 
-    public ActuatorService(OxygenPumpStatusRepository oxygenPumpStatusRepository, ObjectMapper objectMapper) {
+    public ActuatorService(OxygenPumpStatusRepository oxygenPumpStatusRepository,
+                           DeviceRepository deviceRepository,
+                           ObjectMapper objectMapper) {
         this.oxygenPumpStatusRepository = oxygenPumpStatusRepository;
+        this.deviceRepository = deviceRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -36,11 +41,10 @@ public class ActuatorService {
             if (!node.path("layer").isMissingNode()) {
                 status.setLayer(node.path("layer").asText());
             }
-            if (!node.path("deviceId").isMissingNode()) {
-                status.setDeviceId(node.path("deviceId").asText());
-            }
             if (!node.path("compositeId").isMissingNode()) {
-                status.setCompositeId(node.path("compositeId").asText());
+                String compositeId = node.path("compositeId").asText();
+                deviceRepository.findById(compositeId)
+                        .ifPresent(status::setDevice);
             }
             oxygenPumpStatusRepository.save(status);
         } catch (Exception e) {

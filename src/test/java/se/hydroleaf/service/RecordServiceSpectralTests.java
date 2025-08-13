@@ -41,8 +41,10 @@ class RecordServiceSpectralTests {
         String json = """
             {
               "deviceId": "esp-1",
-              "timestamp": "2024-01-01T00:00:00Z",
+              "system": "SYS",
               "layer": "test",
+              "compositeId": "SYS-test-esp-1",
+              "timestamp": "2024-01-01T00:00:00Z",
               "sensors": [
                 {
                   "sensorName": "%s",
@@ -88,8 +90,10 @@ class RecordServiceSpectralTests {
         String json = """
             {
               "deviceId": "tank-1",
-              "timestamp": "2024-01-01T00:00:00Z",
+              "system": "SYS",
               "layer": "test",
+              "compositeId": "SYS-test-tank-1",
+              "timestamp": "2024-01-01T00:00:00Z",
               "sensors": [
                 {
                   "sensorName": "%s",

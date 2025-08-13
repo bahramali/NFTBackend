@@ -23,13 +23,13 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
                   AVG(sd.sensor_value) AS avgValue
                 FROM sensor_data sd
                 JOIN sensor_record sr ON sd.record_id = sr.id
-            WHERE sr.device_id = :deviceId
+            WHERE sr.device_composite_id = :compositeId
                   AND sr.record_time BETWEEN :from AND :to
             GROUP BY sd.sensor_name, sd.value_type, sd.unit, bucketTime
             ORDER BY sd.sensor_name, sd.value_type, sd.unit, bucketTime
             """, nativeQuery = true)
     List<SensorAggregateResult> aggregateSensorData(
-            @Param("deviceId") String deviceId,
+            @Param("compositeId") String compositeId,
             @Param("from") Instant from,
             @Param("to") Instant to,
             @Param("bucketSize") long bucketSizeInSeconds
@@ -37,7 +37,7 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
 
     @Query(value = """
             WITH dev AS (
-              SELECT id
+              SELECT composite_id
               FROM device
               WHERE system = UPPER(:system) AND layer = UPPER(:layer)
             )
@@ -47,7 +47,7 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
             JOIN LATERAL (
               SELECT sr.id
               FROM sensor_record sr
-              WHERE sr.device_id = d.id
+              WHERE sr.device_composite_id = d.composite_id
               ORDER BY sr.record_time DESC
               LIMIT 1
             ) lr ON true

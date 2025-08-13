@@ -25,11 +25,11 @@ public class SensorRecordController {
 
     @GetMapping("/history/aggregated")
     public AggregatedHistoryResponse getHistoryAggregated(
-            @RequestParam("espId") String espId,
+            @RequestParam("compositeId") String compositeId,
             @RequestParam("from") String from,
             @RequestParam("to") String to) {
         Instant fromInst = InstantUtil.parse(from);
         Instant toInst = InstantUtil.parse(to);
-        return recordService.getAggregatedRecords(espId, fromInst, toInst);
+        return recordService.getAggregatedRecords(compositeId, fromInst, toInst);
     }
 }

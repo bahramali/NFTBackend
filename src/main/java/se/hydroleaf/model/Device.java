@@ -15,14 +15,16 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 public class Device {
-    @Id
-    private String id;
+
+    @Column(name = "device_id")
+    private String deviceId;
 
     private String layer;
 
     @Column(name = "system")
     private String system;
 
+    @Id
     @Column(name = "composite_id")
     private String compositeId;
 

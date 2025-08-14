@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import se.hydroleaf.service.RecordService;
+import se.hydroleaf.service.StatusService;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -242,8 +243,4 @@ public class MqttService implements MqttCallback {
         });
     }
 
-    // ====== Replace with your real aggregation/live facade ======
-    public interface StatusService {
-        Object getAllSystemLayerAverages();
-    }
 }

@@ -16,7 +16,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: false
 mqtt:
   brokerUri: ${MQTT_BROKER:tcp://100.113.16.30:1883}

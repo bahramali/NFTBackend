@@ -4,12 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import se.hydroleaf.service.DeviceProvisionService;
 import se.hydroleaf.service.RecordService;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -28,16 +26,18 @@ public class MqttMessageHandler {
     private final SimpMessagingTemplate messagingTemplate;
     private final DeviceProvisionService deviceProvisionService;
 
-    private final ConcurrentHashMap<String, Instant> lastSeen = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Instant> lastSeen;
 
     public MqttMessageHandler(ObjectMapper objectMapper,
                               RecordService recordService,
                               SimpMessagingTemplate messagingTemplate,
-                              DeviceProvisionService deviceProvisionService) {
+                              DeviceProvisionService deviceProvisionService,
+                              ConcurrentHashMap<String, Instant> lastSeen) {
         this.objectMapper = objectMapper;
         this.recordService = recordService;
         this.messagingTemplate = messagingTemplate;
         this.deviceProvisionService = deviceProvisionService;
+        this.lastSeen = lastSeen;
     }
 
     public void handle(String topic, String payload) {
@@ -81,14 +81,5 @@ public class MqttMessageHandler {
         return null;
     }
 
-    @Scheduled(fixedDelay = 10000)
-    public void logLaggingDevices() {
-        Instant now = Instant.now();
-        lastSeen.forEach((id, ts) -> {
-            if (Duration.between(ts, now).toSeconds() > 60) {
-                log.debug("Device {} no message for >60s (lastSeen={})", id, ts);
-            }
-        });
-    }
 }
 

@@ -28,7 +28,6 @@ class ActuatorServiceTest {
 
     @BeforeEach
     void setup() {
-        // Suppose your ActuatorService has this constructor; adjust if different.
         this.actuatorService = new ActuatorService(new ObjectMapper(), pumpRepo, deviceRepo);
     }
 
@@ -39,14 +38,14 @@ class ActuatorServiceTest {
     }
 
     @Test
-    void saves_status_when_payload_has_composite_id_and_string_on_off() {
+    void saves_status_when_payload_has_airPump_controller_with_string_state() {
         String compositeId = "S01-L02-G01";
         when(deviceRepo.findById(compositeId)).thenReturn(Optional.of(device(compositeId)));
 
         String json = "{"
                 + "\"composite_id\":\"S01-L02-G01\","
                 + "\"timestamp\":\"2023-01-01T00:00:00Z\","
-                + "\"status\":\"on\""
+                + "\"controllers\":[{\"name\":\"airPump\",\"state\":\"on\"}]"
                 + "}";
 
         actuatorService.saveOxygenPumpStatus(json);
@@ -65,8 +64,8 @@ class ActuatorServiceTest {
         String compositeId = "S02-L01-X1";
         when(deviceRepo.findById(compositeId)).thenReturn(Optional.of(device(compositeId)));
 
-        String jsonTrue = "{\"composite_id\":\"S02-L01-X1\",\"timestamp\":\"2024-02-02T12:00:00Z\",\"status\":true}";
-        String jsonNum  = "{\"composite_id\":\"S02-L01-X1\",\"timestamp\":\"2024-02-02T12:01:00Z\",\"status\":1}";
+        String jsonTrue = "{\"composite_id\":\"S02-L01-X1\",\"controllers\":[{\"name\":\"airPump\",\"state\":true,\"timestamp\":\"2024-02-02T12:00:00Z\"}]}";
+        String jsonNum  = "{\"composite_id\":\"S02-L01-X1\",\"controllers\":[{\"name\":\"airPump\",\"state\":1,\"timestamp\":\"2024-02-02T12:01:00Z\"}]}";
 
         actuatorService.saveOxygenPumpStatus(jsonTrue);
         actuatorService.saveOxygenPumpStatus(jsonNum);
@@ -77,6 +76,8 @@ class ActuatorServiceTest {
         OxygenPumpStatus first = captor.getAllValues().get(0);
         OxygenPumpStatus second = captor.getAllValues().get(1);
 
+        assertEquals(Instant.parse("2024-02-02T12:00:00Z"), first.getTimestamp());
+        assertEquals(Instant.parse("2024-02-02T12:01:00Z"), second.getTimestamp());
         assertTrue(first.getStatus());
         assertTrue(second.getStatus());
         assertEquals(compositeId, first.getDevice().getCompositeId());
@@ -85,7 +86,7 @@ class ActuatorServiceTest {
 
     @Test
     void throws_when_composite_id_missing() {
-        String json = "{\"timestamp\":\"2024-01-01T00:00:00Z\",\"status\":\"off\"}";
+        String json = "{\"controllers\":[{\"name\":\"airPump\",\"state\":\"off\"}]}";
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> actuatorService.saveOxygenPumpStatus(json));
@@ -94,3 +95,4 @@ class ActuatorServiceTest {
         verifyNoInteractions(pumpRepo);
     }
 }
+

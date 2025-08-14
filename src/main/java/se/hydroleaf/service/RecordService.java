@@ -123,8 +123,6 @@ public class RecordService {
                 SensorData d = new SensorData();
                 d.setRecord(record);
                 d.setSensorType(sensorType); // logical type
-                if (sensorName != null) d.setSensorName(sensorName); // hardware identifier
-                d.setValueType("number");
                 d.setValue(num);
                 if (unit != null) d.setUnit(unit);
                 if (source != null) d.setSource(source);
@@ -197,12 +195,12 @@ public class RecordService {
         List<SensorAggregateResult> results =
                 aggregationReader.aggregate(compositeId, bucketFrom, bucketTo, bucket);
 
-        // Collate by (sensorType|valueType|unit)
+        // Collate by (sensorType|unit)
         Map<String, AggregatedSensorData> map = new LinkedHashMap<>();
         for (SensorAggregateResult r : results) {
-            String key = r.getSensorType() + "|" + r.getValueType() + "|" + r.getUnit();
+            String key = r.getSensorType() + "|" + r.getUnit();
             AggregatedSensorData agg = map.computeIfAbsent(key, k ->
-                    new AggregatedSensorData(r.getSensorType(), r.getValueType(), r.getUnit(), new ArrayList<>())
+                    new AggregatedSensorData(r.getSensorType(), r.getUnit(), new ArrayList<>())
             );
             agg.data().add(new TimestampValue(r.getBucketTime(), r.getAvgValue()));
         }
@@ -243,7 +241,6 @@ public class RecordService {
      */
     public interface SensorAggregateResult {
         String getSensorType();
-        String getValueType();
         String getUnit();
         Instant getBucketTime();
         Double getAvgValue();

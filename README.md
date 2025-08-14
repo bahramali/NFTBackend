@@ -4,7 +4,7 @@ This project is a Spring Boot application that connects to an MQTT broker and st
 
 ## MQTT Message Format
 
-Sensor data is published as JSON where each entry in the `sensors` array includes a `sensorType` describing the logical sensor. An optional `sensorName` can identify the hardware instance when multiple sensors of the same type exist. Examples:
+Sensor data is published as JSON where each entry in the `sensors` array includes a `sensorType` describing the logical sensor. An optional `sensorName` may identify the hardware instance when multiple sensors of the same type exist, but the backend currently ignores this value. Examples:
 
 ### Grow sensors
 

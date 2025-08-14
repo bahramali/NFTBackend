@@ -41,18 +41,6 @@ public class SensorData {
     private String sensorType;
 
     /**
-     * Optional hardware sensor identifier.
-     */
-    @Column(name = "sensor_name", length = 64)
-    private String sensorName;
-
-    /**
-     * Value type hint if you store mixed value kinds (e.g., "number","boolean","string").
-     */
-    @Column(name = "value_type", length = 32)
-    private String valueType;
-
-    /**
      * Numeric value for most sensors. Column name avoids the reserved word "value".
      */
     @Column(name = "sensor_value")

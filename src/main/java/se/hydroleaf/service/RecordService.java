@@ -93,43 +93,60 @@ public class RecordService {
         record.setDevice(device);
         record.setTimestamp(ts);
 
-        // Parse numeric values
-        JsonNode values = json.path("values");
-        if (values.isObject()) {
-            Iterator<Map.Entry<String, JsonNode>> it = values.fields();
-            while (it.hasNext()) {
-                Map.Entry<String, JsonNode> e = it.next();
-                String name = e.getKey();      // e.g., "light","temperature","humidity","ph","ec","do"
-                JsonNode v = e.getValue();
+        // Parse sensor readings from sensors array
+        JsonNode sensors = json.path("sensors");
+        Map<String, String> sensorNameToType = new HashMap<>();
+        if (sensors.isArray()) {
+            for (JsonNode s : sensors) {
+                String sensorType = s.path("sensorType").asText(null);
+                String sensorName = s.path("sensorName").asText(null);
+                if (sensorName != null && sensorType != null) {
+                    sensorNameToType.put(sensorName, sensorType);
+                }
 
-                Double num = readDouble(v.path("value")).orElse(null);
-                if (num == null) continue;     // skip invalid entries
+                // support value as either a primitive or an object with {value,unit,source}
+                JsonNode valueNode = s.path("value");
+                Double num;
+                String unit = null;
+                String source = null;
+                if (valueNode.isObject()) {
+                    num = readDouble(valueNode.path("value")).orElse(null);
+                    if (valueNode.hasNonNull("unit")) unit = valueNode.get("unit").asText();
+                    if (valueNode.hasNonNull("source")) source = valueNode.get("source").asText();
+                } else {
+                    num = readDouble(valueNode).orElse(null);
+                    if (s.hasNonNull("unit")) unit = s.get("unit").asText();
+                    if (s.hasNonNull("source")) source = s.get("source").asText();
+                }
+                if (sensorType == null || num == null) continue; // skip invalid
 
                 SensorData d = new SensorData();
                 d.setRecord(record);
-                d.setSensorName(name);
+                d.setSensorName(sensorType); // logical name
                 d.setValueType("number");
                 d.setValue(num);
-                if (v.hasNonNull("unit"))   d.setUnit(v.get("unit").asText());
-                if (v.hasNonNull("source")) d.setSource(v.get("source").asText());
+                if (unit != null) d.setUnit(unit);
+                if (source != null) d.setSource(source);
 
                 record.getValues().add(d);
             }
         }
 
-        // Parse health booleans
+        // Parse health booleans keyed by sensorName
         JsonNode health = json.path("health");
         if (health.isObject()) {
             Iterator<Map.Entry<String, JsonNode>> it = health.fields();
             while (it.hasNext()) {
                 Map.Entry<String, JsonNode> e = it.next();
-                String type = e.getKey();
+                String sensorName = e.getKey();
                 JsonNode v = e.getValue();
                 if (!v.isBoolean()) continue;
+                String sensorType = sensorNameToType.get(sensorName);
+                if (sensorType == null) continue;
 
                 SensorHealthItem h = new SensorHealthItem();
                 h.setRecord(record);
-                h.setSensorType(type);
+                h.setSensorType(sensorType);
                 h.setStatus(v.asBoolean());
 
                 record.getHealthItems().add(h);
@@ -139,13 +156,21 @@ public class RecordService {
         // Persist the record (cascades values + health)
         recordRepository.save(record);
 
-        // Optional: air pump status
-        if (json.has("air_pump") && json.get("air_pump").isBoolean()) {
-            OxygenPumpStatus ps = new OxygenPumpStatus();
-            ps.setDevice(device);
-            ps.setTimestamp(ts);
-            ps.setStatus(json.get("air_pump").asBoolean());
-            pumpRepository.save(ps);
+        // Optional controllers array for air pump status
+        JsonNode controllers = json.path("controllers");
+        if (controllers.isArray()) {
+            for (JsonNode c : controllers) {
+                String name = c.path("name").asText(null);
+                if (name != null && name.equalsIgnoreCase("airPump")) {
+                    JsonNode stateNode = c.path("state");
+                    if (!stateNode.isBoolean()) continue;
+                    OxygenPumpStatus ps = new OxygenPumpStatus();
+                    ps.setDevice(device);
+                    ps.setTimestamp(parseTimestamp(c.path("timestamp")).orElse(ts));
+                    ps.setStatus(stateNode.asBoolean());
+                    pumpRepository.save(ps);
+                }
+            }
         }
     }
 

@@ -80,15 +80,17 @@ class RecordServiceDeviceTests {
         String json = """
                   {
                 "timestamp": "2025-01-01T00:00:00Z",
-                "values": {
-                  "light":       {"value": 549.3, "unit": "lx"},
-                  "temperature": {"value": 26.2,  "unit": "°C"},
-                  "humidity":    {"value": 42.4,  "unit": "%"}
+                "sensors": [
+                  {"sensorName": "lightSensor", "sensorType": "light", "value": 549.3, "unit": "lx"},
+                  {"sensorName": "tempSensor",  "sensorType": "temperature", "value": 26.2, "unit": "°C"},
+                  {"sensorName": "humSensor",   "sensorType": "humidity", "value": 42.4, "unit": "%"}
+                ],
+                "health": {
+                  "tempSensor": true
                 },
-                    "health": {
-                  "temperature": true
-                },
-                "air_pump": false
+                "controllers": [
+                  {"name": "airPump", "state": false}
+                ]
                   }
                 """;
         JsonNode node = objectMapper.readTree(json);
@@ -110,7 +112,7 @@ class RecordServiceDeviceTests {
         assertNotNull(lightAvg.getAverage());
         assertTrue(lightAvg.getCount() >= 1);
 
-        // Pump status row should be inserted (air_pump=false)
+        // Pump status row should be inserted (airPump=false)
         long pumpAfter = oxygenPumpStatusRepository.count();
         assertTrue(pumpAfter > pumpBefore, "pump status should be saved");
     }

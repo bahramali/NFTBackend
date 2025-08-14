@@ -67,7 +67,7 @@ class RecordServiceSpectralTests {
 
         String json = "{\n"
                 + "  \"timestamp\": \"2024-01-01T00:00:00Z\",\n"
-                + "  \"values\": {},\n"
+                + "  \"sensors\": [],\n"
                 + "  \"health\": {}\n"
                 + "}";
 
@@ -87,11 +87,11 @@ class RecordServiceSpectralTests {
         // Represent spectral channels as independent numeric sensors
         String json = "{\n"
                 + "  \"timestamp\": \"2024-01-01T00:00:01Z\",\n"
-                + "  \"values\": {\n"
-                + "    \"spectrum_450\": {\"value\": 12.3, \"unit\": \"a.u.\"},\n"
-                + "    \"spectrum_550\": {\"value\": 23.1, \"unit\": \"a.u.\"},\n"
-                + "    \"spectrum_650\": {\"value\": 17.8, \"unit\": \"a.u.\"}\n"
-                + "  }\n"
+                + "  \"sensors\": [\n"
+                + "    {\"sensorName\": \"s450\", \"sensorType\": \"spectrum_450\", \"value\": 12.3, \"unit\": \"a.u.\"},\n"
+                + "    {\"sensorName\": \"s550\", \"sensorType\": \"spectrum_550\", \"value\": 23.1, \"unit\": \"a.u.\"},\n"
+                + "    {\"sensorName\": \"s650\", \"sensorType\": \"spectrum_650\", \"value\": 17.8, \"unit\": \"a.u.\"}\n"
+                + "  ]\n"
                 + "}";
 
         JsonNode node = objectMapper.readTree(json);
@@ -115,12 +115,12 @@ class RecordServiceSpectralTests {
 
         String json = "{\n"
                 + "  \"timestamp\": \"2024-01-01T00:00:02Z\",\n"
-                + "  \"values\": {\n"
-                + "    \"light\":       {\"value\": 55.4, \"unit\": \"lx\"},\n"
-                + "    \"temperature\": {\"value\": 23.4, \"unit\": \"°C\"},\n"
-                + "    \"humidity\":    {\"value\": 54.2, \"unit\": \"%\"},\n"
-                + "    \"spectrum_500\": {\"value\": 9.9, \"unit\": \"a.u.\"}\n"
-                + "  }\n"
+                + "  \"sensors\": [\n"
+                + "    {\"sensorName\": \"lightSensor\", \"sensorType\": \"light\", \"value\": 55.4, \"unit\": \"lx\"},\n"
+                + "    {\"sensorName\": \"tempSensor\",  \"sensorType\": \"temperature\", \"value\": 23.4, \"unit\": \"°C\"},\n"
+                + "    {\"sensorName\": \"humSensor\",   \"sensorType\": \"humidity\", \"value\": 54.2, \"unit\": \"%\"},\n"
+                + "    {\"sensorName\": \"spec500\",    \"sensorType\": \"spectrum_500\", \"value\": 9.9, \"unit\": \"a.u.\"}\n"
+                + "  ]\n"
                 + "}";
 
         JsonNode node = objectMapper.readTree(json);

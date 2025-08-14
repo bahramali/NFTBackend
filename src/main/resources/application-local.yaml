@@ -12,11 +12,11 @@ spring:
     baseline-on-migrate: true
   jpa:
     hibernate:
-      ddl-auto: none
-    show-sql: true
+      ddl-auto: update
+    show-sql: false
 
 mqtt:
-  broker: ${MQTT_BROKER:tcp://localhost:1884}
+  brokerUri: ${MQTT_BROKER:tcp://localhost:1884}
   enabled: true
 server:
   ssl:

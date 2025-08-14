@@ -63,6 +63,7 @@ class RecordServiceDeviceTests {
             if (parts.length >= 2) {
                 d.setSystem(parts[0]);
                 d.setLayer(parts[1]);
+                d.setDeviceId(parts[2]);
             }
             d.setGroup(defaultGroup);
             return deviceRepository.save(d);

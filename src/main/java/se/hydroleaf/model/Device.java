@@ -13,43 +13,33 @@ import lombok.NoArgsConstructor;
 @Data
 @Table(
         name = "device",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "ux_device_system_layer_deviceid",
+                        columnNames = {"system", "layer", "device_id"}
+                )
+        },
         indexes = {
-                // Helpful when filtering by system/layer; keep them if you store these columns.
-                @Index(name = "ix_device_system", columnList = "system"),
-                @Index(name = "ix_device_layer", columnList = "layer")
+                @Index(name = "ix_device_system_layer", columnList = "system,layer"),
+                @Index(name = "ix_device_device_id", columnList = "device_id")
         }
 )
 public class Device {
-    /**
-     * Primary identifier, e.g. "S01-L01-esp32-01". This is the single source of truth.
-     */
+
     @Id
-    @Column(name = "composite_id", nullable = false, updatable = false)
-    private String compositeId;
+    @Column(name = "composite_id", length = 128, nullable = false)
+    private String compositeId;                 // e.g. S01-L02-esp32-01
 
-    /**
-     * Optional denormalized fields. Keep only if you enforce consistency with compositeId.
-     */
-    @Column(name = "system")
-    private String system;
+    @Column(name = "system", length = 16, nullable = false)
+    private String system;                      // e.g. S01
 
-    @Column(name = "layer")
-    private String layer;
+    @Column(name = "layer", length = 16, nullable = false)
+    private String layer;                       // e.g. L02
+
+    @Column(name = "device_id", length = 64, nullable = false)
+    private String deviceId;                    // e.g. esp32-01   <-- (NEW)
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "group_id", nullable = false)
     private DeviceGroup group;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Device d)) return false;
-        return compositeId != null && compositeId.equals(d.compositeId);
-    }
-
-    @Override
-    public int hashCode() {
-        return compositeId != null ? compositeId.hashCode() : 0;
-    }
-
 }

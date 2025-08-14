@@ -53,6 +53,7 @@ class RecordServiceSpectralTests {
             if (parts.length >= 2) {
                 d.setSystem(parts[0]);
                 d.setLayer(parts[1]);
+                d.setDeviceId(parts[2]);
             }
             d.setGroup(ensureGroup());
             return deviceRepository.save(d);
@@ -61,7 +62,7 @@ class RecordServiceSpectralTests {
 
     @Test
     void saves_record_with_empty_values_and_no_sensor_data() throws Exception {
-        String compositeId = "S01-L01-esp32-01";
+        String compositeId = "S01-L01-G01";
         ensureDevice(compositeId);
 
         String json = "{\n"

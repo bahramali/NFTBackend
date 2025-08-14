@@ -42,11 +42,15 @@ class ActuatorServiceTest {
         String compositeId = "S01-L02-G01";
         when(deviceRepo.findById(compositeId)).thenReturn(Optional.of(device(compositeId)));
 
-        String json = "{"
-                + "\"composite_id\":\"S01-L02-G01\","
-                + "\"timestamp\":\"2023-01-01T00:00:00Z\","
-                + "\"controllers\":[{\"name\":\"airPump\",\"state\":\"on\"}]"
-                + "}";
+        String json = """
+                {
+                  "composite_id":"S01-L02-G01",
+                  "timestamp":"2023-01-01T00:00:00Z",
+                  "sensors":[{"sensorName":"tempSensor","sensorType":"temperature","value":22.5}],
+                  "health":{"tempSensor":true},
+                  "controllers":[{"name":"airPump","state":"on"}]
+                }
+                """;
 
         actuatorService.saveOxygenPumpStatus(json);
 
@@ -64,8 +68,22 @@ class ActuatorServiceTest {
         String compositeId = "S02-L01-X1";
         when(deviceRepo.findById(compositeId)).thenReturn(Optional.of(device(compositeId)));
 
-        String jsonTrue = "{\"composite_id\":\"S02-L01-X1\",\"controllers\":[{\"name\":\"airPump\",\"state\":true,\"timestamp\":\"2024-02-02T12:00:00Z\"}]}";
-        String jsonNum  = "{\"composite_id\":\"S02-L01-X1\",\"controllers\":[{\"name\":\"airPump\",\"state\":1,\"timestamp\":\"2024-02-02T12:01:00Z\"}]}";
+        String jsonTrue = """
+                {
+                  "composite_id":"S02-L01-X1",
+                  "sensors":[{"sensorName":"s1","sensorType":"temperature","value":25.0}],
+                  "health":{"s1":true},
+                  "controllers":[{"name":"airPump","state":true,"timestamp":"2024-02-02T12:00:00Z"}]
+                }
+                """;
+        String jsonNum  = """
+                {
+                  "composite_id":"S02-L01-X1",
+                  "sensors":[{"sensorName":"s1","sensorType":"temperature","value":25.0}],
+                  "health":{"s1":true},
+                  "controllers":[{"name":"airPump","state":1,"timestamp":"2024-02-02T12:01:00Z"}]
+                }
+                """;
 
         actuatorService.saveOxygenPumpStatus(jsonTrue);
         actuatorService.saveOxygenPumpStatus(jsonNum);
@@ -86,7 +104,13 @@ class ActuatorServiceTest {
 
     @Test
     void throws_when_composite_id_missing() {
-        String json = "{\"controllers\":[{\"name\":\"airPump\",\"state\":\"off\"}]}";
+        String json = """
+                {
+                  "sensors":[{"sensorName":"t1","sensorType":"temperature","value":20.0}],
+                  "health":{"t1":true},
+                  "controllers":[{"name":"airPump","state":"off"}]
+                }
+                """;
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> actuatorService.saveOxygenPumpStatus(json));

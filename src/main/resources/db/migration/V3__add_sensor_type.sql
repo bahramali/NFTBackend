@@ -1,6 +1,5 @@
-ALTER TABLE sensor_data ADD COLUMN sensor_type VARCHAR(64);
-
--- Populate the new column for existing records.
-UPDATE sensor_data SET sensor_type = 'unknown';
-
-ALTER TABLE sensor_data ALTER COLUMN sensor_type SET NOT NULL;
+-- Populate missing sensor types for existing records before
+-- enforcing the NOT NULL constraint in a later migration.
+UPDATE sensor_data
+SET sensor_type = 'unknown'
+WHERE sensor_type IS NULL;

@@ -17,9 +17,9 @@ import java.util.Objects;
  * - Saves oxygen pump status aligned with Option-1 (Device PK = composite_id).
  * - Required fields in payload:
  *    - composite_id (or compositeId)
- *    - status: "on"/"off" | true/false | 1/0
+ *    - controllers[]: array with entries {name:"airPump", state:true/false, timestamp?}
  * - Optional:
- *    - timestamp: ISO-8601 or epoch millis; defaults to now()
+ *    - timestamp: ISO-8601 or epoch millis; defaults to now() and used when controller timestamp absent
  */
 @Service
 public class ActuatorService {
@@ -36,7 +36,7 @@ public class ActuatorService {
         this.deviceRepo = deviceRepo;
     }
 
-    /** Entry point used by tests and MQTT layer. */
+    /** Entry point used by tests and other layers. */
     @Transactional
     public void saveOxygenPumpStatus(String jsonString) {
         Objects.requireNonNull(jsonString, "payload is null");
@@ -52,21 +52,33 @@ public class ActuatorService {
             Device device = deviceRepo.findById(compositeId)
                     .orElseThrow(() -> new IllegalArgumentException("Unknown device composite_id: " + compositeId));
 
-            // 2) Timestamp (optional)
-            Instant ts = readTimestamp(node);
+            // 2) Base timestamp (optional)
+            Instant baseTs = readTimestamp(node);
 
-            // 3) Status (required)
-            Boolean status = readStatus(node.path("status"));
-            if (status == null) {
-                throw new IllegalArgumentException("status must be one of: true/false, 1/0, \"on\"/\"off\"");
+            // 3) Controllers array with airPump entry
+            JsonNode controllers = node.path("controllers");
+            boolean savedAny = false;
+            if (controllers.isArray()) {
+                for (JsonNode c : controllers) {
+                    String name = c.path("name").asText(null);
+                    if (name != null && name.equalsIgnoreCase("airPump")) {
+                        Boolean status = readStatus(c.path("state"));
+                        if (status == null) continue;
+                        Instant ts = c.hasNonNull("timestamp") ? readTimestamp(c) : baseTs;
+
+                        OxygenPumpStatus row = new OxygenPumpStatus();
+                        row.setDevice(device);   // FK via composite_id
+                        row.setTimestamp(ts);
+                        row.setStatus(status);
+                        pumpRepo.save(row);
+                        savedAny = true;
+                    }
+                }
             }
 
-            // 4) Persist
-            OxygenPumpStatus row = new OxygenPumpStatus();
-            row.setDevice(device);   // FK via composite_id
-            row.setTimestamp(ts);
-            row.setStatus(status);
-            pumpRepo.save(row);
+            if (!savedAny) {
+                throw new IllegalArgumentException("controllers array with airPump state is required");
+            }
 
         } catch (IllegalArgumentException iae) {
             throw iae;

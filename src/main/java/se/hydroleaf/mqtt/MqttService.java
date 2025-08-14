@@ -2,7 +2,6 @@ package se.hydroleaf.mqtt;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,6 @@ import se.hydroleaf.model.Device;
 import se.hydroleaf.model.DeviceGroup;
 import se.hydroleaf.repository.DeviceGroupRepository;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.service.ActuatorService;
 import se.hydroleaf.service.RecordService;
 import se.hydroleaf.service.StatusService;
 
@@ -44,7 +42,6 @@ public class MqttService implements MqttCallback {
 
     private final ObjectMapper objectMapper;
     private final RecordService recordService;
-    private final ActuatorService actuatorService;
     private final SimpMessagingTemplate messagingTemplate;
     private final StatusService statusService;
     private final DeviceRepository deviceRepo;
@@ -72,14 +69,12 @@ public class MqttService implements MqttCallback {
 
     public MqttService(ObjectMapper objectMapper,
                        RecordService recordService,
-                       ActuatorService actuatorService,
                        SimpMessagingTemplate messagingTemplate,
                        StatusService statusService,
                        DeviceRepository deviceRepo,
                        DeviceGroupRepository groupRepo) {
         this.objectMapper = objectMapper;
         this.recordService = recordService;
-        this.actuatorService = actuatorService;
         this.messagingTemplate = messagingTemplate;
         this.statusService = statusService;
         this.deviceRepo = deviceRepo;
@@ -144,17 +139,8 @@ public class MqttService implements MqttCallback {
             // 2) auto-provision device/group if missing
             ensureDevice(compositeId, topic);
 
-            // 3) route by topic
-            if (topic.startsWith("actuator/oxygenPump")) {
-                // ensure payload has composite_id for ActuatorService
-                if (!node.hasNonNull("composite_id") && node instanceof ObjectNode on) {
-                    on.put("composite_id", compositeId);
-                    payload = objectMapper.writeValueAsString(on);
-                }
-                actuatorService.saveOxygenPumpStatus(payload);
-            } else {
-                recordService.saveRecord(compositeId, node);
-            }
+            // 3) forward all payloads to RecordService
+            recordService.saveRecord(compositeId, node);
 
             lastSeen.put(compositeId, Instant.now());
         } catch (Exception ex) {

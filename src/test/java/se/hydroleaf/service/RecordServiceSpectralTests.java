@@ -103,9 +103,9 @@ class RecordServiceSpectralTests {
         assertEquals(3, values.size(), "three spectral channels expected");
 
         // quick sanity on names and values
-        assertTrue(values.stream().anyMatch(v -> "spectrum_450".equals(v.getSensorName()) && Double.valueOf(12.3).equals(v.getValue())));
-        assertTrue(values.stream().anyMatch(v -> "spectrum_550".equals(v.getSensorName()) && Double.valueOf(23.1).equals(v.getValue())));
-        assertTrue(values.stream().anyMatch(v -> "spectrum_650".equals(v.getSensorName()) && Double.valueOf(17.8).equals(v.getValue())));
+        assertTrue(values.stream().anyMatch(v -> "spectrum_450".equals(v.getSensorType()) && Double.valueOf(12.3).equals(v.getValue())));
+        assertTrue(values.stream().anyMatch(v -> "spectrum_550".equals(v.getSensorType()) && Double.valueOf(23.1).equals(v.getValue())));
+        assertTrue(values.stream().anyMatch(v -> "spectrum_650".equals(v.getSensorType()) && Double.valueOf(17.8).equals(v.getValue())));
     }
 
     @Test
@@ -130,9 +130,9 @@ class RecordServiceSpectralTests {
         assertEquals(1, records.size());
         List<SensorData> values = records.get(0).getValues();
         assertEquals(4, values.size());
-        assertTrue(values.stream().anyMatch(v -> "light".equals(v.getSensorName())));
-        assertTrue(values.stream().anyMatch(v -> "temperature".equals(v.getSensorName())));
-        assertTrue(values.stream().anyMatch(v -> "humidity".equals(v.getSensorName())));
-        assertTrue(values.stream().anyMatch(v -> "spectrum_500".equals(v.getSensorName())));
+        assertTrue(values.stream().anyMatch(v -> "light".equals(v.getSensorType())));
+        assertTrue(values.stream().anyMatch(v -> "temperature".equals(v.getSensorType())));
+        assertTrue(values.stream().anyMatch(v -> "humidity".equals(v.getSensorType())));
+        assertTrue(values.stream().anyMatch(v -> "spectrum_500".equals(v.getSensorType())));
     }
 }

@@ -28,12 +28,12 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
             FROM last_rec lr
             JOIN sensor_data sd ON sd.record_id = lr.id
             WHERE lr.rn = 1                                         -- latest per device
-              AND sd.sensor_name = :sensorName
+              AND sd.sensor_type = :sensorType
             """, nativeQuery = true)
     AverageResult getLatestAverage(
             @Param("system") String system,
             @Param("layer") String layer,
-            @Param("sensorName") String sensorName
+            @Param("sensorType") String sensorType
     );
 
 }

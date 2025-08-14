@@ -30,8 +30,7 @@ public class SensorAggregationAdapter implements RecordService.SensorAggregation
 
         for (SensorAggregationRepository.Row r : rows) {
             out.add(new RowImpl(
-                    r.getSensorName(),
-                    r.getValueType(),
+                    r.getSensorType(),
                     r.getUnit(),
                     r.getBucketTime(),
                     r.getAvgValue()
@@ -42,14 +41,12 @@ public class SensorAggregationAdapter implements RecordService.SensorAggregation
 
     // Simple DTO implementing the service's projection interface
     private record RowImpl(
-            String sensorName,
-            String valueType,
+            String sensorType,
             String unit,
             Instant bucketTime,
             Double avgValue
     ) implements RecordService.SensorAggregateResult {
-        @Override public String getSensorName() { return sensorName; }
-        @Override public String getValueType() { return valueType; }
+        @Override public String getSensorType() { return sensorType; }
         @Override public String getUnit() { return unit; }
         @Override public Instant getBucketTime() { return bucketTime; }
         @Override public Double getAvgValue() { return avgValue; }

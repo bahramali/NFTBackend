@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "sensor_data",
         uniqueConstraints = {
-                // Prevent duplicate (record, sensor_name) rows.
-                @UniqueConstraint(name = "ux_data_record_sensor", columnNames = {"record_id", "sensor_name"})
+                // Prevent duplicate (record, sensor_type) rows.
+                @UniqueConstraint(name = "ux_data_record_type", columnNames = {"record_id", "sensor_type"})
         },
         indexes = {
                 @Index(name = "ix_data_record", columnList = "record_id")
@@ -35,16 +35,10 @@ public class SensorData {
     private SensorRecord record;
 
     /**
-     * Logical sensor name: e.g. "light", "temperature", "humidity", "ph", "ec", "do", "air_pump".
+     * Logical sensor type: e.g. "light", "temperature", "humidity", "ph", "ec", "do", "air_pump".
      */
-    @Column(name = "sensor_name", nullable = false, length = 64)
-    private String sensorName;
-
-    /**
-     * Value type hint if you store mixed value kinds (e.g., "number","boolean","string").
-     */
-    @Column(name = "value_type", length = 32)
-    private String valueType;
+    @Column(name = "sensor_type", nullable = false, length = 64)
+    private String sensorType;
 
     /**
      * Numeric value for most sensors. Column name avoids the reserved word "value".

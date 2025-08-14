@@ -14,7 +14,7 @@ import java.util.List;
 public interface SensorAggregationRepository extends JpaRepository<SensorRecord, Long> {
 
     interface Row {
-        String getSensorName();
+        String getSensorType();
 
         String getValueType();
 
@@ -28,7 +28,7 @@ public interface SensorAggregationRepository extends JpaRepository<SensorRecord,
     @Query(value = """
             SELECT
               to_timestamp(floor(extract(epoch from sr.record_time) / :bucketSec) * :bucketSec) AS bucket_time,
-            sd.sensor_name AS sensor_name,
+            sd.sensor_type AS sensor_type,
             sd.value_type  AS value_type,
             sd.unit        AS unit,
             AVG(sd.sensor_value) AS avg_value
@@ -38,7 +38,7 @@ public interface SensorAggregationRepository extends JpaRepository<SensorRecord,
               AND sr.record_time >= :fromTs
               AND sr.record_time <  :toTs
               AND sd.sensor_value IS NOT NULL
-            GROUP BY bucket_time, sd.sensor_name, sd.value_type, sd.unit
+            GROUP BY bucket_time, sd.sensor_type, sd.value_type, sd.unit
             ORDER BY bucket_time
             """, nativeQuery = true)
     List<Row> aggregate(

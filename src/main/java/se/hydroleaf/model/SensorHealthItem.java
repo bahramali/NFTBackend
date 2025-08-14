@@ -34,7 +34,7 @@ public class SensorHealthItem {
     private SensorRecord record;
 
     /**
-     * Sensor type, e.g., "temperature","ph"...
+     * Logical sensor type, e.g., "temperature", "ph"...
      */
     @Column(name = "sensor_type", nullable = false, length = 64)
     private String sensorType;

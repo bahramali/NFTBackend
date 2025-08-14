@@ -64,7 +64,7 @@ public class RecordService {
      *  {
      *    "timestamp": "2025-08-14T10:20:00Z",  // optional, default now()
      *    "values": {
-     *       "light":       {"value": 550.2, "unit": "lx",    "source":"raw"},
+     *       "light":       {"value": 550.2, "unit": "lx"},
      *       "temperature": {"value": 23.8,  "unit": "°C"},
      *       "humidity":    {"value": 42.1,  "unit": "%"},
      *       "ph":          {"value": 6.1},
@@ -104,19 +104,16 @@ public class RecordService {
                     sensorNameToType.put(sensorName, sensorType);
                 }
 
-                // support value as either a primitive or an object with {value,unit,source}
+                // support value as either a primitive or an object with {value,unit}
                 JsonNode valueNode = s.path("value");
                 Double num;
                 String unit = null;
-                String source = null;
                 if (valueNode.isObject()) {
                     num = readDouble(valueNode.path("value")).orElse(null);
                     if (valueNode.hasNonNull("unit")) unit = valueNode.get("unit").asText();
-                    if (valueNode.hasNonNull("source")) source = valueNode.get("source").asText();
                 } else {
                     num = readDouble(valueNode).orElse(null);
                     if (s.hasNonNull("unit")) unit = s.get("unit").asText();
-                    if (s.hasNonNull("source")) source = s.get("source").asText();
                 }
                 if (sensorType == null || num == null) continue; // skip invalid
 
@@ -125,7 +122,6 @@ public class RecordService {
                 d.setSensorType(sensorType); // logical type
                 d.setValue(num);
                 if (unit != null) d.setUnit(unit);
-                if (source != null) d.setSource(source);
 
                 record.getValues().add(d);
             }

@@ -51,10 +51,4 @@ public class SensorData {
      */
     @Column(name = "unit", length = 32)
     private String unit;
-
-    /**
-     * Optional source tag (e.g., "avg", "raw", "composite").
-     */
-    @Column(name = "source", length = 64)
-    private String source;
 }

@@ -43,8 +43,8 @@ class ActuatorServiceTest {
         when(deviceRepo.findById(compositeId)).thenReturn(Optional.of(device(compositeId)));
 
         String json = "{"
-                + "\"composite_id\":\"S01-L02-G01\",""
-                + "\"timestamp\":\"2023-01-01T00:00:00Z\",""
+                + "\"composite_id\":\"S01-L02-G01\","
+                + "\"timestamp\":\"2023-01-01T00:00:00Z\","
                 + "\"controllers\":[{\"name\":\"airPump\",\"state\":\"on\"}]"
                 + "}";
 

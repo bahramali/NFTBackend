@@ -43,7 +43,8 @@ public class StatusService {
     }
 
     public StatusAllAverageResponse getAllAverages(String system, String layer) {
-        List<String> sensorTypes = List.of("light", "humidity", "temperature", "dissolvedOxygen", "airpump");
+        String oxygenPumpType = "airPump";
+        List<String> sensorTypes = List.of("light", "humidity", "temperature", "dissolvedOxygen", oxygenPumpType);
         Map<String, StatusAverageResponse> responses = new HashMap<>();
         for (String type : sensorTypes) {
             responses.put(type, getAverage(system, layer, type));
@@ -53,7 +54,7 @@ public class StatusService {
                 responses.get("humidity"),
                 responses.get("temperature"),
                 responses.get("dissolvedOxygen"),
-                responses.get("airpump")
+                responses.get(oxygenPumpType)
         );
     }
 
@@ -81,6 +82,6 @@ public class StatusService {
         if (sensorType == null) {
             return false;
         }
-        return sensorType.equals("airpump");
+        return sensorType.equalsIgnoreCase("airPump") || sensorType.equalsIgnoreCase("airpump");
     }
 }

@@ -4,7 +4,7 @@ This project is a Spring Boot application that connects to an MQTT broker and st
 
 ## MQTT Message Format
 
-Sensor data is published as JSON where each entry in the `sensors` array includes both a `sensorName` and a `valueType`. Examples:
+Sensor data is published as JSON where each entry in the `sensors` array includes a `sensorType` describing the logical sensor. An optional `sensorName` can identify the hardware instance when multiple sensors of the same type exist. Examples:
 
 ### Grow sensors
 
@@ -14,8 +14,8 @@ Sensor data is published as JSON where each entry in the `sensors` array include
   "timestamp": "2024-01-01T00:00:00Z",
   "layer": "test",
   "sensors": [
-    { "sensorName": "spec1", "valueType": "445nm", "unit": "count", "value": 10 },
-    { "sensorName": "spec1", "valueType": "480nm", "unit": "count", "value": 20 }
+    { "sensorName": "s450", "sensorType": "spectrum_450", "unit": "count", "value": 10 },
+    { "sensorName": "s480", "sensorType": "spectrum_480", "unit": "count", "value": 20 }
   ]
 }
 ```
@@ -28,8 +28,8 @@ Sensor data is published as JSON where each entry in the `sensors` array include
   "timestamp": "2024-01-01T00:00:00Z",
   "layer": "test",
   "sensors": [
-    { "sensorName": "tank1", "valueType": "level", "unit": "percent", "value": 70 },
-    { "sensorName": "tank1", "valueType": "temperature", "unit": "C", "value": 22 }
+    { "sensorName": "tank1", "sensorType": "level", "unit": "percent", "value": 70 },
+    { "sensorName": "tank1", "sensorType": "temperature", "unit": "C", "value": 22 }
   ]
 }
 ```

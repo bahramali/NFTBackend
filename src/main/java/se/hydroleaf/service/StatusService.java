@@ -2,6 +2,9 @@ package se.hydroleaf.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import se.hydroleaf.dto.LiveNowSnapshot;
+import se.hydroleaf.dto.LayerActuatorStatus;
+import se.hydroleaf.dto.LayerSensorSummary;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
 import se.hydroleaf.model.Device;
@@ -58,8 +61,8 @@ public class StatusService {
         );
     }
 
-    public Map<String, Map<String, StatusAllAverageResponse>> getAllSystemLayerAverages() {
-        Map<String, Map<String, StatusAllAverageResponse>> result = new HashMap<>();
+    public LiveNowSnapshot getLiveNowSnapshot() {
+        Map<String, Map<String, LiveNowSnapshot.LayerSnapshot>> result = new HashMap<>();
         List<Device> devices = deviceRepository.findAll();
         for (Device device : devices) {
             String system = device.getSystem();
@@ -73,9 +76,15 @@ public class StatusService {
             }
 
             result.computeIfAbsent(system, s -> new HashMap<>())
-                    .computeIfAbsent(layer, l -> getAllAverages(system, layer));
+                    .computeIfAbsent(layer, l -> {
+                        StatusAllAverageResponse all = getAllAverages(system, layer);
+                        LayerActuatorStatus actuator = new LayerActuatorStatus(all.airpump());
+                        LayerSensorSummary growSensors = new LayerSensorSummary(all.light(), all.humidity(), all.temperature(), null);
+                        LayerSensorSummary waterTank = new LayerSensorSummary(null, null, null, all.dissolvedOxygen());
+                        return new LiveNowSnapshot.LayerSnapshot(actuator, growSensors, waterTank);
+                    });
         }
-        return result;
+        return new LiveNowSnapshot(result);
     }
 
     private boolean isOxygenPump(String sensorType) {

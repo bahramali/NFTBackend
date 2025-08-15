@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import se.hydroleaf.dto.LiveNowSnapshot;
 import se.hydroleaf.service.StatusService;
 
 import java.time.Duration;
@@ -32,7 +33,7 @@ public class LiveFeedScheduler {
     @Scheduled(fixedRate = 2000)
     public void sendLiveNow() {
         try {
-            Object snapshot = statusService.getAllSystemLayerAverages();
+            LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
             messagingTemplate.convertAndSend("/topic/live_now", snapshot);
         } catch (Exception e) {
             log.warn("sendLiveNow failed: {}", e.getMessage());

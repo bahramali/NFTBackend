@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Spy;
+import se.hydroleaf.dto.LiveNowSnapshot;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
 import se.hydroleaf.model.Device;
@@ -83,25 +84,31 @@ class StatusServiceTest {
     }
 
     @Test
-    void getAllSystemLayerAveragesAggregatesByDevice() {
+    void getLiveNowSnapshotAggregatesByDevice() {
         Device d1 = Device.builder().compositeId("1").system("S01").layer("L01").build();
         Device d2 = Device.builder().compositeId("2").system("S01").layer("L02").build();
         Device d3 = Device.builder().compositeId("3").system("S02").layer("L01").build();
         when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2, d3));
 
-        StatusAllAverageResponse r1 = new StatusAllAverageResponse(null, null, null, null, null);
-        StatusAllAverageResponse r2 = new StatusAllAverageResponse(null, null, null, null, null);
-        StatusAllAverageResponse r3 = new StatusAllAverageResponse(null, null, null, null, null);
+        StatusAverageResponse pump = new StatusAverageResponse(1.0, 1L);
+        StatusAverageResponse light = new StatusAverageResponse(2.0, 2L);
+        StatusAverageResponse humidity = new StatusAverageResponse(3.0, 3L);
+        StatusAverageResponse temp = new StatusAverageResponse(4.0, 4L);
+        StatusAverageResponse dox = new StatusAverageResponse(5.0, 5L);
+
+        StatusAllAverageResponse r1 = new StatusAllAverageResponse(light, humidity, temp, dox, pump);
+        StatusAllAverageResponse r2 = new StatusAllAverageResponse(light, humidity, temp, dox, pump);
+        StatusAllAverageResponse r3 = new StatusAllAverageResponse(light, humidity, temp, dox, pump);
 
         doReturn(r1).when(statusService).getAllAverages("S01", "L01");
         doReturn(r2).when(statusService).getAllAverages("S01", "L02");
         doReturn(r3).when(statusService).getAllAverages("S02", "L01");
 
-        var result = statusService.getAllSystemLayerAverages();
+        LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
-        assertEquals(r1, result.get("S01").get("L01"));
-        assertEquals(r2, result.get("S01").get("L02"));
-        assertEquals(r3, result.get("S02").get("L01"));
+        assertEquals(pump, result.systems().get("S01").get("L01").actuator().airPump());
+        assertEquals(light, result.systems().get("S01").get("L02").growSensors().light());
+        assertEquals(dox, result.systems().get("S02").get("L01").waterTank().dissolvedOxygen());
 
         verify(statusService).getAllAverages("S01", "L01");
         verify(statusService).getAllAverages("S01", "L02");
@@ -109,7 +116,7 @@ class StatusServiceTest {
     }
 
     @Test
-    void getAllSystemLayerAveragesSkipsBlankSystemOrLayer() {
+    void getLiveNowSnapshotSkipsBlankSystemOrLayer() {
         Device d1 = Device.builder().compositeId("1").system("").layer("L01").build();
         Device d2 = Device.builder().compositeId("2").system("S01").layer(" ").build();
         Device d3 = Device.builder().compositeId("3").system(null).layer("L02").build();
@@ -120,11 +127,11 @@ class StatusServiceTest {
         StatusAllAverageResponse r = new StatusAllAverageResponse(null, null, null, null, null);
         doReturn(r).when(statusService).getAllAverages("S01", "L01");
 
-        var result = statusService.getAllSystemLayerAverages();
+        LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
-        assertEquals(1, result.size());
-        assertEquals(1, result.get("S01").size());
-        assertEquals(r, result.get("S01").get("L01"));
+        assertEquals(1, result.systems().size());
+        assertEquals(1, result.systems().get("S01").size());
+        assertEquals(r.airpump(), result.systems().get("S01").get("L01").actuator().airPump());
         verify(statusService).getAllAverages("S01", "L01");
     }
 

@@ -8,9 +8,9 @@ import se.hydroleaf.dto.LayerSensorSummary;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
 import se.hydroleaf.model.Device;
+import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.AverageResult;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.repository.OxygenPumpStatusRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 
 import java.util.HashMap;
@@ -22,21 +22,21 @@ import java.util.Map;
 public class StatusService {
 
     private final SensorDataRepository sensorDataRepository;
-    private final OxygenPumpStatusRepository oxygenPumpStatusRepository;
+    private final ActuatorStatusRepository actuatorStatusRepository;
     private final DeviceRepository deviceRepository;
 
     public StatusService(SensorDataRepository sensorDataRepository,
-                         OxygenPumpStatusRepository oxygenPumpStatusRepository,
+                         ActuatorStatusRepository actuatorStatusRepository,
                          DeviceRepository deviceRepository) {
         this.sensorDataRepository = sensorDataRepository;
-        this.oxygenPumpStatusRepository = oxygenPumpStatusRepository;
+        this.actuatorStatusRepository = actuatorStatusRepository;
         this.deviceRepository = deviceRepository;
     }
 
     public StatusAverageResponse getAverage(String system, String layer, String sensorType) {
         AverageResult result;
-        if (isOxygenPump(sensorType)) {
-            result = oxygenPumpStatusRepository.getLatestPumpAverage(system, layer);
+        if (isActuator(sensorType)) {
+            result = actuatorStatusRepository.getLatestActuatorAverage(system, layer, sensorType);
         } else {
             result = sensorDataRepository.getLatestAverage(system, layer, sensorType);
         }
@@ -87,7 +87,7 @@ public class StatusService {
         return new LiveNowSnapshot(result);
     }
 
-    private boolean isOxygenPump(String sensorType) {
+    private boolean isActuator(String sensorType) {
         if (sensorType == null) {
             return false;
         }

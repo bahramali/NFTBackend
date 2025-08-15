@@ -10,9 +10,9 @@ import se.hydroleaf.dto.LiveNowSnapshot;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
 import se.hydroleaf.model.Device;
+import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.AverageResult;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.repository.OxygenPumpStatusRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,7 +25,7 @@ class StatusServiceTest {
     private SensorDataRepository sensorDataRepository;
 
     @Mock
-    private OxygenPumpStatusRepository oxygenPumpStatusRepository;
+    private ActuatorStatusRepository actuatorStatusRepository;
 
     @Mock
     private DeviceRepository deviceRepository;
@@ -44,20 +44,20 @@ class StatusServiceTest {
         assertEquals(10.0, response.average());
         assertEquals(3L, response.deviceCount());
         verify(sensorDataRepository).getLatestAverage("Sys", "Layer", "light");
-        verifyNoInteractions(oxygenPumpStatusRepository);
+        verifyNoInteractions(actuatorStatusRepository);
     }
 
     @Test
-    void getAverageUsesOxygenPumpRepositoryForAirpump() {
+    void getAverageUsesActuatorRepositoryForAirpump() {
         AverageResult avg = simpleResult(1.5, 2L);
-        when(oxygenPumpStatusRepository.getLatestPumpAverage("Sys", "Layer"))
+        when(actuatorStatusRepository.getLatestActuatorAverage("Sys", "Layer", "airpump"))
                 .thenReturn(avg);
 
         StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "airpump");
         assertEquals(1.5, response.average());
         assertEquals(2L, response.deviceCount());
-        verify(oxygenPumpStatusRepository).getLatestPumpAverage("Sys", "Layer");
-        verifyNoMoreInteractions(oxygenPumpStatusRepository);
+        verify(actuatorStatusRepository).getLatestActuatorAverage("Sys", "Layer", "airpump");
+        verifyNoMoreInteractions(actuatorStatusRepository);
         verifyNoInteractions(sensorDataRepository);
     }
 
@@ -71,7 +71,7 @@ class StatusServiceTest {
                 .thenReturn(simpleResult(3.0, 3L));
         when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedOxygen"))
                 .thenReturn(simpleResult(4.0, 4L));
-        when(oxygenPumpStatusRepository.getLatestPumpAverage("sys", "layer"))
+        when(actuatorStatusRepository.getLatestActuatorAverage("sys", "layer", "airPump"))
                 .thenReturn(simpleResult(5.0, 5L));
 
         StatusAllAverageResponse response = statusService.getAllAverages("sys", "layer");

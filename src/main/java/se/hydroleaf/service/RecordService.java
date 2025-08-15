@@ -7,13 +7,13 @@ import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.dto.AggregatedHistoryResponse;
 import se.hydroleaf.dto.AggregatedSensorData;
 import se.hydroleaf.dto.TimestampValue;
+import se.hydroleaf.model.ActuatorStatus;
 import se.hydroleaf.model.Device;
-import se.hydroleaf.model.OxygenPumpStatus;
 import se.hydroleaf.model.SensorData;
 import se.hydroleaf.model.SensorHealthItem;
 import se.hydroleaf.model.SensorRecord;
+import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.repository.OxygenPumpStatusRepository;
 import se.hydroleaf.repository.SensorRecordRepository;
 import se.hydroleaf.util.InstantUtil;
 
@@ -31,7 +31,7 @@ import java.util.*;
  *  2) Read aggregated history by time bucket via SensorAggregationReader abstraction.
  *
  * Assumptions:
- *  - Repositories exist: DeviceRepository, SensorRecordRepository, OxygenPumpStatusRepository.
+ *  - Repositories exist: DeviceRepository, SensorRecordRepository, ActuatorStatusRepository.
  *  - SensorRecord entity uses CascadeType.ALL for values (SensorData) and health items (SensorHealthItem).
  *  - There is a repository/adapter implementing SensorAggregationReader (native/JPQL).
  */
@@ -41,20 +41,20 @@ public class RecordService {
     private final ObjectMapper objectMapper;
     private final DeviceRepository deviceRepository;
     private final SensorRecordRepository recordRepository;
-    private final OxygenPumpStatusRepository pumpRepository;
+    private final ActuatorStatusRepository actuatorStatusRepository;
     private final SensorAggregationReader aggregationReader; // thin facade over custom repo/projection
 
     public RecordService(
             ObjectMapper objectMapper,
             DeviceRepository deviceRepository,
             SensorRecordRepository recordRepository,
-            OxygenPumpStatusRepository pumpRepository,
+            ActuatorStatusRepository actuatorStatusRepository,
             SensorAggregationReader aggregationReader
     ) {
         this.objectMapper = objectMapper;
         this.deviceRepository = deviceRepository;
         this.recordRepository = recordRepository;
-        this.pumpRepository = pumpRepository;
+        this.actuatorStatusRepository = actuatorStatusRepository;
         this.aggregationReader = aggregationReader;
     }
 
@@ -151,20 +151,24 @@ public class RecordService {
         // Persist the record (cascades values + health)
         recordRepository.save(record);
 
-        // Optional controllers array for air pump status
+        // Optional controllers array for actuator statuses
         JsonNode controllers = json.path("controllers");
         if (controllers.isArray()) {
+            List<ActuatorStatus> statuses = new ArrayList<>();
             for (JsonNode c : controllers) {
-                String name = c.path("name").asText(null);
-                if (name != null && name.equalsIgnoreCase("airPump")) {
-                    JsonNode stateNode = c.path("state");
-                    if (!stateNode.isBoolean()) continue;
-                    OxygenPumpStatus ps = new OxygenPumpStatus();
-                    ps.setDevice(device);
-                    ps.setTimestamp(parseTimestamp(c.path("timestamp")).orElse(ts));
-                    ps.setStatus(stateNode.asBoolean());
-                    pumpRepository.save(ps);
-                }
+                String type = c.path("name").asText(null);
+                if (type == null) continue;
+                JsonNode stateNode = c.path("state");
+                if (!stateNode.isBoolean()) continue;
+                ActuatorStatus as = new ActuatorStatus();
+                as.setDevice(device);
+                as.setTimestamp(parseTimestamp(c.path("timestamp")).orElse(ts));
+                as.setActuatorType(type);
+                as.setState(stateNode.asBoolean());
+                statuses.add(as);
+            }
+            if (!statuses.isEmpty()) {
+                actuatorStatusRepository.saveAll(statuses);
             }
         }
     }

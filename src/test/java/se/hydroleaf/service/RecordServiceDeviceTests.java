@@ -10,9 +10,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.DeviceGroup;
+import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.DeviceGroupRepository;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.repository.OxygenPumpStatusRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 import se.hydroleaf.repository.SensorHealthItemRepository;
 
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Integration test for RecordService with Option-1 model:
  * - Device PK = composite_id
- * - RecordService.saveRecord persists SensorRecord + SensorData (+ optional pump)
+ * - RecordService.saveRecord persists SensorRecord + SensorData (+ optional actuator status)
  * Notes:
  * - All comments are in English only per your preference.
  */
@@ -43,7 +43,7 @@ class RecordServiceDeviceTests {
     @Autowired
     SensorDataRepository sensorDataRepository;
     @Autowired
-    OxygenPumpStatusRepository oxygenPumpStatusRepository;
+    ActuatorStatusRepository actuatorStatusRepository;
     @Autowired
     SensorHealthItemRepository sensorHealthItemRepository;
     private DeviceGroup defaultGroup;
@@ -100,7 +100,7 @@ class RecordServiceDeviceTests {
                 """;
         JsonNode node = objectMapper.readTree(json);
 
-        long pumpBefore = oxygenPumpStatusRepository.count();
+        long pumpBefore = actuatorStatusRepository.count();
 
         // Act
         recordService.saveRecord(compositeId, node);
@@ -122,12 +122,12 @@ class RecordServiceDeviceTests {
                 .anyMatch(d -> "ph".equals(d.getSensorType())));
 
         // Pump status row should be inserted (airPump=false)
-        long pumpAfter = oxygenPumpStatusRepository.count();
+        long pumpAfter = actuatorStatusRepository.count();
         assertTrue(pumpAfter > pumpBefore, "pump status should be saved");
-        var pumpRow = oxygenPumpStatusRepository
-                .findTopByDeviceCompositeIdOrderByTimestampDesc(compositeId)
+        var pumpRow = actuatorStatusRepository
+                .findTopByDeviceCompositeIdAndActuatorTypeOrderByTimestampDesc(compositeId, "airPump")
                 .orElseThrow();
-        assertFalse(pumpRow.getStatus());
+        assertFalse(pumpRow.getState());
         assertEquals(Instant.parse("2025-01-01T00:00:00Z"), pumpRow.getTimestamp());
     }
 
@@ -172,13 +172,13 @@ class RecordServiceDeviceTests {
                 }
                 """;
 
-        long before = oxygenPumpStatusRepository.count();
+        long before = actuatorStatusRepository.count();
         recordService.saveRecord(compositeId, objectMapper.readTree(json));
-        assertEquals(before + 1, oxygenPumpStatusRepository.count());
-        var pumpRow = oxygenPumpStatusRepository
-                .findTopByDeviceCompositeIdOrderByTimestampDesc(compositeId)
+        assertEquals(before + 1, actuatorStatusRepository.count());
+        var pumpRow = actuatorStatusRepository
+                .findTopByDeviceCompositeIdAndActuatorTypeOrderByTimestampDesc(compositeId, "airPump")
                 .orElseThrow();
-        assertTrue(pumpRow.getStatus());
+        assertTrue(pumpRow.getState());
         assertEquals(Instant.parse("2025-03-03T03:03:03Z"), pumpRow.getTimestamp());
     }
 }

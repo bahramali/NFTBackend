@@ -4,22 +4,15 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Snapshot of a system containing categorized layer snapshots for water and environment.
+ * Snapshot of a system containing all layer snapshots.
  */
 public record SystemSnapshot(
-        CategorySnapshot water,
-        CategorySnapshot environment
+        List<LayerSnapshot> layers
 ) {
 
     /**
-     * Wrapper for layer snapshots categorized by type.
-     */
-    public record CategorySnapshot(
-            List<LayerSnapshot> byLayer
-    ) {}
-
-    /**
      * Snapshot of a single layer with the time of the last update.
+     * Holds water, environment and actuator information for the layer.
      */
     public record LayerSnapshot(
             String layerId,

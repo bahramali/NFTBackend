@@ -146,10 +146,10 @@ class StatusServiceTest {
 
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
-        SystemSnapshot.LayerSnapshot s01Layer = result.systems().get("S01").water().byLayer().stream()
+        SystemSnapshot.LayerSnapshot s01Layer = result.systems().get("S01").layers().stream()
                 .filter(l -> l.layerId().equals("L01"))
                 .findFirst().orElseThrow();
-        SystemSnapshot.LayerSnapshot s02Layer = result.systems().get("S02").water().byLayer().stream()
+        SystemSnapshot.LayerSnapshot s02Layer = result.systems().get("S02").layers().stream()
                 .filter(l -> l.layerId().equals("L01"))
                 .findFirst().orElseThrow();
         assertEquals(pump, s01Layer.actuators().airPump());
@@ -180,7 +180,7 @@ class StatusServiceTest {
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
         assertEquals(1, result.systems().size());
-        SystemSnapshot.LayerSnapshot layerSnapshot = result.systems().get("S01").water().byLayer().get(0);
+        SystemSnapshot.LayerSnapshot layerSnapshot = result.systems().get("S01").layers().get(0);
         assertEquals(pump, layerSnapshot.actuators().airPump());
         assertNotNull(layerSnapshot.lastUpdate());
         verify(statusService, atLeastOnce()).getAverage("S01", "L01", "airPump");

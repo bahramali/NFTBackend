@@ -32,7 +32,7 @@ class LiveFeedSchedulerTest {
     private SimpMessagingTemplate messagingTemplate;
 
     @Test
-    void sendLiveNowPublishesSnapshotWithCategorizedDto() throws Exception {
+    void sendLiveNowPublishesSnapshotWithLayers() throws Exception {
         SystemSnapshot.LayerSnapshot layerSnapshot = new SystemSnapshot.LayerSnapshot(
                 "L1",
                 java.time.Instant.now(),
@@ -49,9 +49,8 @@ class LiveFeedSchedulerTest {
                         new StatusAverageResponse(4.0, "°C", 1L)
                 )
         );
-        SystemSnapshot.CategorySnapshot categorySnapshot = new SystemSnapshot.CategorySnapshot(List.of(layerSnapshot));
         LiveNowSnapshot snapshot = new LiveNowSnapshot(
-                Map.of("S1", new SystemSnapshot(categorySnapshot, categorySnapshot))
+                Map.of("S1", new SystemSnapshot(List.of(layerSnapshot)))
         );
         when(statusService.getLiveNowSnapshot()).thenReturn(snapshot);
 
@@ -65,7 +64,7 @@ class LiveFeedSchedulerTest {
         verify(messagingTemplate).convertAndSend(eq("/topic/live_now"), captor.capture());
 
         LiveNowSnapshot sent = mapper.readValue(captor.getValue(), LiveNowSnapshot.class);
-        SystemSnapshot.LayerSnapshot sentLayer = sent.systems().get("S1").water().byLayer().get(0);
+        SystemSnapshot.LayerSnapshot sentLayer = sent.systems().get("S1").layers().get(0);
         assertEquals(6.0, sentLayer.water().dissolvedOxygen().average());
         assertEquals(1.0, sentLayer.actuators().airPump().average());
         assertNotNull(sentLayer.lastUpdate());

@@ -80,9 +80,16 @@ public class MqttMessageHandler {
     private static final Pattern GROW_PATTERN =
             Pattern.compile("^growSensors/(S\\d+)/(L\\d+)/([^/]+)$");
 
+    private static final Pattern WATER_PATTERN =
+            Pattern.compile("^waterTank/(S\\d+)/(L\\d+)/([^/]+)$");
+
     private String deriveCompositeIdFromTopic(String topic) {
         if (topic == null) return null;
         Matcher m = GROW_PATTERN.matcher(topic);
+        if (m.find()) {
+            return m.group(1) + "-" + m.group(2) + "-" + m.group(3);
+        }
+        m = WATER_PATTERN.matcher(topic);
         if (m.find()) {
             return m.group(1) + "-" + m.group(2) + "-" + m.group(3);
         }

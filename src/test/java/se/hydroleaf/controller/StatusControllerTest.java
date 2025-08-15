@@ -7,8 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import se.hydroleaf.dto.StatusAllAverageResponse;
-import se.hydroleaf.dto.StatusAverageResponse;
+import se.hydroleaf.dto.*;
 import se.hydroleaf.service.StatusService;
 import java.util.Map;
 
@@ -103,5 +102,48 @@ class StatusControllerTest {
                 .andExpect(jsonPath("$.waterTank.pH.average").value(6.0))
                 .andExpect(jsonPath("$.waterTank.electricalConductivity.average").value(7.0))
                 .andExpect(jsonPath("$.airpump.average").value(8.0));
+    }
+
+    @Test
+    void getLiveNowEndpointReturnsSystemData() throws Exception {
+        SystemSnapshot.LayerSnapshot layer = new SystemSnapshot.LayerSnapshot(
+                "L1",
+                java.time.Instant.parse("2023-01-01T00:00:00Z"),
+                new LayerActuatorStatus(new StatusAverageResponse(1.0, "status", 1L)),
+                new WaterTankSummary(
+                        new StatusAverageResponse(4.0, "°C",1L),
+                        new StatusAverageResponse(5.0, "mg/L",1L),
+                        new StatusAverageResponse(6.0, "pH",1L),
+                        new StatusAverageResponse(7.0, "µS/cm",1L)
+                ),
+                new GrowSensorSummary(
+                        new StatusAverageResponse(2.0, "lux",1L),
+                        new StatusAverageResponse(3.0, "%",1L),
+                        new StatusAverageResponse(8.0, "°C",1L)
+                )
+        );
+        SystemSnapshot system = new SystemSnapshot(
+                java.time.Instant.parse("2023-01-01T00:00:00Z"),
+                new SystemActuatorStatus(new StatusAverageResponse(1.0, "status",1L)),
+                new WaterTankSummary(
+                        new StatusAverageResponse(4.0, "°C",1L),
+                        new StatusAverageResponse(5.0, "mg/L",1L),
+                        new StatusAverageResponse(6.0, "pH",1L),
+                        new StatusAverageResponse(7.0, "µS/cm",1L)
+                ),
+                new GrowSensorSummary(
+                        new StatusAverageResponse(2.0, "lux",1L),
+                        new StatusAverageResponse(3.0, "%",1L),
+                        new StatusAverageResponse(8.0, "°C",1L)
+                ),
+                java.util.List.of(layer)
+        );
+        LiveNowSnapshot snapshot = new LiveNowSnapshot(Map.of("sys", system));
+        when(statusService.getLiveNowSnapshot()).thenReturn(snapshot);
+
+        mockMvc.perform(get("/api/status/live-now"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.systems.sys.actuators.airPump.average").value(1.0))
+                .andExpect(jsonPath("$.systems.sys.layers[0].water.dissolvedOxygen.average").value(5.0));
     }
 }

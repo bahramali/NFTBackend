@@ -40,6 +40,28 @@ class StatusControllerTest {
     }
 
     @Test
+    void getAverageEndpointReturnsActuatorData() throws Exception {
+        when(statusService.getAverage("sys", "layer", "airPump"))
+                .thenReturn(new StatusAverageResponse(1.0, 2L));
+
+        mockMvc.perform(get("/api/status/sys/layer/airPump/average"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.average").value(1.0))
+                .andExpect(jsonPath("$.deviceCount").value(2));
+    }
+
+    @Test
+    void getAverageEndpointReturnsWaterTankSensorData() throws Exception {
+        when(statusService.getAverage("sys", "layer", "dissolvedOxygen"))
+                .thenReturn(new StatusAverageResponse(5.5, 4L));
+
+        mockMvc.perform(get("/api/status/sys/layer/dissolvedOxygen/average"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.average").value(5.5))
+                .andExpect(jsonPath("$.deviceCount").value(4));
+    }
+
+    @Test
     void getAverageEndpointAcceptsDifferentCase() throws Exception {
         when(statusService.getAverage("SYS", "LAYER", "Lux"))
                 .thenReturn(new StatusAverageResponse(8.0, 1L));

@@ -1,10 +1,11 @@
 package se.hydroleaf.mqtt;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.*;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -28,9 +29,13 @@ public class MqttService implements MqttCallback {
         this.messageHandler = messageHandler;
     }
 
-    @PostConstruct
     public void start() throws Exception {
         clientManager.start(this);
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() throws Exception {
+        start();
     }
 
     @PreDestroy

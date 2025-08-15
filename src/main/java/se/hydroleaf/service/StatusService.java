@@ -58,7 +58,7 @@ public class StatusService {
         List<String> sensorTypes = List.of(
                 "light",
                 "humidity",
-                "airTemperature",
+                "temperature",
                 "dissolvedOxygen",
                 "dissolvedTemp",
                 "pH",
@@ -73,7 +73,7 @@ public class StatusService {
         Map<String, StatusAverageResponse> growSensors = Map.of(
                 "light", responses.get("light"),
                 "humidity", responses.get("humidity"),
-                "airTemperature", responses.get("airTemperature")
+                "temperature", responses.get("temperature")
         );
         Map<String, StatusAverageResponse> waterTank = Map.ofEntries(
                 Map.entry("dissolvedTemp", responses.get("dissolvedTemp")),
@@ -109,7 +109,7 @@ public class StatusService {
                 GrowSensorSummary environment = new GrowSensorSummary(
                         getAverage(system, layer, "light"),
                         getAverage(system, layer, "humidity"),
-                        getAverage(system, layer, "airTemperature")
+                        getAverage(system, layer, "temperature")
                 );
                 WaterTankSummary water = new WaterTankSummary(
                         getAverage(system, layer, "dissolvedTemp"),
@@ -148,7 +148,7 @@ public class StatusService {
             GrowSensorSummary environment = new GrowSensorSummary(
                     aggregate(layers, l -> l.environment().light()),
                     aggregate(layers, l -> l.environment().humidity()),
-                    aggregate(layers, l -> l.environment().airTemperature())
+                    aggregate(layers, l -> l.environment().temperature())
             );
             result.put(entry.getKey(), new SystemSnapshot(lastUpdate, actuators, water, environment, layers));
         }
@@ -191,7 +191,7 @@ public class StatusService {
         return switch (sensorType.toLowerCase()) {
             case "light" -> "lux";
             case "humidity" -> "%";
-            case "airtemperature", "dissolvedtemp" -> "°C";
+            case "temperature", "dissolvedtemp" -> "°C";
             case "dissolvedoxygen" -> "mg/L";
             case "ph" -> "pH";
             case "dissolvedec" -> "mS/cm";

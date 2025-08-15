@@ -87,7 +87,7 @@ class StatusServiceTest {
                 .thenReturn(simpleResult(1.0, 1L));
         when(sensorDataRepository.getLatestAverage("sys", "layer", "humidity"))
                 .thenReturn(simpleResult(2.0, 2L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "airTemperature"))
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "temperature"))
                 .thenReturn(simpleResult(3.0, 3L));
         when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedOxygen"))
                 .thenReturn(simpleResult(4.0, 4L));
@@ -106,7 +106,7 @@ class StatusServiceTest {
 
         assertEquals(1.0, response.growSensors().get("light").average());
         assertEquals(2.0, response.growSensors().get("humidity").average());
-        assertEquals(3.0, response.growSensors().get("airTemperature").average());
+        assertEquals(3.0, response.growSensors().get("temperature").average());
         assertEquals(5.0, response.waterTank().get("dissolvedTemp").average());
         assertEquals(4.0, response.waterTank().get("dissolvedOxygen").average());
         assertEquals(6.0, response.waterTank().get("pH").average());
@@ -143,7 +143,7 @@ class StatusServiceTest {
                 case "airPump" -> pump;
                 case "light" -> light;
                 case "humidity" -> humidity;
-                case "airTemperature" -> temp;
+                case "temperature" -> temp;
                 case "dissolvedTemp" -> dTemp;
                 case "dissolvedOxygen" -> dOxy;
                 case "pH" -> dPh;

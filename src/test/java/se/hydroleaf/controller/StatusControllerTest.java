@@ -77,7 +77,7 @@ class StatusControllerTest {
         Map<String, StatusAverageResponse> growSensors = Map.of(
                 "light", new StatusAverageResponse(1.0, "lux",1L),
                 "humidity", new StatusAverageResponse(2.0, "%",2L),
-                "airTemperature", new StatusAverageResponse(3.0, "°C",3L)
+                "temperature", new StatusAverageResponse(3.0, "°C",3L)
         );
         Map<String, StatusAverageResponse> waterTank = Map.of(
                 "dissolvedTemp", new StatusAverageResponse(4.0, "°C",4L),
@@ -97,7 +97,7 @@ class StatusControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.growSensors.light.average").value(1.0))
                 .andExpect(jsonPath("$.growSensors.humidity.average").value(2.0))
-                .andExpect(jsonPath("$.growSensors.airTemperature.average").value(3.0))
+                .andExpect(jsonPath("$.growSensors.temperature.average").value(3.0))
                 .andExpect(jsonPath("$.waterTank.dissolvedTemp.average").value(4.0))
                 .andExpect(jsonPath("$.waterTank.dissolvedOxygen.average").value(5.0))
                 .andExpect(jsonPath("$.waterTank.pH.average").value(6.0))
@@ -148,6 +148,8 @@ class StatusControllerTest {
         mockMvc.perform(get("/api/status/live-now"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.systems.sys.actuators.airPump.average").value(1.0))
+                .andExpect(jsonPath("$.systems.sys.environment.temperature.average").value(8.0))
+                .andExpect(jsonPath("$.systems.sys.layers[0].environment.temperature.average").value(8.0))
                 .andExpect(jsonPath("$.systems.sys.layers[0].water.dissolvedOxygen.average").value(5.0));
     }
 }

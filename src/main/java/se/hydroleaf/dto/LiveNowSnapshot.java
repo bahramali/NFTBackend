@@ -7,7 +7,7 @@ public record LiveNowSnapshot(
 ) {
     public record LayerSnapshot(
             LayerActuatorStatus actuator,
-            LayerSensorSummary growSensors,
-            LayerSensorSummary waterTank
+            GrowSensorSummary growSensors,
+            WaterTankSummary waterTank
     ) {}
 }

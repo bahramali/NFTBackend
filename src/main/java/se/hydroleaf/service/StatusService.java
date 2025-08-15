@@ -4,7 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import se.hydroleaf.dto.LiveNowSnapshot;
 import se.hydroleaf.dto.LayerActuatorStatus;
-import se.hydroleaf.dto.LayerSensorSummary;
+import se.hydroleaf.dto.GrowSensorSummary;
+import se.hydroleaf.dto.WaterTankSummary;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
 import se.hydroleaf.model.Device;
@@ -77,10 +78,18 @@ public class StatusService {
 
             result.computeIfAbsent(system, s -> new HashMap<>())
                     .computeIfAbsent(layer, l -> {
-                        StatusAllAverageResponse all = getAllAverages(system, layer);
-                        LayerActuatorStatus actuator = new LayerActuatorStatus(all.airpump());
-                        LayerSensorSummary growSensors = new LayerSensorSummary(all.light(), all.humidity(), all.temperature(), null);
-                        LayerSensorSummary waterTank = new LayerSensorSummary(null, null, null, all.dissolvedOxygen());
+                        LayerActuatorStatus actuator = new LayerActuatorStatus(getAverage(system, layer, "airPump"));
+                        GrowSensorSummary growSensors = new GrowSensorSummary(
+                                getAverage(system, layer, "light"),
+                                getAverage(system, layer, "humidity"),
+                                getAverage(system, layer, "temperature")
+                        );
+                        WaterTankSummary waterTank = new WaterTankSummary(
+                                getAverage(system, layer, "dissolvedTemp"),
+                                getAverage(system, layer, "dissolvedOxygen"),
+                                getAverage(system, layer, "dissolvedPH"),
+                                getAverage(system, layer, "dissolvedEC")
+                        );
                         return new LiveNowSnapshot.LayerSnapshot(actuator, growSensors, waterTank);
                     });
         }

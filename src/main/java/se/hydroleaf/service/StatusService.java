@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import se.hydroleaf.dto.LiveNowSnapshot;
 import se.hydroleaf.dto.LayerActuatorStatus;
 import se.hydroleaf.dto.GrowSensorSummary;
+import se.hydroleaf.dto.SystemSnapshot;
 import se.hydroleaf.dto.WaterTankSummary;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
@@ -81,7 +82,7 @@ public class StatusService {
     }
 
     public LiveNowSnapshot getLiveNowSnapshot() {
-        Map<String, Map<String, LiveNowSnapshot.LayerSnapshot>> result = new HashMap<>();
+        Map<String, SystemSnapshot> result = new HashMap<>();
         List<Device> devices = deviceRepository.findAll();
         for (Device device : devices) {
             String system = device.getSystem();
@@ -94,22 +95,21 @@ public class StatusService {
                 continue;
             }
 
-            result.computeIfAbsent(system, s -> new HashMap<>())
-                    .computeIfAbsent(layer, l -> {
-                        LayerActuatorStatus actuator = new LayerActuatorStatus(getAverage(system, layer, "airPump"));
-                        GrowSensorSummary growSensors = new GrowSensorSummary(
-                                getAverage(system, layer, "light"),
-                                getAverage(system, layer, "humidity"),
-                                getAverage(system, layer, "temperature")
-                        );
-                        WaterTankSummary waterTank = new WaterTankSummary(
-                                getAverage(system, layer, "dissolvedTemp"),
-                                getAverage(system, layer, "dissolvedOxygen"),
-                                getAverage(system, layer, "dissolvedPH"),
-                                getAverage(system, layer, "dissolvedEC")
-                        );
-                        return new LiveNowSnapshot.LayerSnapshot(actuator, growSensors, waterTank);
-                    });
+            LayerActuatorStatus actuator = new LayerActuatorStatus(getAverage(system, layer, "airPump"));
+            GrowSensorSummary environment = new GrowSensorSummary(
+                    getAverage(system, layer, "light"),
+                    getAverage(system, layer, "humidity"),
+                    getAverage(system, layer, "temperature")
+            );
+            WaterTankSummary water = new WaterTankSummary(
+                    getAverage(system, layer, "dissolvedTemp"),
+                    getAverage(system, layer, "dissolvedOxygen"),
+                    getAverage(system, layer, "dissolvedPH"),
+                    getAverage(system, layer, "dissolvedEC")
+            );
+
+            SystemSnapshot snapshot = new SystemSnapshot(java.time.Instant.now(), actuator, water, environment);
+            result.put(system, snapshot);
         }
         return new LiveNowSnapshot(result);
     }

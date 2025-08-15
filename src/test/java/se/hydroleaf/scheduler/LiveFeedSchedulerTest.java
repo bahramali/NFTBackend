@@ -27,21 +27,22 @@ class LiveFeedSchedulerTest {
     @Test
     void sendLiveNowPublishesSnapshotWithCategorizedDto() {
         LiveNowSnapshot snapshot = new LiveNowSnapshot(
-                Map.of("S1", Map.of("L1",
-                        new LiveNowSnapshot.LayerSnapshot(
+                Map.of("S1",
+                        new SystemSnapshot(
+                                java.time.Instant.now(),
                                 new LayerActuatorStatus(new StatusAverageResponse(1.0,1L)),
-                                new GrowSensorSummary(
-                                        new StatusAverageResponse(2.0,1L),
-                                        new StatusAverageResponse(3.0,1L),
-                                        new StatusAverageResponse(4.0,1L)
-                                ),
                                 new WaterTankSummary(
                                         new StatusAverageResponse(5.0,1L),
                                         new StatusAverageResponse(6.0,1L),
                                         new StatusAverageResponse(7.0,1L),
                                         new StatusAverageResponse(8.0,1L)
+                                ),
+                                new GrowSensorSummary(
+                                        new StatusAverageResponse(2.0,1L),
+                                        new StatusAverageResponse(3.0,1L),
+                                        new StatusAverageResponse(4.0,1L)
                                 )
-                        )))
+                        ))
         );
         when(statusService.getLiveNowSnapshot()).thenReturn(snapshot);
 
@@ -52,8 +53,8 @@ class LiveFeedSchedulerTest {
         verify(messagingTemplate).convertAndSend(eq("/topic/live_now"), captor.capture());
 
         LiveNowSnapshot sent = captor.getValue();
-        assertEquals(6.0, sent.systems().get("S1").get("L1").waterTank().dissolvedOxygen().average());
-        assertEquals(1.0, sent.systems().get("S1").get("L1").actuator().airPump().average());
+        assertEquals(6.0, sent.systems().get("S1").water().dissolvedOxygen().average());
+        assertEquals(1.0, sent.systems().get("S1").actuators().airPump().average());
     }
 }
 

@@ -26,6 +26,7 @@ public class LiveFeedScheduler {
     private final SimpMessagingTemplate messagingTemplate;
     private final ConcurrentHashMap<String, Instant> lastSeen;
     private final ObjectMapper objectMapper;
+    private Instant lastInvocation;
     public LiveFeedScheduler(@Value("${mqtt.publishEnabled:true}") boolean publishEnabled,
                              StatusService statusService,
                              SimpMessagingTemplate messagingTemplate,
@@ -41,7 +42,13 @@ public class LiveFeedScheduler {
     @Scheduled(fixedRateString = "${livefeed.rate:2000}")
     public void sendLiveNow() {
         Instant start = Instant.now();
-        log.info("sendLiveNow invoked at {}", start);
+        if (lastInvocation != null) {
+            long sinceLast = Duration.between(lastInvocation, start).toMillis();
+            log.info("sendLiveNow invoked at {} ({} ms since last)", start, sinceLast);
+        } else {
+            log.info("sendLiveNow invoked at {}", start);
+        }
+        lastInvocation = start;
 
         LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
         Instant afterSnapshot = Instant.now();
@@ -64,6 +71,8 @@ public class LiveFeedScheduler {
         } catch (Exception e) {
             log.warn("sendLiveNow failed: {}", e.getMessage());
         }
+
+        log.debug("sendLiveNow completed in {} ms", Duration.between(start, Instant.now()).toMillis());
     }
 
     @Scheduled(fixedDelay = 10000)

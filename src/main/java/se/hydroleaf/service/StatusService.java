@@ -2,6 +2,10 @@ package se.hydroleaf.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import se.hydroleaf.dto.LiveNowSnapshot;
+import se.hydroleaf.dto.LayerActuatorStatus;
+import se.hydroleaf.dto.GrowSensorSummary;
+import se.hydroleaf.dto.WaterTankSummary;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
 import se.hydroleaf.model.Device;
@@ -58,8 +62,8 @@ public class StatusService {
         );
     }
 
-    public Map<String, Map<String, StatusAllAverageResponse>> getAllSystemLayerAverages() {
-        Map<String, Map<String, StatusAllAverageResponse>> result = new HashMap<>();
+    public LiveNowSnapshot getLiveNowSnapshot() {
+        Map<String, Map<String, LiveNowSnapshot.LayerSnapshot>> result = new HashMap<>();
         List<Device> devices = deviceRepository.findAll();
         for (Device device : devices) {
             String system = device.getSystem();
@@ -73,9 +77,23 @@ public class StatusService {
             }
 
             result.computeIfAbsent(system, s -> new HashMap<>())
-                    .computeIfAbsent(layer, l -> getAllAverages(system, layer));
+                    .computeIfAbsent(layer, l -> {
+                        LayerActuatorStatus actuator = new LayerActuatorStatus(getAverage(system, layer, "airPump"));
+                        GrowSensorSummary growSensors = new GrowSensorSummary(
+                                getAverage(system, layer, "light"),
+                                getAverage(system, layer, "humidity"),
+                                getAverage(system, layer, "temperature")
+                        );
+                        WaterTankSummary waterTank = new WaterTankSummary(
+                                getAverage(system, layer, "dissolvedTemp"),
+                                getAverage(system, layer, "dissolvedOxygen"),
+                                getAverage(system, layer, "dissolvedPH"),
+                                getAverage(system, layer, "dissolvedEC")
+                        );
+                        return new LiveNowSnapshot.LayerSnapshot(actuator, growSensors, waterTank);
+                    });
         }
-        return result;
+        return new LiveNowSnapshot(result);
     }
 
     private boolean isOxygenPump(String sensorType) {

@@ -6,6 +6,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import se.hydroleaf.dto.*;
 import se.hydroleaf.service.StatusService;
 
@@ -52,7 +53,7 @@ class LiveFeedSchedulerTest {
         );
         when(statusService.getLiveNowSnapshot()).thenReturn(snapshot);
 
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(true, statusService, messagingTemplate, new ConcurrentHashMap<>());
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(true, statusService, messagingTemplate, new ConcurrentHashMap<>(), new ObjectMapper());
         scheduler.sendLiveNow();
 
         ArgumentCaptor<LiveNowSnapshot> captor = ArgumentCaptor.forClass(LiveNowSnapshot.class);

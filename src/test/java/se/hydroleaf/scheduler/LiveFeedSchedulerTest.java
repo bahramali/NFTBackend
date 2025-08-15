@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,20 +30,24 @@ class LiveFeedSchedulerTest {
         LiveNowSnapshot snapshot = new LiveNowSnapshot(
                 Map.of("S1",
                         new SystemSnapshot(
-                                java.time.Instant.now(),
-                                new LayerActuatorStatus(new StatusAverageResponse(1.0,"status",1L)),
-                                new WaterTankSummary(
-                                        new StatusAverageResponse(5.0,"°C",1L),
-                                        new StatusAverageResponse(6.0,"mg/L",1L),
-                                        new StatusAverageResponse(7.0,"pH",1L),
-                                        new StatusAverageResponse(8.0,"µS/cm",1L)
-                                ),
-                                new GrowSensorSummary(
-                                        new StatusAverageResponse(2.0,"lux",1L),
-                                        new StatusAverageResponse(3.0,"%",1L),
-                                        new StatusAverageResponse(4.0,"°C",1L)
+                                Map.of("L1",
+                                        new SystemSnapshot.LayerSnapshot(
+                                                java.time.Instant.now(),
+                                                new LayerActuatorStatus(new StatusAverageResponse(1.0,"status",1L)),
+                                                new WaterTankSummary(
+                                                        new StatusAverageResponse(5.0,"°C",1L),
+                                                        new StatusAverageResponse(6.0,"mg/L",1L),
+                                                        new StatusAverageResponse(7.0,"pH",1L),
+                                                        new StatusAverageResponse(8.0,"µS/cm",1L)
+                                                ),
+                                                new GrowSensorSummary(
+                                                        new StatusAverageResponse(2.0,"lux",1L),
+                                                        new StatusAverageResponse(3.0,"%",1L),
+                                                        new StatusAverageResponse(4.0,"°C",1L)
+                                                )
+                                        )
                                 )
-                        ))
+                        )
         );
         when(statusService.getLiveNowSnapshot()).thenReturn(snapshot);
 
@@ -53,8 +58,9 @@ class LiveFeedSchedulerTest {
         verify(messagingTemplate).convertAndSend(eq("/topic/live_now"), captor.capture());
 
         LiveNowSnapshot sent = captor.getValue();
-        assertEquals(6.0, sent.systems().get("S1").water().dissolvedOxygen().average());
-        assertEquals(1.0, sent.systems().get("S1").actuators().airPump().average());
+        assertEquals(6.0, sent.systems().get("S1").layers().get("L1").water().dissolvedOxygen().average());
+        assertEquals(1.0, sent.systems().get("S1").layers().get("L1").actuators().airPump().average());
+        assertNotNull(sent.systems().get("S1").layers().get("L1").lastUpdate());
     }
 }
 

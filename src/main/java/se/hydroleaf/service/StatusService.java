@@ -15,6 +15,7 @@ import se.hydroleaf.repository.AverageResult;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,8 +110,13 @@ public class StatusService {
                     getAverage(system, layer, "electricalConductivity")
             );
 
-            SystemSnapshot snapshot = new SystemSnapshot(java.time.Instant.now(), actuator, water, environment);
-            result.put(system, snapshot);
+            SystemSnapshot systemSnapshot = result.computeIfAbsent(system, s -> new SystemSnapshot(new HashMap<>()));
+            systemSnapshot.layers().put(layer, new SystemSnapshot.LayerSnapshot(
+                    Instant.now(),
+                    actuator,
+                    water,
+                    environment
+            ));
         }
         return new LiveNowSnapshot(result);
     }

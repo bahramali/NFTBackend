@@ -64,6 +64,7 @@ class LiveFeedSchedulerTest {
         verify(messagingTemplate).convertAndSend(eq("/topic/live_now"), captor.capture());
 
         LiveNowSnapshot sent = mapper.readValue(captor.getValue(), LiveNowSnapshot.class);
+        assertEquals(1, sent.systems().get("S1").layers().size());
         SystemSnapshot.LayerSnapshot sentLayer = sent.systems().get("S1").layers().get(0);
         assertEquals(6.0, sentLayer.water().dissolvedOxygen().average());
         assertEquals(1.0, sentLayer.actuators().airPump().average());

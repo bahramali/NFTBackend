@@ -3,6 +3,7 @@ package se.hydroleaf.mqtt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 import se.hydroleaf.service.DeviceProvisionService;
@@ -21,6 +22,7 @@ import java.util.regex.Pattern;
 @Component
 public class MqttMessageHandler {
 
+    private final boolean publishEnabled;
     private final ObjectMapper objectMapper;
     private final RecordService recordService;
     private final SimpMessagingTemplate messagingTemplate;
@@ -28,11 +30,13 @@ public class MqttMessageHandler {
 
     private final ConcurrentHashMap<String, Instant> lastSeen;
 
-    public MqttMessageHandler(ObjectMapper objectMapper,
+    public MqttMessageHandler(@Value("${mqtt.publishEnabled:true}") boolean publishEnabled,
+                              ObjectMapper objectMapper,
                               RecordService recordService,
                               SimpMessagingTemplate messagingTemplate,
                               DeviceProvisionService deviceProvisionService,
                               ConcurrentHashMap<String, Instant> lastSeen) {
+        this.publishEnabled = publishEnabled;
         this.objectMapper = objectMapper;
         this.recordService = recordService;
         this.messagingTemplate = messagingTemplate;
@@ -41,6 +45,10 @@ public class MqttMessageHandler {
     }
 
     public void handle(String topic, String payload) {
+        if (!publishEnabled){
+            log.info("Local not publish to mqtt");
+            return; // block in local
+        }
         messagingTemplate.convertAndSend("/topic/" + topic, payload);
         try {
             JsonNode node = objectMapper.readTree(payload);

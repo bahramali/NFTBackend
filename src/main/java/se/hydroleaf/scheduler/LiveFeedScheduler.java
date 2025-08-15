@@ -1,6 +1,7 @@
 package se.hydroleaf.scheduler;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -18,13 +19,16 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class LiveFeedScheduler {
 
+    private final boolean publishEnabled;
     private final StatusService statusService;
     private final SimpMessagingTemplate messagingTemplate;
     private final ConcurrentHashMap<String, Instant> lastSeen;
 
-    public LiveFeedScheduler(StatusService statusService,
-                              SimpMessagingTemplate messagingTemplate,
-                              ConcurrentHashMap<String, Instant> lastSeen) {
+    public LiveFeedScheduler(@Value("${mqtt.publishEnabled:true}") boolean publishEnabled,
+                             StatusService statusService,
+                             SimpMessagingTemplate messagingTemplate,
+                             ConcurrentHashMap<String, Instant> lastSeen) {
+        this.publishEnabled = publishEnabled;
         this.statusService = statusService;
         this.messagingTemplate = messagingTemplate;
         this.lastSeen = lastSeen;
@@ -32,6 +36,10 @@ public class LiveFeedScheduler {
 
     @Scheduled(fixedRate = 2000)
     public void sendLiveNow() {
+        if (!publishEnabled){
+            log.info("Local not publish to mqtt");
+            return; // block in local
+        }
         try {
             LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
             log.info("sending to /topic/live_now: {}", snapshot);

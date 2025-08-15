@@ -45,7 +45,7 @@ class LiveFeedSchedulerTest {
         );
         when(statusService.getLiveNowSnapshot()).thenReturn(snapshot);
 
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, messagingTemplate, new ConcurrentHashMap<>());
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(true, statusService, messagingTemplate, new ConcurrentHashMap<>());
         scheduler.sendLiveNow();
 
         ArgumentCaptor<LiveNowSnapshot> captor = ArgumentCaptor.forClass(LiveNowSnapshot.class);

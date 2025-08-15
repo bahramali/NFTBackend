@@ -22,6 +22,7 @@ mqtt:
   qos: 1
   topicPrefix: ""
   enabled: true
+  publishEnabled: false
 server:
   ssl:
     enabled: false

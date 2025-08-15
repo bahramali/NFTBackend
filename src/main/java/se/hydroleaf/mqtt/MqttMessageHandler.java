@@ -58,7 +58,11 @@ public class MqttMessageHandler {
                 compositeId = deriveCompositeIdFromTopic(topic);
             }
             if (compositeId == null || compositeId.isBlank()) {
-                log.warn("MQTT parse/handle failed on topic {}: missing composite_id", topic);
+                if (topic == null || !topic.contains("/")) {
+                    log.debug("Ignoring MQTT message on topic {} without composite_id", topic);
+                } else {
+                    log.warn("MQTT parse/handle failed on topic {}: missing composite_id", topic);
+                }
                 return;
             }
 

@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class MqttMessageHandlerWaterTankTest {
@@ -49,5 +50,16 @@ class MqttMessageHandlerWaterTankTest {
         verify(deviceProvisionService).ensureDevice(eq("S01-L01-probe1"), eq(topic));
         verify(recordService).saveRecord(eq("S01-L01-probe1"), any());
         assertTrue(lastSeen.containsKey("S01-L01-probe1"));
+    }
+
+    @Test
+    void waterTankBaseTopicWithoutCompositeId_isIgnored() {
+        String topic = "waterTank";
+        String payload = "{}";
+
+        handler.handle(topic, payload);
+
+        verifyNoInteractions(deviceProvisionService, recordService);
+        assertTrue(lastSeen.isEmpty());
     }
 }

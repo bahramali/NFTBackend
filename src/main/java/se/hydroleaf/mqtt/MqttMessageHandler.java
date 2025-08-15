@@ -45,11 +45,11 @@ public class MqttMessageHandler {
     }
 
     public void handle(String topic, String payload) {
-        if (!publishEnabled){
-            log.info("Local not publish to mqtt");
-            return; // block in local
+        if (publishEnabled) {
+            messagingTemplate.convertAndSend("/topic/" + topic, payload);
+        } else {
+            log.info("publishing to /topic/{}, payload: {}", topic, payload);
         }
-        messagingTemplate.convertAndSend("/topic/" + topic, payload);
         try {
             JsonNode node = objectMapper.readTree(payload);
 

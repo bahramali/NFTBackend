@@ -36,13 +36,12 @@ public class LiveFeedScheduler {
 
     @Scheduled(fixedRate = 2000)
     public void sendLiveNow() {
-        if (!publishEnabled){
-            log.info("Local not publish to mqtt");
+        LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
+        if (!publishEnabled) {
+            log.info("Should publish to /topic/live_now with payload: {}", snapshot);
             return; // block in local
         }
         try {
-            LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
-            log.info("sending to /topic/live_now: {}", snapshot);
             messagingTemplate.convertAndSend("/topic/live_now", snapshot);
         } catch (Exception e) {
             log.warn("sendLiveNow failed: {}", e.getMessage());

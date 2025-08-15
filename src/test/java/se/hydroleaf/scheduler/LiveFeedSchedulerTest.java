@@ -6,7 +6,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import se.hydroleaf.dto.*;
 import se.hydroleaf.service.StatusService;
 
@@ -27,7 +31,7 @@ class LiveFeedSchedulerTest {
     private SimpMessagingTemplate messagingTemplate;
 
     @Test
-    void sendLiveNowPublishesSnapshotWithCategorizedDto() {
+    void sendLiveNowPublishesSnapshotWithCategorizedDto() throws Exception {
         LiveNowSnapshot snapshot = new LiveNowSnapshot(
                 Map.of("S1",
                         new SystemSnapshot(
@@ -53,13 +57,16 @@ class LiveFeedSchedulerTest {
         );
         when(statusService.getLiveNowSnapshot()).thenReturn(snapshot);
 
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(true, statusService, messagingTemplate, new ConcurrentHashMap<>(), new ObjectMapper());
+        ObjectMapper mapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(true, statusService, messagingTemplate, new ConcurrentHashMap<>(), mapper);
         scheduler.sendLiveNow();
 
-        ArgumentCaptor<LiveNowSnapshot> captor = ArgumentCaptor.forClass(LiveNowSnapshot.class);
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(messagingTemplate).convertAndSend(eq("/topic/live_now"), captor.capture());
 
-        LiveNowSnapshot sent = captor.getValue();
+        LiveNowSnapshot sent = mapper.readValue(captor.getValue(), LiveNowSnapshot.class);
         assertEquals(6.0, sent.systems().get("S1").layers().get("L1").water().dissolvedOxygen().average());
         assertEquals(1.0, sent.systems().get("S1").layers().get("L1").actuators().airPump().average());
         assertNotNull(sent.systems().get("S1").layers().get("L1").lastUpdate());

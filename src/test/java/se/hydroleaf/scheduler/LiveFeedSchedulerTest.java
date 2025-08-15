@@ -14,6 +14,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import se.hydroleaf.dto.*;
 import se.hydroleaf.service.StatusService;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,28 +33,25 @@ class LiveFeedSchedulerTest {
 
     @Test
     void sendLiveNowPublishesSnapshotWithCategorizedDto() throws Exception {
-        LiveNowSnapshot snapshot = new LiveNowSnapshot(
-                Map.of("S1",
-                        new SystemSnapshot(
-                                Map.of("L1",
-                                        new SystemSnapshot.LayerSnapshot(
-                                                java.time.Instant.now(),
-                                                new LayerActuatorStatus(new StatusAverageResponse(1.0, "status", 1L)),
-                                                new WaterTankSummary(
-                                                        new StatusAverageResponse(5.0, "°C", 1L),
-                                                        new StatusAverageResponse(6.0, "mg/L", 1L),
-                                                        new StatusAverageResponse(7.0, "pH", 1L),
-                                                        new StatusAverageResponse(8.0, "µS/cm", 1L)
-                                                ),
-                                                new GrowSensorSummary(
-                                                        new StatusAverageResponse(2.0, "lux", 1L),
-                                                        new StatusAverageResponse(3.0, "%", 1L),
-                                                        new StatusAverageResponse(4.0, "°C", 1L)
-                                                )
-                                        )
-                                )
-                        )
+        SystemSnapshot.LayerSnapshot layerSnapshot = new SystemSnapshot.LayerSnapshot(
+                "L1",
+                java.time.Instant.now(),
+                new LayerActuatorStatus(new StatusAverageResponse(1.0, "status", 1L)),
+                new WaterTankSummary(
+                        new StatusAverageResponse(5.0, "°C", 1L),
+                        new StatusAverageResponse(6.0, "mg/L", 1L),
+                        new StatusAverageResponse(7.0, "pH", 1L),
+                        new StatusAverageResponse(8.0, "µS/cm", 1L)
+                ),
+                new GrowSensorSummary(
+                        new StatusAverageResponse(2.0, "lux", 1L),
+                        new StatusAverageResponse(3.0, "%", 1L),
+                        new StatusAverageResponse(4.0, "°C", 1L)
                 )
+        );
+        SystemSnapshot.CategorySnapshot categorySnapshot = new SystemSnapshot.CategorySnapshot(List.of(layerSnapshot));
+        LiveNowSnapshot snapshot = new LiveNowSnapshot(
+                Map.of("S1", new SystemSnapshot(categorySnapshot, categorySnapshot))
         );
         when(statusService.getLiveNowSnapshot()).thenReturn(snapshot);
 
@@ -67,9 +65,10 @@ class LiveFeedSchedulerTest {
         verify(messagingTemplate).convertAndSend(eq("/topic/live_now"), captor.capture());
 
         LiveNowSnapshot sent = mapper.readValue(captor.getValue(), LiveNowSnapshot.class);
-        assertEquals(6.0, sent.systems().get("S1").layers().get("L1").water().dissolvedOxygen().average());
-        assertEquals(1.0, sent.systems().get("S1").layers().get("L1").actuators().airPump().average());
-        assertNotNull(sent.systems().get("S1").layers().get("L1").lastUpdate());
+        SystemSnapshot.LayerSnapshot sentLayer = sent.systems().get("S1").water().byLayer().get(0);
+        assertEquals(6.0, sentLayer.water().dissolvedOxygen().average());
+        assertEquals(1.0, sentLayer.actuators().airPump().average());
+        assertNotNull(sentLayer.lastUpdate());
     }
 }
 

@@ -16,6 +16,7 @@ import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +85,7 @@ public class StatusService {
     }
 
     public LiveNowSnapshot getLiveNowSnapshot() {
-        Map<String, SystemSnapshot> result = new HashMap<>();
+        Map<String, List<SystemSnapshot.LayerSnapshot>> systemLayers = new HashMap<>();
         List<Device> devices = deviceRepository.findAll();
         for (Device device : devices) {
             String system = device.getSystem();
@@ -110,13 +111,20 @@ public class StatusService {
                     getAverage(system, layer, "electricalConductivity")
             );
 
-            SystemSnapshot systemSnapshot = result.computeIfAbsent(system, s -> new SystemSnapshot(new HashMap<>()));
-            systemSnapshot.layers().put(layer, new SystemSnapshot.LayerSnapshot(
+            List<SystemSnapshot.LayerSnapshot> layers = systemLayers.computeIfAbsent(system, s -> new ArrayList<>());
+            layers.add(new SystemSnapshot.LayerSnapshot(
+                    layer,
                     Instant.now(),
                     actuator,
                     water,
                     environment
             ));
+        }
+
+        Map<String, SystemSnapshot> result = new HashMap<>();
+        for (Map.Entry<String, List<SystemSnapshot.LayerSnapshot>> entry : systemLayers.entrySet()) {
+            SystemSnapshot.CategorySnapshot snapshot = new SystemSnapshot.CategorySnapshot(entry.getValue());
+            result.put(entry.getKey(), new SystemSnapshot(snapshot, snapshot));
         }
         return new LiveNowSnapshot(result);
     }

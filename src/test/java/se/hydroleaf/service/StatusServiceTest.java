@@ -9,6 +9,7 @@ import org.mockito.Spy;
 import se.hydroleaf.dto.LiveNowSnapshot;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
+import se.hydroleaf.dto.SystemSnapshot;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.AverageResult;
@@ -145,10 +146,16 @@ class StatusServiceTest {
 
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
-        assertEquals(pump, result.systems().get("S01").layers().get("L01").actuators().airPump());
-        assertEquals(light, result.systems().get("S01").layers().get("L01").environment().light());
-        assertEquals(dOxy, result.systems().get("S02").layers().get("L01").water().dissolvedOxygen());
-        assertNotNull(result.systems().get("S01").layers().get("L01").lastUpdate());
+        SystemSnapshot.LayerSnapshot s01Layer = result.systems().get("S01").water().byLayer().stream()
+                .filter(l -> l.layerId().equals("L01"))
+                .findFirst().orElseThrow();
+        SystemSnapshot.LayerSnapshot s02Layer = result.systems().get("S02").water().byLayer().stream()
+                .filter(l -> l.layerId().equals("L01"))
+                .findFirst().orElseThrow();
+        assertEquals(pump, s01Layer.actuators().airPump());
+        assertEquals(light, s01Layer.environment().light());
+        assertEquals(dOxy, s02Layer.water().dissolvedOxygen());
+        assertNotNull(s01Layer.lastUpdate());
 
         verify(statusService, atLeastOnce()).getAverage("S01", "L01", "airPump");
         verify(statusService, atLeastOnce()).getAverage("S01", "L01", "light");
@@ -173,8 +180,9 @@ class StatusServiceTest {
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
         assertEquals(1, result.systems().size());
-        assertEquals(pump, result.systems().get("S01").layers().get("L01").actuators().airPump());
-        assertNotNull(result.systems().get("S01").layers().get("L01").lastUpdate());
+        SystemSnapshot.LayerSnapshot layerSnapshot = result.systems().get("S01").water().byLayer().get(0);
+        assertEquals(pump, layerSnapshot.actuators().airPump());
+        assertNotNull(layerSnapshot.lastUpdate());
         verify(statusService, atLeastOnce()).getAverage("S01", "L01", "airPump");
     }
 

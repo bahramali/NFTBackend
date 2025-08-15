@@ -5,16 +5,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.model.Device;
-import se.hydroleaf.model.OxygenPumpStatus;
+import se.hydroleaf.model.ActuatorStatus;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.repository.OxygenPumpStatusRepository;
+import se.hydroleaf.repository.ActuatorStatusRepository;
 
 import java.time.Instant;
 import java.util.Objects;
 
 /**
  * ActuatorService
- * - Saves oxygen pump status aligned with Option-1 (Device PK = composite_id).
+ * - Saves controller actuator states aligned with Option-1 (Device PK = composite_id).
  * - Required fields in payload:
  *    - composite_id (or compositeId)
  *    - controllers[]: array with entries {name:"airPump", state:true/false, timestamp?}
@@ -25,20 +25,20 @@ import java.util.Objects;
 public class ActuatorService {
 
     private final ObjectMapper objectMapper;
-    private final OxygenPumpStatusRepository pumpRepo;
+    private final ActuatorStatusRepository actuatorRepo;
     private final DeviceRepository deviceRepo;
 
     public ActuatorService(ObjectMapper objectMapper,
-                           OxygenPumpStatusRepository pumpRepo,
+                           ActuatorStatusRepository actuatorRepo,
                            DeviceRepository deviceRepo) {
         this.objectMapper = objectMapper;
-        this.pumpRepo = pumpRepo;
+        this.actuatorRepo = actuatorRepo;
         this.deviceRepo = deviceRepo;
     }
 
     /** Entry point used by tests and other layers. */
     @Transactional
-    public void saveOxygenPumpStatus(String jsonString) {
+    public void saveActuatorStatus(String jsonString) {
         Objects.requireNonNull(jsonString, "payload is null");
         try {
             JsonNode node = objectMapper.readTree(jsonString);
@@ -55,35 +55,39 @@ public class ActuatorService {
             // 2) Base timestamp (optional)
             Instant baseTs = readTimestamp(node);
 
-            // 3) Controllers array with airPump entry
+            // 3) Controllers array with actuator entries
             JsonNode controllers = node.path("controllers");
             boolean savedAny = false;
             if (controllers.isArray()) {
                 for (JsonNode c : controllers) {
                     String name = c.path("name").asText(null);
-                    if (name != null && name.equalsIgnoreCase("airPump")) {
-                        Boolean status = readStatus(c.path("state"));
-                        if (status == null) continue;
-                        Instant ts = c.hasNonNull("timestamp") ? readTimestamp(c) : baseTs;
-
-                        OxygenPumpStatus row = new OxygenPumpStatus();
-                        row.setDevice(device);   // FK via composite_id
-                        row.setTimestamp(ts);
-                        row.setStatus(status);
-                        pumpRepo.save(row);
-                        savedAny = true;
+                    if (name == null || name.isBlank()) {
+                        continue;
                     }
+                    Boolean status = readStatus(c.path("state"));
+                    if (status == null) {
+                        continue;
+                    }
+                    Instant ts = c.hasNonNull("timestamp") ? readTimestamp(c) : baseTs;
+
+                    ActuatorStatus row = new ActuatorStatus();
+                    row.setDevice(device);   // FK via composite_id
+                    row.setTimestamp(ts);
+                    row.setActuatorType(name);
+                    row.setState(status);
+                    actuatorRepo.save(row);
+                    savedAny = true;
                 }
             }
 
             if (!savedAny) {
-                throw new IllegalArgumentException("controllers array with airPump state is required");
+                throw new IllegalArgumentException("controllers array with actuator state is required");
             }
 
         } catch (IllegalArgumentException iae) {
             throw iae;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to parse and save oxygen pump status", e);
+            throw new RuntimeException("Failed to parse and save actuator status", e);
         }
     }
 

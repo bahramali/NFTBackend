@@ -8,8 +8,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import se.hydroleaf.model.Device;
-import se.hydroleaf.model.OxygenPumpStatus;
-import se.hydroleaf.repository.OxygenPumpStatusRepository;
+import se.hydroleaf.model.ActuatorStatus;
+import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.DeviceRepository;
 
 import java.time.Instant;
@@ -21,14 +21,14 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ActuatorServiceTest {
 
-    @Mock OxygenPumpStatusRepository pumpRepo;
+    @Mock ActuatorStatusRepository actuatorRepo;
     @Mock DeviceRepository deviceRepo;
 
     private ActuatorService actuatorService;
 
     @BeforeEach
     void setup() {
-        this.actuatorService = new ActuatorService(new ObjectMapper(), pumpRepo, deviceRepo);
+        this.actuatorService = new ActuatorService(new ObjectMapper(), actuatorRepo, deviceRepo);
     }
 
     private Device device(String compositeId) {
@@ -52,15 +52,16 @@ class ActuatorServiceTest {
                 }
                 """;
 
-        actuatorService.saveOxygenPumpStatus(json);
+        actuatorService.saveActuatorStatus(json);
 
-        ArgumentCaptor<OxygenPumpStatus> captor = ArgumentCaptor.forClass(OxygenPumpStatus.class);
-        verify(pumpRepo, times(1)).save(captor.capture());
-        OxygenPumpStatus saved = captor.getValue();
+        ArgumentCaptor<ActuatorStatus> captor = ArgumentCaptor.forClass(ActuatorStatus.class);
+        verify(actuatorRepo, times(1)).save(captor.capture());
+        ActuatorStatus saved = captor.getValue();
 
         assertEquals(compositeId, saved.getDevice().getCompositeId());
         assertEquals(Instant.parse("2023-01-01T00:00:00Z"), saved.getTimestamp());
-        assertTrue(saved.getStatus());
+        assertTrue(saved.getState());
+        assertEquals("airPump", saved.getActuatorType());
     }
 
     @Test
@@ -85,21 +86,23 @@ class ActuatorServiceTest {
                 }
                 """;
 
-        actuatorService.saveOxygenPumpStatus(jsonTrue);
-        actuatorService.saveOxygenPumpStatus(jsonNum);
+        actuatorService.saveActuatorStatus(jsonTrue);
+        actuatorService.saveActuatorStatus(jsonNum);
 
-        ArgumentCaptor<OxygenPumpStatus> captor = ArgumentCaptor.forClass(OxygenPumpStatus.class);
-        verify(pumpRepo, times(2)).save(captor.capture());
+        ArgumentCaptor<ActuatorStatus> captor = ArgumentCaptor.forClass(ActuatorStatus.class);
+        verify(actuatorRepo, times(2)).save(captor.capture());
 
-        OxygenPumpStatus first = captor.getAllValues().get(0);
-        OxygenPumpStatus second = captor.getAllValues().get(1);
+        ActuatorStatus first = captor.getAllValues().get(0);
+        ActuatorStatus second = captor.getAllValues().get(1);
 
         assertEquals(Instant.parse("2024-02-02T12:00:00Z"), first.getTimestamp());
         assertEquals(Instant.parse("2024-02-02T12:01:00Z"), second.getTimestamp());
-        assertTrue(first.getStatus());
-        assertTrue(second.getStatus());
+        assertTrue(first.getState());
+        assertTrue(second.getState());
         assertEquals(compositeId, first.getDevice().getCompositeId());
         assertEquals(compositeId, second.getDevice().getCompositeId());
+        assertEquals("airPump", first.getActuatorType());
+        assertEquals("airPump", second.getActuatorType());
     }
 
     @Test
@@ -113,10 +116,10 @@ class ActuatorServiceTest {
                 """;
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> actuatorService.saveOxygenPumpStatus(json));
+                () -> actuatorService.saveActuatorStatus(json));
 
         assertTrue(ex.getMessage().toLowerCase().contains("composite"));
-        verifyNoInteractions(pumpRepo);
+        verifyNoInteractions(actuatorRepo);
     }
 }
 

@@ -167,6 +167,46 @@ class StatusServiceTest {
     }
 
     @Test
+    void getLiveNowSnapshotAggregatesMultipleLayers() {
+        Device d1 = Device.builder().compositeId("1").system("S01").layer("L01").build();
+        Device d2 = Device.builder().compositeId("2").system("S01").layer("L02").build();
+        when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2));
+
+        StatusAverageResponse pumpL1 = new StatusAverageResponse(1.0, "status",1L);
+        StatusAverageResponse pumpL2 = new StatusAverageResponse(3.0, "status",1L);
+        StatusAverageResponse waterL1 = new StatusAverageResponse(10.0, "°C",1L);
+        StatusAverageResponse waterL2 = new StatusAverageResponse(30.0, "°C",1L);
+
+        doAnswer(invocation -> {
+            String layer = invocation.getArgument(1);
+            String type = invocation.getArgument(2);
+            return switch (layer + type) {
+                case "L01airPump" -> pumpL1;
+                case "L02airPump" -> pumpL2;
+                case "L01waterTemperature" -> waterL1;
+                case "L02waterTemperature" -> waterL2;
+                default -> new StatusAverageResponse(null, null,0L);
+            };
+        }).when(statusService).getAverage(anyString(), anyString(), anyString());
+
+        LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
+
+        SystemSnapshot system = snapshot.systems().get("S01");
+        SystemSnapshot.LayerSnapshot layer1 = system.layers().stream()
+                .filter(l -> l.layerId().equals("L01"))
+                .findFirst().orElseThrow();
+        SystemSnapshot.LayerSnapshot layer2 = system.layers().stream()
+                .filter(l -> l.layerId().equals("L02"))
+                .findFirst().orElseThrow();
+
+        assertEquals(2.0, system.actuators().airPump().average());
+        assertEquals(20.0, system.water().waterTemperature().average());
+        assertEquals(layer2.lastUpdate(), system.lastUpdate());
+        assertEquals(pumpL1, layer1.actuators().airPump());
+        assertEquals(waterL2, layer2.water().waterTemperature());
+    }
+
+    @Test
     void getLiveNowSnapshotSkipsBlankSystemOrLayer() {
         Device d1 = Device.builder().compositeId("1").system("").layer("L01").build();
         Device d2 = Device.builder().compositeId("2").system("S01").layer(" ").build();

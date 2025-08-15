@@ -42,6 +42,7 @@ class StatusServiceTest {
 
         StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "light");
         assertEquals(10.0, response.average());
+        assertEquals("lux", response.unit());
         assertEquals(3L, response.deviceCount());
         verify(sensorDataRepository).getLatestAverage("Sys", "Layer", "light");
         verifyNoInteractions(actuatorStatusRepository);
@@ -55,6 +56,7 @@ class StatusServiceTest {
 
         StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "dissolvedOxygen");
         assertEquals(9.9, response.average());
+        assertEquals("mg/L", response.unit());
         assertEquals(4L, response.deviceCount());
         verify(sensorDataRepository).getLatestAverage("Sys", "Layer", "dissolvedOxygen");
         verifyNoInteractions(actuatorStatusRepository);
@@ -68,6 +70,7 @@ class StatusServiceTest {
 
         StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "airpump");
         assertEquals(1.5, response.average());
+        assertEquals("status", response.unit());
         assertEquals(2L, response.deviceCount());
         verify(actuatorStatusRepository).getLatestActuatorAverage("Sys", "Layer", "airpump");
         verifyNoMoreInteractions(actuatorStatusRepository);
@@ -80,15 +83,15 @@ class StatusServiceTest {
                 .thenReturn(simpleResult(1.0, 1L));
         when(sensorDataRepository.getLatestAverage("sys", "layer", "humidity"))
                 .thenReturn(simpleResult(2.0, 2L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "temperature"))
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "airTemperature"))
                 .thenReturn(simpleResult(3.0, 3L));
         when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedOxygen"))
                 .thenReturn(simpleResult(4.0, 4L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedTemp"))
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "waterTemperature"))
                 .thenReturn(simpleResult(5.0, 5L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedPH"))
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "pH"))
                 .thenReturn(simpleResult(6.0, 6L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedEC"))
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "electricalConductivity"))
                 .thenReturn(simpleResult(7.0, 7L));
         when(actuatorStatusRepository.getLatestActuatorAverage("sys", "layer", "airPump"))
                 .thenReturn(simpleResult(8.0, 8L));
@@ -97,16 +100,16 @@ class StatusServiceTest {
 
         assertEquals(1.0, response.growSensors().get("light").average());
         assertEquals(2.0, response.growSensors().get("humidity").average());
-        assertEquals(3.0, response.growSensors().get("temperature").average());
-        assertEquals(5.0, response.waterTank().get("dissolvedTemp").average());
+        assertEquals(3.0, response.growSensors().get("airTemperature").average());
+        assertEquals(5.0, response.waterTank().get("waterTemperature").average());
         assertEquals(4.0, response.waterTank().get("dissolvedOxygen").average());
-        assertEquals(6.0, response.waterTank().get("dissolvedPH").average());
-        assertEquals(7.0, response.waterTank().get("dissolvedEC").average());
+        assertEquals(6.0, response.waterTank().get("pH").average());
+        assertEquals(7.0, response.waterTank().get("electricalConductivity").average());
         assertEquals(8.0, response.airpump().average());
 
-        verify(sensorDataRepository).getLatestAverage("sys", "layer", "dissolvedTemp");
-        verify(sensorDataRepository).getLatestAverage("sys", "layer", "dissolvedPH");
-        verify(sensorDataRepository).getLatestAverage("sys", "layer", "dissolvedEC");
+        verify(sensorDataRepository).getLatestAverage("sys", "layer", "waterTemperature");
+        verify(sensorDataRepository).getLatestAverage("sys", "layer", "pH");
+        verify(sensorDataRepository).getLatestAverage("sys", "layer", "electricalConductivity");
     }
 
     @Test
@@ -115,14 +118,14 @@ class StatusServiceTest {
         Device d2 = Device.builder().compositeId("2").system("S02").layer("L01").build();
         when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2));
 
-        StatusAverageResponse pump = new StatusAverageResponse(1.0, 1L);
-        StatusAverageResponse light = new StatusAverageResponse(2.0, 2L);
-        StatusAverageResponse humidity = new StatusAverageResponse(3.0, 3L);
-        StatusAverageResponse temp = new StatusAverageResponse(4.0, 4L);
-        StatusAverageResponse dTemp = new StatusAverageResponse(5.0, 5L);
-        StatusAverageResponse dOxy = new StatusAverageResponse(6.0, 6L);
-        StatusAverageResponse dPh = new StatusAverageResponse(7.0, 7L);
-        StatusAverageResponse dEc = new StatusAverageResponse(8.0, 8L);
+        StatusAverageResponse pump = new StatusAverageResponse(1.0, "status",1L);
+        StatusAverageResponse light = new StatusAverageResponse(2.0, "lux",2L);
+        StatusAverageResponse humidity = new StatusAverageResponse(3.0, "%",3L);
+        StatusAverageResponse temp = new StatusAverageResponse(4.0, "°C",4L);
+        StatusAverageResponse dTemp = new StatusAverageResponse(5.0, "°C",5L);
+        StatusAverageResponse dOxy = new StatusAverageResponse(6.0, "mg/L",6L);
+        StatusAverageResponse dPh = new StatusAverageResponse(7.0, "pH",7L);
+        StatusAverageResponse dEc = new StatusAverageResponse(8.0, "µS/cm",8L);
 
         doAnswer(invocation -> {
             String type = invocation.getArgument(2);
@@ -130,11 +133,11 @@ class StatusServiceTest {
                 case "airPump" -> pump;
                 case "light" -> light;
                 case "humidity" -> humidity;
-                case "temperature" -> temp;
-                case "dissolvedTemp" -> dTemp;
+                case "airTemperature" -> temp;
+                case "waterTemperature" -> dTemp;
                 case "dissolvedOxygen" -> dOxy;
-                case "dissolvedPH" -> dPh;
-                case "dissolvedEC" -> dEc;
+                case "pH" -> dPh;
+                case "electricalConductivity" -> dEc;
                 default -> null;
             };
         }).when(statusService).getAverage(anyString(), anyString(), anyString());
@@ -159,10 +162,10 @@ class StatusServiceTest {
         Device valid = Device.builder().compositeId("5").system("S01").layer("L01").build();
         when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2, d3, d4, valid));
 
-        StatusAverageResponse pump = new StatusAverageResponse(1.0, 1L);
+        StatusAverageResponse pump = new StatusAverageResponse(1.0, "status",1L);
         doAnswer(invocation -> {
             String type = invocation.getArgument(2);
-            return "airPump".equals(type) ? pump : new StatusAverageResponse(null, 0L);
+            return "airPump".equals(type) ? pump : new StatusAverageResponse(null, null,0L);
         }).when(statusService).getAverage(anyString(), anyString(), anyString());
 
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();

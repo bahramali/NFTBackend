@@ -1,3 +1,8 @@
 package se.hydroleaf.dto;
 
-public record StatusAverageResponse(Double average, long deviceCount) {}
+/**
+ * Represents an average value for a sensor or actuator together with its unit
+ * and how many devices contributed to the average.
+ */
+public record StatusAverageResponse(Double average, String unit, long deviceCount) {}
+

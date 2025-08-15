@@ -2,6 +2,7 @@ package se.hydroleaf.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.dto.LiveNowSnapshot;
 import se.hydroleaf.dto.LayerActuatorStatus;
 import se.hydroleaf.dto.GrowSensorSummary;
@@ -26,6 +27,7 @@ import java.util.function.Function;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 public class StatusService {
 
     private final SensorDataRepository sensorDataRepository;

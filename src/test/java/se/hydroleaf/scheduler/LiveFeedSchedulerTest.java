@@ -41,7 +41,8 @@ class LiveFeedSchedulerTest {
                         new StatusAverageResponse(5.0, "°C", 1L),
                         new StatusAverageResponse(6.0, "mg/L", 1L),
                         new StatusAverageResponse(7.0, "pH", 1L),
-                        new StatusAverageResponse(8.0, "µS/cm", 1L)
+                        new StatusAverageResponse(8.0, "mS/cm", 1L),
+                        new StatusAverageResponse(9.0, "ppm", 1L)
                 ),
                 new GrowSensorSummary(
                         new StatusAverageResponse(2.0, "lux", 1L),
@@ -56,7 +57,8 @@ class LiveFeedSchedulerTest {
                         new StatusAverageResponse(5.0, "°C", 1L),
                         new StatusAverageResponse(6.0, "mg/L", 1L),
                         new StatusAverageResponse(7.0, "pH", 1L),
-                        new StatusAverageResponse(8.0, "µS/cm", 1L)
+                        new StatusAverageResponse(8.0, "mS/cm", 1L),
+                        new StatusAverageResponse(9.0, "ppm", 1L)
                 ),
                 new GrowSensorSummary(
                         new StatusAverageResponse(2.0, "lux", 1L),

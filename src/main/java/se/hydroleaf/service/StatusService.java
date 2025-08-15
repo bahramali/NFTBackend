@@ -60,9 +60,10 @@ public class StatusService {
                 "humidity",
                 "airTemperature",
                 "dissolvedOxygen",
-                "waterTemperature",
+                "dissolvedTemp",
                 "pH",
-                "electricalConductivity",
+                "dissolvedEC",
+                "dissolvedTDS",
                 oxygenPumpType
         );
         Map<String, StatusAverageResponse> responses = new HashMap<>();
@@ -74,11 +75,12 @@ public class StatusService {
                 "humidity", responses.get("humidity"),
                 "airTemperature", responses.get("airTemperature")
         );
-        Map<String, StatusAverageResponse> waterTank = Map.of(
-                "waterTemperature", responses.get("waterTemperature"),
-                "dissolvedOxygen", responses.get("dissolvedOxygen"),
-                "pH", responses.get("pH"),
-                "electricalConductivity", responses.get("electricalConductivity")
+        Map<String, StatusAverageResponse> waterTank = Map.ofEntries(
+                Map.entry("dissolvedTemp", responses.get("dissolvedTemp")),
+                Map.entry("dissolvedOxygen", responses.get("dissolvedOxygen")),
+                Map.entry("pH", responses.get("pH")),
+                Map.entry("dissolvedEC", responses.get("dissolvedEC")),
+                Map.entry("dissolvedTDS", responses.get("dissolvedTDS"))
         );
         return new StatusAllAverageResponse(
                 growSensors,
@@ -110,10 +112,11 @@ public class StatusService {
                         getAverage(system, layer, "airTemperature")
                 );
                 WaterTankSummary water = new WaterTankSummary(
-                        getAverage(system, layer, "waterTemperature"),
+                        getAverage(system, layer, "dissolvedTemp"),
                         getAverage(system, layer, "dissolvedOxygen"),
                         getAverage(system, layer, "pH"),
-                        getAverage(system, layer, "electricalConductivity")
+                        getAverage(system, layer, "dissolvedEC"),
+                        getAverage(system, layer, "dissolvedTDS")
                 );
 
                 return new SystemSnapshot.LayerSnapshot(
@@ -136,10 +139,11 @@ public class StatusService {
             StatusAverageResponse airPump = aggregate(layers, l -> l.actuators().airPump());
             SystemActuatorStatus actuators = new SystemActuatorStatus(airPump);
             WaterTankSummary water = new WaterTankSummary(
-                    aggregate(layers, l -> l.water().waterTemperature()),
+                    aggregate(layers, l -> l.water().dissolvedTemp()),
                     aggregate(layers, l -> l.water().dissolvedOxygen()),
                     aggregate(layers, l -> l.water().pH()),
-                    aggregate(layers, l -> l.water().electricalConductivity())
+                    aggregate(layers, l -> l.water().dissolvedEC()),
+                    aggregate(layers, l -> l.water().dissolvedTDS())
             );
             GrowSensorSummary environment = new GrowSensorSummary(
                     aggregate(layers, l -> l.environment().light()),
@@ -187,10 +191,11 @@ public class StatusService {
         return switch (sensorType.toLowerCase()) {
             case "light" -> "lux";
             case "humidity" -> "%";
-            case "airtemperature", "watertemperature" -> "°C";
+            case "airtemperature", "dissolvedtemp" -> "°C";
             case "dissolvedoxygen" -> "mg/L";
             case "ph" -> "pH";
-            case "electricalconductivity" -> "µS/cm";
+            case "dissolvedec" -> "mS/cm";
+            case "dissolvedtds" -> "ppm";
             case "airpump" -> "status";
             default -> null;
         };

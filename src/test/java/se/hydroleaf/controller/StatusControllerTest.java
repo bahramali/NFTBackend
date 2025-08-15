@@ -80,15 +80,16 @@ class StatusControllerTest {
                 "airTemperature", new StatusAverageResponse(3.0, "°C",3L)
         );
         Map<String, StatusAverageResponse> waterTank = Map.of(
-                "waterTemperature", new StatusAverageResponse(4.0, "°C",4L),
+                "dissolvedTemp", new StatusAverageResponse(4.0, "°C",4L),
                 "dissolvedOxygen", new StatusAverageResponse(5.0, "mg/L",5L),
                 "pH", new StatusAverageResponse(6.0, "pH",6L),
-                "electricalConductivity", new StatusAverageResponse(7.0, "µS/cm",7L)
+                "dissolvedEC", new StatusAverageResponse(7.0, "mS/cm",7L),
+                "dissolvedTDS", new StatusAverageResponse(8.0, "ppm",8L)
         );
         StatusAllAverageResponse response = new StatusAllAverageResponse(
                 growSensors,
                 waterTank,
-                new StatusAverageResponse(8.0, "status",8L)
+                new StatusAverageResponse(9.0, "status",9L)
         );
         when(statusService.getAllAverages("sys", "layer")).thenReturn(response);
 
@@ -97,11 +98,12 @@ class StatusControllerTest {
                 .andExpect(jsonPath("$.growSensors.light.average").value(1.0))
                 .andExpect(jsonPath("$.growSensors.humidity.average").value(2.0))
                 .andExpect(jsonPath("$.growSensors.airTemperature.average").value(3.0))
-                .andExpect(jsonPath("$.waterTank.waterTemperature.average").value(4.0))
+                .andExpect(jsonPath("$.waterTank.dissolvedTemp.average").value(4.0))
                 .andExpect(jsonPath("$.waterTank.dissolvedOxygen.average").value(5.0))
                 .andExpect(jsonPath("$.waterTank.pH.average").value(6.0))
-                .andExpect(jsonPath("$.waterTank.electricalConductivity.average").value(7.0))
-                .andExpect(jsonPath("$.airpump.average").value(8.0));
+                .andExpect(jsonPath("$.waterTank.dissolvedEC.average").value(7.0))
+                .andExpect(jsonPath("$.waterTank.dissolvedTDS.average").value(8.0))
+                .andExpect(jsonPath("$.airpump.average").value(9.0));
     }
 
     @Test
@@ -114,7 +116,8 @@ class StatusControllerTest {
                         new StatusAverageResponse(4.0, "°C",1L),
                         new StatusAverageResponse(5.0, "mg/L",1L),
                         new StatusAverageResponse(6.0, "pH",1L),
-                        new StatusAverageResponse(7.0, "µS/cm",1L)
+                        new StatusAverageResponse(7.0, "mS/cm",1L),
+                        new StatusAverageResponse(8.0, "ppm",1L)
                 ),
                 new GrowSensorSummary(
                         new StatusAverageResponse(2.0, "lux",1L),
@@ -129,7 +132,8 @@ class StatusControllerTest {
                         new StatusAverageResponse(4.0, "°C",1L),
                         new StatusAverageResponse(5.0, "mg/L",1L),
                         new StatusAverageResponse(6.0, "pH",1L),
-                        new StatusAverageResponse(7.0, "µS/cm",1L)
+                        new StatusAverageResponse(7.0, "mS/cm",1L),
+                        new StatusAverageResponse(8.0, "ppm",1L)
                 ),
                 new GrowSensorSummary(
                         new StatusAverageResponse(2.0, "lux",1L),

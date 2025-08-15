@@ -112,9 +112,8 @@ class StatusServiceTest {
     @Test
     void getLiveNowSnapshotAggregatesByDevice() {
         Device d1 = Device.builder().compositeId("1").system("S01").layer("L01").build();
-        Device d2 = Device.builder().compositeId("2").system("S01").layer("L02").build();
-        Device d3 = Device.builder().compositeId("3").system("S02").layer("L01").build();
-        when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2, d3));
+        Device d2 = Device.builder().compositeId("2").system("S02").layer("L01").build();
+        when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2));
 
         StatusAverageResponse pump = new StatusAverageResponse(1.0, 1L);
         StatusAverageResponse light = new StatusAverageResponse(2.0, 2L);
@@ -142,12 +141,12 @@ class StatusServiceTest {
 
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
-        assertEquals(pump, result.systems().get("S01").get("L01").actuator().airPump());
-        assertEquals(light, result.systems().get("S01").get("L02").growSensors().light());
-        assertEquals(dOxy, result.systems().get("S02").get("L01").waterTank().dissolvedOxygen());
+        assertEquals(pump, result.systems().get("S01").actuators().airPump());
+        assertEquals(light, result.systems().get("S01").environment().light());
+        assertEquals(dOxy, result.systems().get("S02").water().dissolvedOxygen());
 
         verify(statusService, atLeastOnce()).getAverage("S01", "L01", "airPump");
-        verify(statusService, atLeastOnce()).getAverage("S01", "L02", "light");
+        verify(statusService, atLeastOnce()).getAverage("S01", "L01", "light");
         verify(statusService, atLeastOnce()).getAverage("S02", "L01", "dissolvedOxygen");
     }
 
@@ -169,8 +168,7 @@ class StatusServiceTest {
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
         assertEquals(1, result.systems().size());
-        assertEquals(1, result.systems().get("S01").size());
-        assertEquals(pump, result.systems().get("S01").get("L01").actuator().airPump());
+        assertEquals(pump, result.systems().get("S01").actuators().airPump());
         verify(statusService, atLeastOnce()).getAverage("S01", "L01", "airPump");
     }
 

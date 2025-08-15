@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
 import se.hydroleaf.service.StatusService;
+import java.util.Map;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -50,21 +51,33 @@ class StatusControllerTest {
 
     @Test
     void getAllAveragesEndpointReturnsData() throws Exception {
+        Map<String, StatusAverageResponse> growSensors = Map.of(
+                "light", new StatusAverageResponse(1.0,1L),
+                "humidity", new StatusAverageResponse(2.0,2L),
+                "temperature", new StatusAverageResponse(3.0,3L)
+        );
+        Map<String, StatusAverageResponse> waterTank = Map.of(
+                "dissolvedTemp", new StatusAverageResponse(4.0,4L),
+                "dissolvedOxygen", new StatusAverageResponse(5.0,5L),
+                "dissolvedPH", new StatusAverageResponse(6.0,6L),
+                "dissolvedEC", new StatusAverageResponse(7.0,7L)
+        );
         StatusAllAverageResponse response = new StatusAllAverageResponse(
-                new StatusAverageResponse(1.0,1L),
-                new StatusAverageResponse(2.0,2L),
-                new StatusAverageResponse(3.0,3L),
-                new StatusAverageResponse(4.0,4L),
-                new StatusAverageResponse(5.0,5L)
+                growSensors,
+                waterTank,
+                new StatusAverageResponse(8.0,8L)
         );
         when(statusService.getAllAverages("sys", "layer")).thenReturn(response);
 
         mockMvc.perform(get("/api/status/sys/layer/all/average"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.light.average").value(1.0))
-                .andExpect(jsonPath("$.humidity.average").value(2.0))
-                .andExpect(jsonPath("$.temperature.average").value(3.0))
-                .andExpect(jsonPath("$.dissolvedOxygen.average").value(4.0))
-                .andExpect(jsonPath("$.airpump.average").value(5.0));
+                .andExpect(jsonPath("$.growSensors.light.average").value(1.0))
+                .andExpect(jsonPath("$.growSensors.humidity.average").value(2.0))
+                .andExpect(jsonPath("$.growSensors.temperature.average").value(3.0))
+                .andExpect(jsonPath("$.waterTank.dissolvedTemp.average").value(4.0))
+                .andExpect(jsonPath("$.waterTank.dissolvedOxygen.average").value(5.0))
+                .andExpect(jsonPath("$.waterTank.dissolvedPH.average").value(6.0))
+                .andExpect(jsonPath("$.waterTank.dissolvedEC.average").value(7.0))
+                .andExpect(jsonPath("$.airpump.average").value(8.0));
     }
 }

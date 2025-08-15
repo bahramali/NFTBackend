@@ -48,16 +48,34 @@ public class StatusService {
 
     public StatusAllAverageResponse getAllAverages(String system, String layer) {
         String oxygenPumpType = "airPump";
-        List<String> sensorTypes = List.of("light", "humidity", "temperature", "dissolvedOxygen", oxygenPumpType);
+        List<String> sensorTypes = List.of(
+                "light",
+                "humidity",
+                "temperature",
+                "dissolvedOxygen",
+                "dissolvedTemp",
+                "dissolvedPH",
+                "dissolvedEC",
+                oxygenPumpType
+        );
         Map<String, StatusAverageResponse> responses = new HashMap<>();
         for (String type : sensorTypes) {
             responses.put(type, getAverage(system, layer, type));
         }
+        Map<String, StatusAverageResponse> growSensors = Map.of(
+                "light", responses.get("light"),
+                "humidity", responses.get("humidity"),
+                "temperature", responses.get("temperature")
+        );
+        Map<String, StatusAverageResponse> waterTank = Map.of(
+                "dissolvedTemp", responses.get("dissolvedTemp"),
+                "dissolvedOxygen", responses.get("dissolvedOxygen"),
+                "dissolvedPH", responses.get("dissolvedPH"),
+                "dissolvedEC", responses.get("dissolvedEC")
+        );
         return new StatusAllAverageResponse(
-                responses.get("light"),
-                responses.get("humidity"),
-                responses.get("temperature"),
-                responses.get("dissolvedOxygen"),
+                growSensors,
+                waterTank,
                 responses.get(oxygenPumpType)
         );
     }

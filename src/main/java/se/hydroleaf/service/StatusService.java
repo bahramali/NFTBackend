@@ -123,8 +123,7 @@ public class StatusService {
 
         Map<String, SystemSnapshot> result = new HashMap<>();
         for (Map.Entry<String, List<SystemSnapshot.LayerSnapshot>> entry : systemLayers.entrySet()) {
-            SystemSnapshot.CategorySnapshot snapshot = new SystemSnapshot.CategorySnapshot(entry.getValue());
-            result.put(entry.getKey(), new SystemSnapshot(snapshot, snapshot));
+            result.put(entry.getKey(), new SystemSnapshot(entry.getValue()));
         }
         return new LiveNowSnapshot(result);
     }

@@ -1,8 +1,8 @@
 package se.hydroleaf.dto;
 
 public record WaterTankSummary(
-        StatusAverageResponse dissolvedTemp,
+        StatusAverageResponse waterTemperature,
         StatusAverageResponse dissolvedOxygen,
-        StatusAverageResponse dissolvedPH,
-        StatusAverageResponse dissolvedEC
+        StatusAverageResponse pH,
+        StatusAverageResponse electricalConductivity
 ) {}

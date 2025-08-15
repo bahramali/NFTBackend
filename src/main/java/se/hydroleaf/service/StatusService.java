@@ -44,7 +44,8 @@ public class StatusService {
         }
         Double avg = (result != null && result.getAverage() != null) ? (double) Math.round(result.getAverage() * 10) / 10 : null;
         long count = result != null && result.getCount() != null ? result.getCount() : 0L;
-        return new StatusAverageResponse(avg, count);
+        String unit = getUnit(sensorType);
+        return new StatusAverageResponse(avg, unit, count);
     }
 
     public StatusAllAverageResponse getAllAverages(String system, String layer) {
@@ -52,11 +53,11 @@ public class StatusService {
         List<String> sensorTypes = List.of(
                 "light",
                 "humidity",
-                "temperature",
+                "airTemperature",
                 "dissolvedOxygen",
-                "dissolvedTemp",
-                "dissolvedPH",
-                "dissolvedEC",
+                "waterTemperature",
+                "pH",
+                "electricalConductivity",
                 oxygenPumpType
         );
         Map<String, StatusAverageResponse> responses = new HashMap<>();
@@ -66,13 +67,13 @@ public class StatusService {
         Map<String, StatusAverageResponse> growSensors = Map.of(
                 "light", responses.get("light"),
                 "humidity", responses.get("humidity"),
-                "temperature", responses.get("temperature")
+                "airTemperature", responses.get("airTemperature")
         );
         Map<String, StatusAverageResponse> waterTank = Map.of(
-                "dissolvedTemp", responses.get("dissolvedTemp"),
+                "waterTemperature", responses.get("waterTemperature"),
                 "dissolvedOxygen", responses.get("dissolvedOxygen"),
-                "dissolvedPH", responses.get("dissolvedPH"),
-                "dissolvedEC", responses.get("dissolvedEC")
+                "pH", responses.get("pH"),
+                "electricalConductivity", responses.get("electricalConductivity")
         );
         return new StatusAllAverageResponse(
                 growSensors,
@@ -99,13 +100,13 @@ public class StatusService {
             GrowSensorSummary environment = new GrowSensorSummary(
                     getAverage(system, layer, "light"),
                     getAverage(system, layer, "humidity"),
-                    getAverage(system, layer, "temperature")
+                    getAverage(system, layer, "airTemperature")
             );
             WaterTankSummary water = new WaterTankSummary(
-                    getAverage(system, layer, "dissolvedTemp"),
+                    getAverage(system, layer, "waterTemperature"),
                     getAverage(system, layer, "dissolvedOxygen"),
-                    getAverage(system, layer, "dissolvedPH"),
-                    getAverage(system, layer, "dissolvedEC")
+                    getAverage(system, layer, "pH"),
+                    getAverage(system, layer, "electricalConductivity")
             );
 
             SystemSnapshot snapshot = new SystemSnapshot(java.time.Instant.now(), actuator, water, environment);
@@ -119,5 +120,21 @@ public class StatusService {
             return false;
         }
         return sensorType.equalsIgnoreCase("airPump") || sensorType.equalsIgnoreCase("airpump");
+    }
+
+    private String getUnit(String sensorType) {
+        if (sensorType == null) {
+            return null;
+        }
+        return switch (sensorType.toLowerCase()) {
+            case "light" -> "lux";
+            case "humidity" -> "%";
+            case "airtemperature", "watertemperature" -> "°C";
+            case "dissolvedoxygen" -> "mg/L";
+            case "ph" -> "pH";
+            case "electricalconductivity" -> "µS/cm";
+            case "airpump" -> "status";
+            default -> null;
+        };
     }
 }

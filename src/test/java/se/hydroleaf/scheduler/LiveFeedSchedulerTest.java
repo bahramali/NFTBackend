@@ -30,17 +30,17 @@ class LiveFeedSchedulerTest {
                 Map.of("S1",
                         new SystemSnapshot(
                                 java.time.Instant.now(),
-                                new LayerActuatorStatus(new StatusAverageResponse(1.0,1L)),
+                                new LayerActuatorStatus(new StatusAverageResponse(1.0,"status",1L)),
                                 new WaterTankSummary(
-                                        new StatusAverageResponse(5.0,1L),
-                                        new StatusAverageResponse(6.0,1L),
-                                        new StatusAverageResponse(7.0,1L),
-                                        new StatusAverageResponse(8.0,1L)
+                                        new StatusAverageResponse(5.0,"°C",1L),
+                                        new StatusAverageResponse(6.0,"mg/L",1L),
+                                        new StatusAverageResponse(7.0,"pH",1L),
+                                        new StatusAverageResponse(8.0,"µS/cm",1L)
                                 ),
                                 new GrowSensorSummary(
-                                        new StatusAverageResponse(2.0,1L),
-                                        new StatusAverageResponse(3.0,1L),
-                                        new StatusAverageResponse(4.0,1L)
+                                        new StatusAverageResponse(2.0,"lux",1L),
+                                        new StatusAverageResponse(3.0,"%",1L),
+                                        new StatusAverageResponse(4.0,"°C",1L)
                                 )
                         ))
         );

@@ -42,11 +42,13 @@ public class LiveFeedScheduler {
     @Scheduled(fixedRateString = "${livefeed.rate:2000}")
     public void sendLiveNow() {
         Instant start = Instant.now();
-        if (lastInvocation != null) {
-            long sinceLast = Duration.between(lastInvocation, start).toMillis();
-            log.info("sendLiveNow invoked at {} ({} ms since last)", start, sinceLast);
-        } else {
-            log.info("sendLiveNow invoked at {}", start);
+        if (log.isDebugEnabled()) {
+            if (lastInvocation != null) {
+                long sinceLast = Duration.between(lastInvocation, start).toMillis();
+                log.debug("sendLiveNow invoked at {} ({} ms since last)", start, sinceLast);
+            } else {
+                log.debug("sendLiveNow invoked at {}", start);
+            }
         }
         lastInvocation = start;
 
@@ -54,11 +56,12 @@ public class LiveFeedScheduler {
         Instant afterSnapshot = Instant.now();
         log.debug("getLiveNowSnapshot took {} ms", Duration.between(start, afterSnapshot).toMillis());
 
-        String payload = "";
+        String payload;
         try {
             payload = objectMapper.writeValueAsString(snapshot);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.warn("Failed to serialize LiveNowSnapshot", e);
+            return;
         }
         if (!publishEnabled) {
             log.info("Should publish to /topic/live_now with payload: {}", payload);

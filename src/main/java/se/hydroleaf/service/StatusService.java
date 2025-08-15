@@ -85,7 +85,7 @@ public class StatusService {
     }
 
     public LiveNowSnapshot getLiveNowSnapshot() {
-        Map<String, List<SystemSnapshot.LayerSnapshot>> systemLayers = new HashMap<>();
+        Map<String, Map<String, SystemSnapshot.LayerSnapshot>> systemLayers = new HashMap<>();
         List<Device> devices = deviceRepository.findAll();
         for (Device device : devices) {
             String system = device.getSystem();
@@ -98,32 +98,34 @@ public class StatusService {
                 continue;
             }
 
-            LayerActuatorStatus actuator = new LayerActuatorStatus(getAverage(system, layer, "airPump"));
-            GrowSensorSummary environment = new GrowSensorSummary(
-                    getAverage(system, layer, "light"),
-                    getAverage(system, layer, "humidity"),
-                    getAverage(system, layer, "airTemperature")
-            );
-            WaterTankSummary water = new WaterTankSummary(
-                    getAverage(system, layer, "waterTemperature"),
-                    getAverage(system, layer, "dissolvedOxygen"),
-                    getAverage(system, layer, "pH"),
-                    getAverage(system, layer, "electricalConductivity")
-            );
+            Map<String, SystemSnapshot.LayerSnapshot> layers = systemLayers.computeIfAbsent(system, s -> new HashMap<>());
+            layers.computeIfAbsent(layer, l -> {
+                LayerActuatorStatus actuator = new LayerActuatorStatus(getAverage(system, layer, "airPump"));
+                GrowSensorSummary environment = new GrowSensorSummary(
+                        getAverage(system, layer, "light"),
+                        getAverage(system, layer, "humidity"),
+                        getAverage(system, layer, "airTemperature")
+                );
+                WaterTankSummary water = new WaterTankSummary(
+                        getAverage(system, layer, "waterTemperature"),
+                        getAverage(system, layer, "dissolvedOxygen"),
+                        getAverage(system, layer, "pH"),
+                        getAverage(system, layer, "electricalConductivity")
+                );
 
-            List<SystemSnapshot.LayerSnapshot> layers = systemLayers.computeIfAbsent(system, s -> new ArrayList<>());
-            layers.add(new SystemSnapshot.LayerSnapshot(
-                    layer,
-                    Instant.now(),
-                    actuator,
-                    water,
-                    environment
-            ));
+                return new SystemSnapshot.LayerSnapshot(
+                        layer,
+                        Instant.now(),
+                        actuator,
+                        water,
+                        environment
+                );
+            });
         }
 
         Map<String, SystemSnapshot> result = new HashMap<>();
-        for (Map.Entry<String, List<SystemSnapshot.LayerSnapshot>> entry : systemLayers.entrySet()) {
-            result.put(entry.getKey(), new SystemSnapshot(entry.getValue()));
+        for (Map.Entry<String, Map<String, SystemSnapshot.LayerSnapshot>> entry : systemLayers.entrySet()) {
+            result.put(entry.getKey(), new SystemSnapshot(new ArrayList<>(entry.getValue().values())));
         }
         return new LiveNowSnapshot(result);
     }

@@ -16,6 +16,8 @@ import se.hydroleaf.repository.AverageResult;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
@@ -117,8 +119,9 @@ class StatusServiceTest {
     @Test
     void getLiveNowSnapshotAggregatesByDevice() {
         Device d1 = Device.builder().compositeId("1").system("S01").layer("L01").build();
+        Device dDup = Device.builder().compositeId("3").system("S01").layer("L01").build();
         Device d2 = Device.builder().compositeId("2").system("S02").layer("L01").build();
-        when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2));
+        when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, dDup, d2));
 
         StatusAverageResponse pump = new StatusAverageResponse(1.0, "status",1L);
         StatusAverageResponse light = new StatusAverageResponse(2.0, "lux",2L);
@@ -146,19 +149,17 @@ class StatusServiceTest {
 
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
-        SystemSnapshot.LayerSnapshot s01Layer = result.systems().get("S01").layers().stream()
-                .filter(l -> l.layerId().equals("L01"))
-                .findFirst().orElseThrow();
-        SystemSnapshot.LayerSnapshot s02Layer = result.systems().get("S02").layers().stream()
-                .filter(l -> l.layerId().equals("L01"))
-                .findFirst().orElseThrow();
+        List<SystemSnapshot.LayerSnapshot> s01Layers = result.systems().get("S01").layers();
+        assertEquals(1, s01Layers.size());
+        SystemSnapshot.LayerSnapshot s01Layer = s01Layers.get(0);
+        SystemSnapshot.LayerSnapshot s02Layer = result.systems().get("S02").layers().get(0);
         assertEquals(pump, s01Layer.actuators().airPump());
         assertEquals(light, s01Layer.environment().light());
         assertEquals(dOxy, s02Layer.water().dissolvedOxygen());
         assertNotNull(s01Layer.lastUpdate());
 
-        verify(statusService, atLeastOnce()).getAverage("S01", "L01", "airPump");
-        verify(statusService, atLeastOnce()).getAverage("S01", "L01", "light");
+        verify(statusService, times(1)).getAverage("S01", "L01", "airPump");
+        verify(statusService, times(1)).getAverage("S01", "L01", "light");
         verify(statusService, atLeastOnce()).getAverage("S02", "L01", "dissolvedOxygen");
     }
 
@@ -180,7 +181,9 @@ class StatusServiceTest {
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
         assertEquals(1, result.systems().size());
-        SystemSnapshot.LayerSnapshot layerSnapshot = result.systems().get("S01").layers().get(0);
+        List<SystemSnapshot.LayerSnapshot> layers = result.systems().get("S01").layers();
+        assertEquals(1, layers.size());
+        SystemSnapshot.LayerSnapshot layerSnapshot = layers.get(0);
         assertEquals(pump, layerSnapshot.actuators().airPump());
         assertNotNull(layerSnapshot.lastUpdate());
         verify(statusService, atLeastOnce()).getAverage("S01", "L01", "airPump");

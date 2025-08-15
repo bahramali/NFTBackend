@@ -34,6 +34,7 @@ public class LiveFeedScheduler {
     public void sendLiveNow() {
         try {
             LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
+            log.info("sending to /topic/live_now: {}", snapshot);
             messagingTemplate.convertAndSend("/topic/live_now", snapshot);
         } catch (Exception e) {
             log.warn("sendLiveNow failed: {}", e.getMessage());

@@ -1,6 +1,9 @@
 package se.hydroleaf.scheduler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,7 +26,8 @@ public class LiveFeedScheduler {
     private final StatusService statusService;
     private final SimpMessagingTemplate messagingTemplate;
     private final ConcurrentHashMap<String, Instant> lastSeen;
-
+    @Autowired
+    private ObjectMapper objectMapper;
     public LiveFeedScheduler(@Value("${mqtt.publishEnabled:true}") boolean publishEnabled,
                              StatusService statusService,
                              SimpMessagingTemplate messagingTemplate,
@@ -37,12 +41,18 @@ public class LiveFeedScheduler {
     @Scheduled(fixedRate = 2000)
     public void sendLiveNow() {
         LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
+        String payload = "";
+        try {
+            payload = objectMapper.writeValueAsString(snapshot);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         if (!publishEnabled) {
-            log.info("Should publish to /topic/live_now with payload: {}", snapshot);
+            log.info("Should publish to /topic/live_now with payload: {}", payload);
             return; // block in local
         }
         try {
-            messagingTemplate.convertAndSend("/topic/live_now", snapshot);
+            messagingTemplate.convertAndSend("/topic/live_now", payload);
         } catch (Exception e) {
             log.warn("sendLiveNow failed: {}", e.getMessage());
         }

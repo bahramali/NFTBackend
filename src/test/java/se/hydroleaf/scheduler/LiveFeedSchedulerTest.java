@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
@@ -89,6 +90,25 @@ class LiveFeedSchedulerTest {
         assertEquals(1.0, sentLayer.actuators().airPump().average());
         assertNotNull(sentLayer.lastUpdate());
         assertEquals(1.0, system.actuators().airPump().average());
+    }
+
+    @Test
+    void continuesAfterSerializationFailure() throws Exception {
+        LiveNowSnapshot snapshot = new LiveNowSnapshot(Map.of());
+        when(statusService.getLiveNowSnapshot()).thenReturn(snapshot);
+
+        ObjectMapper mapper = mock(ObjectMapper.class);
+        when(mapper.writeValueAsString(any()))
+                .thenThrow(new com.fasterxml.jackson.core.JsonProcessingException("boom") {})
+                .thenReturn("{}");
+
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(true, statusService, messagingTemplate, new ConcurrentHashMap<>(), mapper);
+
+        assertDoesNotThrow(scheduler::sendLiveNow);
+        scheduler.sendLiveNow();
+
+        verify(statusService, times(2)).getLiveNowSnapshot();
+        verify(messagingTemplate).convertAndSend("/topic/live_now", "{}");
     }
 }
 

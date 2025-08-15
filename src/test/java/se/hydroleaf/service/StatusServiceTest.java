@@ -71,16 +71,29 @@ class StatusServiceTest {
                 .thenReturn(simpleResult(3.0, 3L));
         when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedOxygen"))
                 .thenReturn(simpleResult(4.0, 4L));
-        when(actuatorStatusRepository.getLatestActuatorAverage("sys", "layer", "airPump"))
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedTemp"))
                 .thenReturn(simpleResult(5.0, 5L));
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedPH"))
+                .thenReturn(simpleResult(6.0, 6L));
+        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedEC"))
+                .thenReturn(simpleResult(7.0, 7L));
+        when(actuatorStatusRepository.getLatestActuatorAverage("sys", "layer", "airPump"))
+                .thenReturn(simpleResult(8.0, 8L));
 
         StatusAllAverageResponse response = statusService.getAllAverages("sys", "layer");
 
-        assertEquals(1.0, response.light().average());
-        assertEquals(2.0, response.humidity().average());
-        assertEquals(3.0, response.temperature().average());
-        assertEquals(4.0, response.dissolvedOxygen().average());
-        assertEquals(5.0, response.airpump().average());
+        assertEquals(1.0, response.growSensors().get("light").average());
+        assertEquals(2.0, response.growSensors().get("humidity").average());
+        assertEquals(3.0, response.growSensors().get("temperature").average());
+        assertEquals(5.0, response.waterTank().get("dissolvedTemp").average());
+        assertEquals(4.0, response.waterTank().get("dissolvedOxygen").average());
+        assertEquals(6.0, response.waterTank().get("dissolvedPH").average());
+        assertEquals(7.0, response.waterTank().get("dissolvedEC").average());
+        assertEquals(8.0, response.airpump().average());
+
+        verify(sensorDataRepository).getLatestAverage("sys", "layer", "dissolvedTemp");
+        verify(sensorDataRepository).getLatestAverage("sys", "layer", "dissolvedPH");
+        verify(sensorDataRepository).getLatestAverage("sys", "layer", "dissolvedEC");
     }
 
     @Test

@@ -1,9 +1,9 @@
 package se.hydroleaf.dto;
 
+import java.util.Map;
+
 public record StatusAllAverageResponse(
-        StatusAverageResponse light,
-        StatusAverageResponse humidity,
-        StatusAverageResponse temperature,
-        StatusAverageResponse dissolvedOxygen,
+        Map<String, StatusAverageResponse> growSensors,
+        Map<String, StatusAverageResponse> waterTank,
         StatusAverageResponse airpump
 ) {}

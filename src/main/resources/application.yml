@@ -28,6 +28,10 @@ mqtt:
   qos: 1
   topicPrefix: ""
   enabled: true
+  publishEnabled: true
+
+livefeed:
+  rate: 2000
 server:
   ssl:
     enabled: ${SSL_ENABLED:false}

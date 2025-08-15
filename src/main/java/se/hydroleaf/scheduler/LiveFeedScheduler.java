@@ -38,9 +38,15 @@ public class LiveFeedScheduler {
         this.objectMapper = objectMapper;
     }
 
-    @Scheduled(fixedRate = 2000)
+    @Scheduled(fixedRateString = "${livefeed.rate:2000}")
     public void sendLiveNow() {
+        Instant start = Instant.now();
+        log.info("sendLiveNow invoked at {}", start);
+
         LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
+        Instant afterSnapshot = Instant.now();
+        log.debug("getLiveNowSnapshot took {} ms", Duration.between(start, afterSnapshot).toMillis());
+
         String payload = "";
         try {
             payload = objectMapper.writeValueAsString(snapshot);
@@ -52,7 +58,9 @@ public class LiveFeedScheduler {
             return; // block in local
         }
         try {
+            Instant sendStart = Instant.now();
             messagingTemplate.convertAndSend("/topic/live_now", payload);
+            log.debug("convertAndSend took {} ms", Duration.between(sendStart, Instant.now()).toMillis());
         } catch (Exception e) {
             log.warn("sendLiveNow failed: {}", e.getMessage());
         }

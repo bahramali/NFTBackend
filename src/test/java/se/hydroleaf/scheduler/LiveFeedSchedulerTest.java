@@ -6,6 +6,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import se.hydroleaf.dto.*;
 import se.hydroleaf.service.StatusService;
 
@@ -13,6 +18,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,36 +31,45 @@ class LiveFeedSchedulerTest {
     private SimpMessagingTemplate messagingTemplate;
 
     @Test
-    void sendLiveNowPublishesSnapshotWithCategorizedDto() {
+    void sendLiveNowPublishesSnapshotWithCategorizedDto() throws Exception {
         LiveNowSnapshot snapshot = new LiveNowSnapshot(
                 Map.of("S1",
                         new SystemSnapshot(
-                                java.time.Instant.now(),
-                                new LayerActuatorStatus(new StatusAverageResponse(1.0,"status",1L)),
-                                new WaterTankSummary(
-                                        new StatusAverageResponse(5.0,"°C",1L),
-                                        new StatusAverageResponse(6.0,"mg/L",1L),
-                                        new StatusAverageResponse(7.0,"pH",1L),
-                                        new StatusAverageResponse(8.0,"µS/cm",1L)
-                                ),
-                                new GrowSensorSummary(
-                                        new StatusAverageResponse(2.0,"lux",1L),
-                                        new StatusAverageResponse(3.0,"%",1L),
-                                        new StatusAverageResponse(4.0,"°C",1L)
+                                Map.of("L1",
+                                        new SystemSnapshot.LayerSnapshot(
+                                                java.time.Instant.now(),
+                                                new LayerActuatorStatus(new StatusAverageResponse(1.0, "status", 1L)),
+                                                new WaterTankSummary(
+                                                        new StatusAverageResponse(5.0, "°C", 1L),
+                                                        new StatusAverageResponse(6.0, "mg/L", 1L),
+                                                        new StatusAverageResponse(7.0, "pH", 1L),
+                                                        new StatusAverageResponse(8.0, "µS/cm", 1L)
+                                                ),
+                                                new GrowSensorSummary(
+                                                        new StatusAverageResponse(2.0, "lux", 1L),
+                                                        new StatusAverageResponse(3.0, "%", 1L),
+                                                        new StatusAverageResponse(4.0, "°C", 1L)
+                                                )
+                                        )
                                 )
-                        ))
+                        )
+                )
         );
         when(statusService.getLiveNowSnapshot()).thenReturn(snapshot);
 
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(true, statusService, messagingTemplate, new ConcurrentHashMap<>());
+        ObjectMapper mapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(true, statusService, messagingTemplate, new ConcurrentHashMap<>(), mapper);
         scheduler.sendLiveNow();
 
-        ArgumentCaptor<LiveNowSnapshot> captor = ArgumentCaptor.forClass(LiveNowSnapshot.class);
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(messagingTemplate).convertAndSend(eq("/topic/live_now"), captor.capture());
 
-        LiveNowSnapshot sent = captor.getValue();
-        assertEquals(6.0, sent.systems().get("S1").water().dissolvedOxygen().average());
-        assertEquals(1.0, sent.systems().get("S1").actuators().airPump().average());
+        LiveNowSnapshot sent = mapper.readValue(captor.getValue(), LiveNowSnapshot.class);
+        assertEquals(6.0, sent.systems().get("S1").layers().get("L1").water().dissolvedOxygen().average());
+        assertEquals(1.0, sent.systems().get("S1").layers().get("L1").actuators().airPump().average());
+        assertNotNull(sent.systems().get("S1").layers().get("L1").lastUpdate());
     }
 }
 

@@ -16,6 +16,7 @@ import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -144,9 +145,10 @@ class StatusServiceTest {
 
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
-        assertEquals(pump, result.systems().get("S01").actuators().airPump());
-        assertEquals(light, result.systems().get("S01").environment().light());
-        assertEquals(dOxy, result.systems().get("S02").water().dissolvedOxygen());
+        assertEquals(pump, result.systems().get("S01").layers().get("L01").actuators().airPump());
+        assertEquals(light, result.systems().get("S01").layers().get("L01").environment().light());
+        assertEquals(dOxy, result.systems().get("S02").layers().get("L01").water().dissolvedOxygen());
+        assertNotNull(result.systems().get("S01").layers().get("L01").lastUpdate());
 
         verify(statusService, atLeastOnce()).getAverage("S01", "L01", "airPump");
         verify(statusService, atLeastOnce()).getAverage("S01", "L01", "light");
@@ -171,7 +173,8 @@ class StatusServiceTest {
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
         assertEquals(1, result.systems().size());
-        assertEquals(pump, result.systems().get("S01").actuators().airPump());
+        assertEquals(pump, result.systems().get("S01").layers().get("L01").actuators().airPump());
+        assertNotNull(result.systems().get("S01").layers().get("L01").lastUpdate());
         verify(statusService, atLeastOnce()).getAverage("S01", "L01", "airPump");
     }
 

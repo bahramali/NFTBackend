@@ -48,6 +48,19 @@ class StatusServiceTest {
     }
 
     @Test
+    void getAverageUsesSensorDataRepositoryForWaterTankSensor() {
+        AverageResult avg = simpleResult(9.9, 4L);
+        when(sensorDataRepository.getLatestAverage("Sys", "Layer", "dissolvedOxygen"))
+                .thenReturn(avg);
+
+        StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "dissolvedOxygen");
+        assertEquals(9.9, response.average());
+        assertEquals(4L, response.deviceCount());
+        verify(sensorDataRepository).getLatestAverage("Sys", "Layer", "dissolvedOxygen");
+        verifyNoInteractions(actuatorStatusRepository);
+    }
+
+    @Test
     void getAverageUsesActuatorRepositoryForAirpump() {
         AverageResult avg = simpleResult(1.5, 2L);
         when(actuatorStatusRepository.getLatestActuatorAverage("Sys", "Layer", "airpump"))

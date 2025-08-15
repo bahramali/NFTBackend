@@ -49,8 +49,24 @@ class LiveFeedSchedulerTest {
                         new StatusAverageResponse(4.0, "°C", 1L)
                 )
         );
+        SystemSnapshot systemSnapshot = new SystemSnapshot(
+                java.time.Instant.now(),
+                new SystemActuatorStatus(new StatusAverageResponse(1.0, "status", 1L)),
+                new WaterTankSummary(
+                        new StatusAverageResponse(5.0, "°C", 1L),
+                        new StatusAverageResponse(6.0, "mg/L", 1L),
+                        new StatusAverageResponse(7.0, "pH", 1L),
+                        new StatusAverageResponse(8.0, "µS/cm", 1L)
+                ),
+                new GrowSensorSummary(
+                        new StatusAverageResponse(2.0, "lux", 1L),
+                        new StatusAverageResponse(3.0, "%", 1L),
+                        new StatusAverageResponse(4.0, "°C", 1L)
+                ),
+                List.of(layerSnapshot)
+        );
         LiveNowSnapshot snapshot = new LiveNowSnapshot(
-                Map.of("S1", new SystemSnapshot(List.of(layerSnapshot)))
+                Map.of("S1", systemSnapshot)
         );
         when(statusService.getLiveNowSnapshot()).thenReturn(snapshot);
 
@@ -65,10 +81,12 @@ class LiveFeedSchedulerTest {
 
         LiveNowSnapshot sent = mapper.readValue(captor.getValue(), LiveNowSnapshot.class);
         assertEquals(1, sent.systems().get("S1").layers().size());
-        SystemSnapshot.LayerSnapshot sentLayer = sent.systems().get("S1").layers().get(0);
+        SystemSnapshot system = sent.systems().get("S1");
+        SystemSnapshot.LayerSnapshot sentLayer = system.layers().get(0);
         assertEquals(6.0, sentLayer.water().dissolvedOxygen().average());
         assertEquals(1.0, sentLayer.actuators().airPump().average());
         assertNotNull(sentLayer.lastUpdate());
+        assertEquals(1.0, system.actuators().airPump().average());
     }
 }
 

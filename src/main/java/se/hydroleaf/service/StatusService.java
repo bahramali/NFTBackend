@@ -7,6 +7,7 @@ import se.hydroleaf.dto.LayerActuatorStatus;
 import se.hydroleaf.dto.GrowSensorSummary;
 import se.hydroleaf.dto.SystemSnapshot;
 import se.hydroleaf.dto.WaterTankSummary;
+import se.hydroleaf.dto.SystemActuatorStatus;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
 import se.hydroleaf.model.Device;
@@ -20,6 +21,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Comparator;
+import java.util.function.Function;
 
 @Slf4j
 @Service
@@ -125,9 +128,49 @@ public class StatusService {
 
         Map<String, SystemSnapshot> result = new HashMap<>();
         for (Map.Entry<String, Map<String, SystemSnapshot.LayerSnapshot>> entry : systemLayers.entrySet()) {
-            result.put(entry.getKey(), new SystemSnapshot(new ArrayList<>(entry.getValue().values())));
+            List<SystemSnapshot.LayerSnapshot> layers = new ArrayList<>(entry.getValue().values());
+            Instant lastUpdate = layers.stream()
+                    .map(SystemSnapshot.LayerSnapshot::lastUpdate)
+                    .max(Comparator.naturalOrder())
+                    .orElse(null);
+            StatusAverageResponse airPump = aggregate(layers, l -> l.actuators().airPump());
+            SystemActuatorStatus actuators = new SystemActuatorStatus(airPump);
+            WaterTankSummary water = new WaterTankSummary(
+                    aggregate(layers, l -> l.water().waterTemperature()),
+                    aggregate(layers, l -> l.water().dissolvedOxygen()),
+                    aggregate(layers, l -> l.water().pH()),
+                    aggregate(layers, l -> l.water().electricalConductivity())
+            );
+            GrowSensorSummary environment = new GrowSensorSummary(
+                    aggregate(layers, l -> l.environment().light()),
+                    aggregate(layers, l -> l.environment().humidity()),
+                    aggregate(layers, l -> l.environment().airTemperature())
+            );
+            result.put(entry.getKey(), new SystemSnapshot(lastUpdate, actuators, water, environment, layers));
         }
         return new LiveNowSnapshot(result);
+    }
+
+    private StatusAverageResponse aggregate(List<SystemSnapshot.LayerSnapshot> layers,
+                                            Function<SystemSnapshot.LayerSnapshot, StatusAverageResponse> extractor) {
+        double sum = 0.0;
+        long count = 0L;
+        String unit = null;
+        for (SystemSnapshot.LayerSnapshot layer : layers) {
+            StatusAverageResponse res = extractor.apply(layer);
+            if (res == null) {
+                continue;
+            }
+            if (unit == null) {
+                unit = res.unit();
+            }
+            if (res.average() != null) {
+                sum += res.average() * res.deviceCount();
+            }
+            count += res.deviceCount();
+        }
+        Double avg = count > 0 ? Math.round((sum / count) * 10.0) / 10.0 : null;
+        return new StatusAverageResponse(avg, unit, count);
     }
 
     private boolean isActuator(String sensorType) {

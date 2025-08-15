@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
+import se.hydroleaf.dto.LiveNowSnapshot;
 import se.hydroleaf.service.StatusService;
 
 @RestController
@@ -31,5 +32,10 @@ public class StatusController {
             @PathVariable String system,
             @PathVariable String layer) {
         return statusService.getAllAverages(system, layer);
+    }
+
+    @GetMapping("/live-now")
+    public LiveNowSnapshot getLiveNowSnapshot() {
+        return statusService.getLiveNowSnapshot();
     }
 }

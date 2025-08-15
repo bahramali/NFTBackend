@@ -7,6 +7,10 @@ import java.util.List;
  * Snapshot of a system containing all layer snapshots.
  */
 public record SystemSnapshot(
+        Instant lastUpdate,
+        SystemActuatorStatus actuators,
+        WaterTankSummary water,
+        GrowSensorSummary environment,
         List<LayerSnapshot> layers
 ) {
 

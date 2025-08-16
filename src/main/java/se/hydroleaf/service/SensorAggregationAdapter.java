@@ -3,6 +3,7 @@ package se.hydroleaf.service;
 
 import org.springframework.stereotype.Component;
 import se.hydroleaf.repository.SensorAggregationRepository;
+import se.hydroleaf.repository.dto.SensorAggregationRow;
 import se.hydroleaf.util.InstantUtil;
 
 import java.time.Instant;
@@ -28,12 +29,12 @@ public class SensorAggregationAdapter implements RecordService.SensorAggregation
         var rows = repo.aggregate(compositeId, from, to, sec);
         List<RecordService.SensorAggregateResult> out = new ArrayList<>(rows.size());
 
-        for (SensorAggregationRepository.Row r : rows) {
+        for (SensorAggregationRow r : rows) {
             out.add(new RowImpl(
-                    r.getSensorType(),
-                    r.getUnit(),
-                    r.getBucketTime(),
-                    r.getAvgValue()
+                    r.sensorType(),
+                    r.unit(),
+                    r.bucketTime(),
+                    r.avgValue()
             ));
         }
         return out;

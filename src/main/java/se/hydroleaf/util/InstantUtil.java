@@ -10,7 +10,7 @@ public final class InstantUtil {
     private InstantUtil() {}
 
     private static final DateTimeFormatter FLEXIBLE_FORMATTER = new DateTimeFormatterBuilder()
-            .appendPattern("yyyy-MM-dd'T'H:mm:ss")
+            .appendPattern("yyyy-MM-dd'T'HH:mm:ss[.SSS]")
             .appendOffsetId()
             .toFormatter();
 
@@ -18,7 +18,11 @@ public final class InstantUtil {
         try {
             return Instant.parse(value);
         } catch (DateTimeParseException e) {
-            return OffsetDateTime.parse(value, FLEXIBLE_FORMATTER).toInstant();
+            try {
+                return OffsetDateTime.parse(value, FLEXIBLE_FORMATTER).toInstant();
+            } catch (DateTimeParseException ex) {
+                throw new IllegalArgumentException("Invalid time format: " + value, ex);
+            }
         }
     }
 

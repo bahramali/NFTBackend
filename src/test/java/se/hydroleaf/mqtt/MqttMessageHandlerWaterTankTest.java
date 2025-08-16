@@ -47,6 +47,7 @@ class MqttMessageHandlerWaterTankTest {
 
         verify(deviceProvisionService).ensureDevice(eq("S01-L01-probe1"), eq(topic));
         verify(recordService).saveRecord(eq("S01-L01-probe1"), any());
+        verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
         assertTrue(lastSeen.contains("S01-L01-probe1"));
     }
 
@@ -57,7 +58,18 @@ class MqttMessageHandlerWaterTankTest {
 
         handler.handle(topic, payload);
 
-        verifyNoInteractions(deviceProvisionService, recordService);
+        verifyNoInteractions(deviceProvisionService, recordService, topicPublisher);
+        assertTrue(lastSeen.isEmpty());
+    }
+
+    @Test
+    void invalidJson_isDiscardedWithoutPublishing() {
+        String topic = "waterTank/S01/L01/probe1";
+        String payload = "{"; // malformed JSON
+
+        handler.handle(topic, payload);
+
+        verifyNoInteractions(deviceProvisionService, recordService, topicPublisher);
         assertTrue(lastSeen.isEmpty());
     }
 }

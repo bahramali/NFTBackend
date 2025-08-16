@@ -35,7 +35,7 @@ public class LatestSensorValue {
     @Column(name = "sensor_type", nullable = false)
     private String sensorType;
 
-    @Column(name = "value")
+    @Column(name = "sensor_value")
     private Double value;
 
     @Column(name = "unit")

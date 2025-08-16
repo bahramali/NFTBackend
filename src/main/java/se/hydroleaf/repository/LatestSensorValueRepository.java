@@ -14,7 +14,7 @@ public interface LatestSensorValueRepository extends JpaRepository<LatestSensorV
     Optional<LatestSensorValue> findByDeviceCompositeIdAndSensorType(String compositeId, String sensorType);
 
     @Query(value = """
-            SELECT COALESCE(AVG(l.value),0) AS average,
+            SELECT COALESCE(AVG(l.sensor_value),0) AS average,
                    COUNT(*)                AS count
             FROM latest_sensor_value l
             JOIN device d ON d.composite_id = l.composite_id

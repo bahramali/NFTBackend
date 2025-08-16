@@ -29,7 +29,9 @@ public class DeviceProvisionService {
             Device d = new Device();
             d.setCompositeId(compositeId);
 
-            String[] parts = compositeId.split("-");
+            // Split only on the first two hyphens so that device IDs may themselves contain
+            // hyphens (e.g. "S01-L02-esp32-01" -> deviceId "esp32-01")
+            String[] parts = compositeId.split("-", 3);
             if (parts.length >= 3) {
                 d.setSystem(parts[0]);
                 d.setLayer(parts[1]);

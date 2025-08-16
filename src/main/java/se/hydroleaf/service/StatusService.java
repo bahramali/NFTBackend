@@ -3,12 +3,11 @@ package se.hydroleaf.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import se.hydroleaf.dto.ActuatorStatusSummary;
 import se.hydroleaf.dto.LiveNowSnapshot;
-import se.hydroleaf.dto.LayerActuatorStatus;
 import se.hydroleaf.dto.GrowSensorSummary;
 import se.hydroleaf.dto.SystemSnapshot;
 import se.hydroleaf.dto.WaterTankSummary;
-import se.hydroleaf.dto.SystemActuatorStatus;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
 import se.hydroleaf.model.Device;
@@ -111,7 +110,7 @@ public class StatusService {
 
             Map<String, SystemSnapshot.LayerSnapshot> layers = systemLayers.computeIfAbsent(system, s -> new HashMap<>());
             layers.computeIfAbsent(layer, l -> {
-                LayerActuatorStatus actuator = new LayerActuatorStatus(getAverage(system, layer, "airPump"));
+                  ActuatorStatusSummary actuator = new ActuatorStatusSummary(getAverage(system, layer, "airPump"));
                 GrowSensorSummary environment = new GrowSensorSummary(
                         getAverage(system, layer, "light"),
                         getAverage(system, layer, "humidity"),
@@ -142,8 +141,8 @@ public class StatusService {
                     .map(SystemSnapshot.LayerSnapshot::lastUpdate)
                     .max(Comparator.naturalOrder())
                     .orElse(null);
-            StatusAverageResponse airPump = aggregate(layers, l -> l.actuators().airPump());
-            SystemActuatorStatus actuators = new SystemActuatorStatus(airPump);
+              StatusAverageResponse airPump = aggregate(layers, l -> l.actuators().airPump());
+              ActuatorStatusSummary actuators = new ActuatorStatusSummary(airPump);
             WaterTankSummary water = new WaterTankSummary(
                     aggregate(layers, l -> l.water().dissolvedTemp()),
                     aggregate(layers, l -> l.water().dissolvedOxygen()),

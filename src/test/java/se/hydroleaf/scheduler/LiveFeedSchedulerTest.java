@@ -37,7 +37,7 @@ class LiveFeedSchedulerTest {
         SystemSnapshot.LayerSnapshot layerSnapshot = new SystemSnapshot.LayerSnapshot(
                 "L1",
                 java.time.Instant.now(),
-                new LayerActuatorStatus(new StatusAverageResponse(1.0, "status", 1L)),
+                  new ActuatorStatusSummary(new StatusAverageResponse(1.0, "status", 1L)),
                 new WaterTankSummary(
                         new StatusAverageResponse(5.0, "°C", 1L),
                         new StatusAverageResponse(6.0, "mg/L", 1L),
@@ -53,7 +53,7 @@ class LiveFeedSchedulerTest {
         );
         SystemSnapshot systemSnapshot = new SystemSnapshot(
                 java.time.Instant.now(),
-                new SystemActuatorStatus(new StatusAverageResponse(1.0, "status", 1L)),
+                  new ActuatorStatusSummary(new StatusAverageResponse(1.0, "status", 1L)),
                 new WaterTankSummary(
                         new StatusAverageResponse(5.0, "°C", 1L),
                         new StatusAverageResponse(6.0, "mg/L", 1L),

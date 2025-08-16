@@ -45,3 +45,10 @@ server:
     key-store-password: ${SSL_KEY_STORE_PASSWORD:}
     key-store-type: ${SSL_KEY_STORE_TYPE:PKCS12}
     key-alias: ${SSL_KEY_ALIAS:}
+
+logging:
+  level:
+    se:
+      hydroleaf:
+        scheduler: DEBUG
+        mqtt: DEBUG

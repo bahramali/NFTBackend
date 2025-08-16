@@ -1,7 +1,11 @@
-package se.hydroleaf.dto;
+package se.hydroleaf.dto.snapshot;
 
 import java.time.Instant;
 import java.util.List;
+
+import se.hydroleaf.dto.summary.ActuatorStatusSummary;
+import se.hydroleaf.dto.summary.GrowSensorSummary;
+import se.hydroleaf.dto.summary.WaterTankSummary;
 
 /**
  * Snapshot of a system containing all layer snapshots.

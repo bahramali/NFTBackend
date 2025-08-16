@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import se.hydroleaf.dto.AggregatedHistoryResponse;
+import se.hydroleaf.dto.history.AggregatedHistoryResponse;
 import se.hydroleaf.service.RecordService;
 
 import java.time.Instant;

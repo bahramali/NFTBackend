@@ -9,11 +9,15 @@ import se.hydroleaf.dto.AggregatedSensorData;
 import se.hydroleaf.dto.TimestampValue;
 import se.hydroleaf.model.ActuatorStatus;
 import se.hydroleaf.model.Device;
+import se.hydroleaf.model.LatestActuatorStatus;
+import se.hydroleaf.model.LatestSensorValue;
 import se.hydroleaf.model.SensorData;
 import se.hydroleaf.model.SensorHealthItem;
 import se.hydroleaf.model.SensorRecord;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.DeviceRepository;
+import se.hydroleaf.repository.LatestActuatorStatusRepository;
+import se.hydroleaf.repository.LatestSensorValueRepository;
 import se.hydroleaf.repository.SensorRecordRepository;
 import se.hydroleaf.util.InstantUtil;
 
@@ -42,6 +46,8 @@ public class RecordService {
     private final DeviceRepository deviceRepository;
     private final SensorRecordRepository recordRepository;
     private final ActuatorStatusRepository actuatorStatusRepository;
+    private final LatestSensorValueRepository latestSensorValueRepository;
+    private final LatestActuatorStatusRepository latestActuatorStatusRepository;
     private final SensorAggregationReader aggregationReader; // thin facade over custom repo/projection
 
     public RecordService(
@@ -49,12 +55,16 @@ public class RecordService {
             DeviceRepository deviceRepository,
             SensorRecordRepository recordRepository,
             ActuatorStatusRepository actuatorStatusRepository,
+            LatestSensorValueRepository latestSensorValueRepository,
+            LatestActuatorStatusRepository latestActuatorStatusRepository,
             SensorAggregationReader aggregationReader
     ) {
         this.objectMapper = objectMapper;
         this.deviceRepository = deviceRepository;
         this.recordRepository = recordRepository;
         this.actuatorStatusRepository = actuatorStatusRepository;
+        this.latestSensorValueRepository = latestSensorValueRepository;
+        this.latestActuatorStatusRepository = latestActuatorStatusRepository;
         this.aggregationReader = aggregationReader;
     }
 
@@ -151,6 +161,22 @@ public class RecordService {
         // Persist the record (cascades values + health)
         recordRepository.save(record);
 
+        // Upsert latest sensor values for each measurement
+        for (SensorData d : record.getValues()) {
+            LatestSensorValue latest = latestSensorValueRepository
+                    .findByDeviceCompositeIdAndSensorType(device.getCompositeId(), d.getSensorType())
+                    .orElseGet(() -> {
+                        LatestSensorValue l = new LatestSensorValue();
+                        l.setDevice(device);
+                        l.setSensorType(d.getSensorType());
+                        return l;
+                    });
+            latest.setValue(d.getValue());
+            latest.setUnit(d.getUnit());
+            latest.setTimestamp(record.getTimestamp());
+            latestSensorValueRepository.save(latest);
+        }
+
         // Optional controllers array for actuator statuses
         JsonNode controllers = json.path("controllers");
         if (controllers.isArray()) {
@@ -169,6 +195,19 @@ public class RecordService {
             }
             if (!statuses.isEmpty()) {
                 actuatorStatusRepository.saveAll(statuses);
+                for (ActuatorStatus as : statuses) {
+                    LatestActuatorStatus latest = latestActuatorStatusRepository
+                            .findByDeviceCompositeIdAndActuatorType(device.getCompositeId(), as.getActuatorType())
+                            .orElseGet(() -> {
+                                LatestActuatorStatus l = new LatestActuatorStatus();
+                                l.setDevice(device);
+                                l.setActuatorType(as.getActuatorType());
+                                return l;
+                            });
+                    latest.setState(as.getState());
+                    latest.setTimestamp(as.getTimestamp());
+                    latestActuatorStatusRepository.save(latest);
+                }
             }
         }
     }

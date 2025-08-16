@@ -2,6 +2,8 @@ package se.hydroleaf.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.dto.history.AggregatedHistoryResponse;
@@ -81,6 +83,7 @@ public class RecordService {
      * Unknown keys are ignored. Missing sections are skipped.
      */
     @Transactional
+    @CacheEvict(cacheNames = "aggregatedHistory", allEntries = true)
     public void saveRecord(String compositeId, JsonNode json) {
         Objects.requireNonNull(compositeId, "compositeId is required");
 
@@ -179,12 +182,18 @@ public class RecordService {
      * Delegates the heavy lifting to SensorAggregationReader (custom repo/projection).
      */
     @Transactional(readOnly = true)
+    @Cacheable(
+            cacheNames = "aggregatedHistory",
+            key = "{#compositeId, #from, #to, #bucket, #sensorType}",
+            condition = "#useCache"
+    )
     public AggregatedHistoryResponse aggregatedHistory(
             String compositeId,
             Instant from,
             Instant to,
             String bucket, // e.g., "5m","1h","1d"
-            String sensorType // optional filter
+            String sensorType, // optional filter
+            boolean useCache
     ) {
         if (from == null || to == null) throw new IllegalArgumentException("from/to are required");
         if (!deviceRepository.existsById(compositeId)) {

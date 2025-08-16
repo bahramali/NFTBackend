@@ -3,6 +3,7 @@ package se.hydroleaf.repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 import se.hydroleaf.model.Device;
@@ -17,6 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @DataJpaTest
 @ActiveProfiles("test")
 class SensorDataRepositoryTest {
+
+    @MockBean
+    private AggregateRepository aggregateRepository;
 
     @Autowired
     private SensorDataRepository sensorDataRepository;

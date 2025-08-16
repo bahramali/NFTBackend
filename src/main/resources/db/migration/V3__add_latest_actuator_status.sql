@@ -1,4 +1,4 @@
-CREATE TABLE latest_actuator_status (
+CREATE TABLE IF NOT EXISTS latest_actuator_status (
     id BIGSERIAL PRIMARY KEY,
     composite_id VARCHAR(128) NOT NULL,
     actuator_type VARCHAR(64) NOT NULL,
@@ -8,4 +8,4 @@ CREATE TABLE latest_actuator_status (
     CONSTRAINT ux_las_device_actuator UNIQUE (composite_id, actuator_type)
 );
 
-CREATE INDEX ix_las_actuator_device ON latest_actuator_status (actuator_type, composite_id);
+CREATE INDEX IF NOT EXISTS ix_las_actuator_device ON latest_actuator_status (actuator_type, composite_id);

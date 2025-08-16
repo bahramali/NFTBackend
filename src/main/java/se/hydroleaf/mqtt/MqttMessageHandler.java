@@ -81,23 +81,34 @@ public class MqttMessageHandler {
         return null;
     }
 
-    private static final Pattern GROW_PATTERN =
-            Pattern.compile("^growSensors/(S\\d+)/(L\\d+)/([^/]+)$");
+    private enum TopicPrefix {
+        GROW("growSensors"),
+        WATER("waterTank");
 
-    private static final Pattern WATER_PATTERN =
-            Pattern.compile("^waterTank/(S\\d+)/(L\\d+)/([^/]+)$");
+        private final Pattern pattern;
 
-    private String deriveCompositeIdFromTopic(String topic) {
-        if (topic == null) return null;
-        Matcher m = GROW_PATTERN.matcher(topic);
-        if (m.find()) {
-            return m.group(1) + "-" + m.group(2) + "-" + m.group(3);
+        TopicPrefix(String prefix) {
+            this.pattern = Pattern.compile("^" + prefix + "/(S\\d+)/(L\\d+)/([^/]+)$");
         }
-        m = WATER_PATTERN.matcher(topic);
-        if (m.find()) {
-            return m.group(1) + "-" + m.group(2) + "-" + m.group(3);
+    }
+
+    private static String deriveCompositeId(Matcher matcher) {
+        return matcher.group(1) + "-" + matcher.group(2) + "-" + matcher.group(3);
+    }
+
+    private static String deriveCompositeIdFromSupportedPrefixes(String topic) {
+        if (topic == null) return null;
+        for (TopicPrefix prefix : TopicPrefix.values()) {
+            Matcher matcher = prefix.pattern.matcher(topic);
+            if (matcher.find()) {
+                return deriveCompositeId(matcher);
+            }
         }
         return null;
+    }
+
+    private String deriveCompositeIdFromTopic(String topic) {
+        return deriveCompositeIdFromSupportedPrefixes(topic);
     }
 
 }

@@ -12,10 +12,10 @@ import se.hydroleaf.dto.SystemActuatorStatus;
 import se.hydroleaf.dto.StatusAllAverageResponse;
 import se.hydroleaf.dto.StatusAverageResponse;
 import se.hydroleaf.model.Device;
-import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.AverageResult;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.repository.SensorDataRepository;
+import se.hydroleaf.repository.LatestActuatorStatusRepository;
+import se.hydroleaf.repository.LatestSensorValueRepository;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -30,29 +30,33 @@ import java.util.function.Function;
 @Transactional(readOnly = true)
 public class StatusService {
 
-    private final SensorDataRepository sensorDataRepository;
-    private final ActuatorStatusRepository actuatorStatusRepository;
+    private final LatestSensorValueRepository latestSensorValueRepository;
+    private final LatestActuatorStatusRepository latestActuatorStatusRepository;
     private final DeviceRepository deviceRepository;
 
-    public StatusService(SensorDataRepository sensorDataRepository,
-                         ActuatorStatusRepository actuatorStatusRepository,
+    public StatusService(LatestSensorValueRepository latestSensorValueRepository,
+                         LatestActuatorStatusRepository latestActuatorStatusRepository,
                          DeviceRepository deviceRepository) {
-        this.sensorDataRepository = sensorDataRepository;
-        this.actuatorStatusRepository = actuatorStatusRepository;
+        this.latestSensorValueRepository = latestSensorValueRepository;
+        this.latestActuatorStatusRepository = latestActuatorStatusRepository;
         this.deviceRepository = deviceRepository;
     }
 
     public StatusAverageResponse getAverage(String system, String layer, String sensorType) {
-        AverageResult result;
-        if (isActuator(sensorType)) {
-            result = actuatorStatusRepository.getLatestActuatorAverage(system, layer, sensorType);
-        } else {
-            result = sensorDataRepository.getLatestAverage(system, layer, sensorType);
-        }
-        Double avg = (result != null && result.getAverage() != null) ? (double) Math.round(result.getAverage() * 10) / 10 : null;
-        long count = result != null && result.getCount() != null ? result.getCount() : 0L;
         String unit = getUnit(sensorType);
-        return new StatusAverageResponse(avg, unit, count);
+        if (isActuator(sensorType)) {
+            Boolean state = latestActuatorStatusRepository.getLatestActuatorState(system, layer, sensorType);
+            Long count = state != null ? 1L : 0L;
+            Double avg = state != null ? (state ? 1.0 : 0.0) : null;
+            return new StatusAverageResponse(avg, unit, count);
+        } else {
+            AverageResult result = latestSensorValueRepository.getLatestSensorAverage(system, layer, sensorType);
+            Double avg = (result != null && result.getAverage() != null)
+                    ? (double) Math.round(result.getAverage() * 10) / 10
+                    : null;
+            long count = result != null && result.getCount() != null ? result.getCount() : 0L;
+            return new StatusAverageResponse(avg, unit, count);
+        }
     }
 
     public StatusAllAverageResponse getAllAverages(String system, String layer) {

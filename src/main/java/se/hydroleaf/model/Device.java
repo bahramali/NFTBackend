@@ -43,7 +43,7 @@ public class Device {
     private String layer;                       // e.g. L02
 
     @Column(name = "device_id", length = 64, nullable = false)
-    private String deviceId;                    // e.g. esp32-01   <-- (NEW)
+    private String deviceId;                    // e.g. esp32-01 (may contain hyphens)
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "group_id", nullable = false)

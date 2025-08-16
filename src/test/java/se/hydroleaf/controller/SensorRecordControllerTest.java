@@ -44,7 +44,8 @@ class SensorRecordControllerTest {
                 Instant.parse("2023-01-02T00:00:00Z"),
                 List.of(tempData)
         );
-        when(recordService.aggregatedHistory(eq("dev1"), any(), any(), eq("5m"))).thenReturn(response);
+        when(recordService.aggregatedHistory(eq("dev1"), any(), any(), eq("5m"), isNull()))
+                .thenReturn(response);
 
         mockMvc.perform(get("/api/records/history/aggregated")
                         .param("compositeId", "dev1")

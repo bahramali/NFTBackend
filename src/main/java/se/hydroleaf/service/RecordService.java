@@ -175,6 +175,7 @@ public class RecordService {
 
     /**
      * Read aggregated history for a device within [from, to], bucketed by granularity.
+     * Optionally filters to a single sensor type to minimize scanned rows.
      * Delegates the heavy lifting to SensorAggregationReader (custom repo/projection).
      */
     @Transactional(readOnly = true)
@@ -182,7 +183,8 @@ public class RecordService {
             String compositeId,
             Instant from,
             Instant to,
-            String bucket // e.g., "5m","1h","1d"
+            String bucket, // e.g., "5m","1h","1d"
+            String sensorType // optional filter
     ) {
         if (from == null || to == null) throw new IllegalArgumentException("from/to are required");
         if (!deviceRepository.existsById(compositeId)) {
@@ -193,7 +195,7 @@ public class RecordService {
         Instant bucketTo   = InstantUtil.truncateToBucket(to, bucket);
 
         List<SensorAggregateResult> results =
-                aggregationReader.aggregate(compositeId, bucketFrom, bucketTo, bucket);
+                aggregationReader.aggregate(compositeId, bucketFrom, bucketTo, bucket, sensorType);
 
         // Collate by (sensorType|unit)
         Map<String, AggregatedSensorData> map = new LinkedHashMap<>();
@@ -233,7 +235,7 @@ public class RecordService {
      * Implement this with your Spring Data repository (native query / JPQL) that returns projections.
      */
     public interface SensorAggregationReader {
-        List<SensorAggregateResult> aggregate(String compositeId, Instant from, Instant to, String bucket);
+        List<SensorAggregateResult> aggregate(String compositeId, Instant from, Instant to, String bucket, String sensorType);
     }
 
     /**

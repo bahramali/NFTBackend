@@ -23,10 +23,11 @@ public class SensorAggregationAdapter implements RecordService.SensorAggregation
     public List<RecordService.SensorAggregateResult> aggregate(String compositeId,
                                                                Instant from,
                                                                Instant to,
-                                                               String bucket) {
+                                                               String bucket,
+                                                               String sensorType) {
         long sec = InstantUtil.bucketSeconds(bucket);
 
-        var rows = repo.aggregate(compositeId, from, to, sec);
+        var rows = repo.aggregate(compositeId, from, to, sec, sensorType);
         List<RecordService.SensorAggregateResult> out = new ArrayList<>(rows.size());
 
         for (SensorAggregationRow r : rows) {

@@ -16,7 +16,7 @@ public interface SensorAggregationRepository extends JpaRepository<SensorRecord,
             SELECT
               sd.sensor_type AS sensor_type,
               sd.unit        AS unit,
-              to_timestamp(floor(extract(epoch from sr.record_time) / :bucketSec) * :bucketSec) AS bucket_time,
+              time_bucket(:bucketSec * INTERVAL '1 second', sr.record_time) AS bucket_time,
               AVG(sd.sensor_value) AS avg_value
             FROM sensor_record sr
             JOIN sensor_data sd ON sd.record_id = sr.id
@@ -24,6 +24,7 @@ public interface SensorAggregationRepository extends JpaRepository<SensorRecord,
               AND sr.record_time >= :fromTs
               AND sr.record_time <  :toTs
               AND sd.sensor_value IS NOT NULL
+              AND (:sensorType IS NULL OR sd.sensor_type = :sensorType)
             GROUP BY bucket_time, sd.sensor_type, sd.unit
             ORDER BY bucket_time
             """, nativeQuery = true)
@@ -31,6 +32,7 @@ public interface SensorAggregationRepository extends JpaRepository<SensorRecord,
             @Param("compositeId") String compositeId,
             @Param("fromTs") Instant from,
             @Param("toTs") Instant to,
-            @Param("bucketSec") long bucketSeconds
+            @Param("bucketSec") long bucketSeconds,
+            @Param("sensorType") String sensorType
     );
 }

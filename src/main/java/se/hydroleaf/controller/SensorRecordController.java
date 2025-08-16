@@ -41,13 +41,16 @@ public class SensorRecordController {
         }
     }
 
-    /** Aggregated history by time bucket. Accepts ISO-8601 or epoch millis for 'from'/'to'. */
+    /** Aggregated history by time bucket. Accepts ISO-8601 or epoch millis for 'from'/'to'.
+     *  Optionally filters by sensorType.
+     */
     @GetMapping("/history/aggregated")
     public AggregatedHistoryResponse getHistoryAggregated(
             @RequestParam("compositeId") String compositeId,
             @RequestParam("from") String from,
             @RequestParam("to") String to,
-            @RequestParam(name = "bucket", defaultValue = "5m") String bucket
+            @RequestParam(name = "bucket", defaultValue = "5m") String bucket,
+            @RequestParam(name = "sensorType", required = false) String sensorType
     ) {
         Instant fromInst = parseInstant(from);
         Instant toInst = parseInstant(to);
@@ -58,7 +61,7 @@ public class SensorRecordController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "'to' must be after 'from'");
         }
         try {
-            return recordService.aggregatedHistory(compositeId, fromInst, toInst, bucket);
+            return recordService.aggregatedHistory(compositeId, fromInst, toInst, bucket, sensorType);
         } catch (IllegalArgumentException iae) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, iae.getMessage(), iae);
         }

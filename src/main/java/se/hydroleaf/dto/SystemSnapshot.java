@@ -8,7 +8,7 @@ import java.util.List;
  */
 public record SystemSnapshot(
         Instant lastUpdate,
-        SystemActuatorStatus actuators,
+        ActuatorStatusSummary actuators,
         WaterTankSummary water,
         GrowSensorSummary environment,
         List<LayerSnapshot> layers
@@ -21,7 +21,7 @@ public record SystemSnapshot(
     public record LayerSnapshot(
             String layerId,
             Instant lastUpdate,
-            LayerActuatorStatus actuators,
+            ActuatorStatusSummary actuators,
             WaterTankSummary water,
             GrowSensorSummary environment
     ) {}

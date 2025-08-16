@@ -1,5 +1,5 @@
 package se.hydroleaf.dto;
 
-public record SystemActuatorStatus(
+public record ActuatorStatusSummary(
         StatusAverageResponse airPump
 ) {}

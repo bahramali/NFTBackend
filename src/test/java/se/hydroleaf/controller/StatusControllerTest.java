@@ -111,7 +111,7 @@ class StatusControllerTest {
         SystemSnapshot.LayerSnapshot layer = new SystemSnapshot.LayerSnapshot(
                 "L1",
                 java.time.Instant.parse("2023-01-01T00:00:00Z"),
-                new LayerActuatorStatus(new StatusAverageResponse(1.0, "status", 1L)),
+                new ActuatorStatusSummary(new StatusAverageResponse(1.0, "status", 1L)),
                 new WaterTankSummary(
                         new StatusAverageResponse(4.0, "°C",1L),
                         new StatusAverageResponse(5.0, "mg/L",1L),
@@ -127,7 +127,7 @@ class StatusControllerTest {
         );
         SystemSnapshot system = new SystemSnapshot(
                 java.time.Instant.parse("2023-01-01T00:00:00Z"),
-                new SystemActuatorStatus(new StatusAverageResponse(1.0, "status",1L)),
+                new ActuatorStatusSummary(new StatusAverageResponse(1.0, "status",1L)),
                 new WaterTankSummary(
                         new StatusAverageResponse(4.0, "°C",1L),
                         new StatusAverageResponse(5.0, "mg/L",1L),

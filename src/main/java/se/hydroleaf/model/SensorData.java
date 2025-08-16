@@ -3,8 +3,11 @@ package se.hydroleaf.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(
@@ -17,10 +20,13 @@ import lombok.NoArgsConstructor;
                 @Index(name = "ix_data_record", columnList = "record_id")
         }
 )
+@Getter
+@Setter
+@EqualsAndHashCode(exclude = "record")
+@ToString(exclude = "record")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 public class SensorData {
 
     @Id

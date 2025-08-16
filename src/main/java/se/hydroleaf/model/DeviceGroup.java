@@ -3,8 +3,11 @@ package se.hydroleaf.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(
@@ -13,10 +16,13 @@ import lombok.NoArgsConstructor;
                 @Index(name = "ux_device_group_mqtt_topic", columnList = "mqtt_topic", unique = true)
         }
 )
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 public class DeviceGroup {
 
     @Id

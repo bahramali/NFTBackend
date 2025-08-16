@@ -3,8 +3,11 @@ package se.hydroleaf.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.Instant;
 
@@ -18,7 +21,10 @@ import java.time.Instant;
                 @Index(name = "ix_las_actuator_device", columnList = "actuator_type, composite_id")
         }
 )
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(exclude = "device")
+@ToString(exclude = "device")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

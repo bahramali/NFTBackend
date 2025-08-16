@@ -4,14 +4,12 @@ package se.hydroleaf.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 import se.hydroleaf.model.SensorRecord;
 import se.hydroleaf.repository.dto.SensorAggregationRow;
 
 import java.time.Instant;
 import java.util.List;
 
-@Repository
 public interface SensorAggregationRepository extends JpaRepository<SensorRecord, Long> {
 
     @Query(value = """

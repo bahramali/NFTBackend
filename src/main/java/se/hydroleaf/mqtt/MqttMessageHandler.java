@@ -55,6 +55,8 @@ public class MqttMessageHandler {
                 return;
             }
 
+            topicPublisher.publish("/topic/" + topic, payload);
+
             deviceProvisionService.ensureDevice(compositeId, topic);
             recordService.saveRecord(compositeId, node);
             lastSeen.update(compositeId);

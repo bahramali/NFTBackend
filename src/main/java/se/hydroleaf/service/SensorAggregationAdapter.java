@@ -3,6 +3,7 @@ package se.hydroleaf.service;
 
 import org.springframework.stereotype.Component;
 import se.hydroleaf.repository.SensorAggregationRepository;
+import se.hydroleaf.repository.TimescaleDbSupport;
 import se.hydroleaf.repository.dto.SensorAggregationRow;
 import se.hydroleaf.util.InstantUtil;
 
@@ -14,9 +15,11 @@ import java.util.List;
 public class SensorAggregationAdapter implements RecordService.SensorAggregationReader {
 
     private final SensorAggregationRepository repo;
+    private final TimescaleDbSupport timescale;
 
-    public SensorAggregationAdapter(SensorAggregationRepository repo) {
+    public SensorAggregationAdapter(SensorAggregationRepository repo, TimescaleDbSupport timescale) {
         this.repo = repo;
+        this.timescale = timescale;
     }
 
     @Override
@@ -27,7 +30,9 @@ public class SensorAggregationAdapter implements RecordService.SensorAggregation
                                                                String sensorType) {
         long sec = InstantUtil.bucketSeconds(bucket);
 
-        var rows = repo.aggregate(compositeId, from, to, sec, sensorType);
+        var rows = timescale.isAvailable()
+                ? repo.aggregateTimescale(compositeId, from, to, sec, sensorType)
+                : repo.aggregateDateTrunc(compositeId, from, to, sec, sensorType);
         List<RecordService.SensorAggregateResult> out = new ArrayList<>(rows.size());
 
         for (SensorAggregationRow r : rows) {

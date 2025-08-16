@@ -46,12 +46,14 @@ public class StatusService {
 
         if (isActuator(sensorType)) {
             AverageCount ac = actuatorStatusRepository.getLatestActuatorAverage(system, layer, sensorType);
-            Double avg = ac.getCount() > 0 ? ac.getAverage() : null;
-            return new StatusAverageResponse(avg, unit, ac.getCount());
+            long count = ac != null ? ac.getCount() : 0L;
+            Double avg = ac != null && count > 0 ? ac.getAverage() : null;
+            return new StatusAverageResponse(avg, unit, count);
         } else {
             AverageCount ac = sensorDataRepository.getLatestAverage(system, layer, sensorType);
-            Double avg = ac.getCount() > 0 ? Math.round(ac.getAverage() * 10.0) / 10.0 : null;
-            return new StatusAverageResponse(avg, unit, ac.getCount());
+            long count = ac != null ? ac.getCount() : 0L;
+            Double avg = ac != null && count > 0 ? Math.round(ac.getAverage() * 10.0) / 10.0 : null;
+            return new StatusAverageResponse(avg, unit, count);
         }
     }
 

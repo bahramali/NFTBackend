@@ -69,6 +69,8 @@ public class MqttMessageHandler {
             log.info("live_now message test done!");
 
 
+            topicPublisher.publish("/topic/" + topic, payload);
+
             deviceProvisionService.ensureDevice(compositeId, topic);
             recordService.saveRecord(compositeId, node);
             lastSeen.update(compositeId);

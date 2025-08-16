@@ -99,11 +99,16 @@ public class RecordService {
         // Parse sensor readings from sensors array
         JsonNode sensors = json.path("sensors");
         Map<String, String> sensorNameToType = new HashMap<>();
+        Set<String> seenTypes = new HashSet<>();
         if (sensors.isArray()) {
             for (JsonNode s : sensors) {
                 String sensorType = s.path("sensorType").asText(null);
+                if (sensorType == null || sensorType.isBlank() || !seenTypes.add(sensorType)) {
+                    // skip null, empty or duplicate sensor types
+                    continue;
+                }
                 String sensorName = s.path("sensorName").asText(null);
-                if (sensorName != null && sensorType != null) {
+                if (sensorName != null) {
                     sensorNameToType.put(sensorName, sensorType);
                 }
 
@@ -118,7 +123,7 @@ public class RecordService {
                     num = readDouble(valueNode).orElse(null);
                     if (s.hasNonNull("unit")) unit = s.get("unit").asText();
                 }
-                if (sensorType == null || num == null) continue; // skip invalid
+                if (num == null) continue; // skip invalid
 
                 SensorData d = new SensorData();
                 d.setRecord(record);

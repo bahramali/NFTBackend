@@ -181,4 +181,53 @@ class RecordServiceDeviceTests {
         assertTrue(pumpRow.getState());
         assertEquals(Instant.parse("2025-03-03T03:03:03Z"), pumpRow.getTimestamp());
     }
+
+    @Test
+    void saveRecord_skips_duplicate_sensor_types() throws Exception {
+        final String compositeId = "S06-L01-DUP";
+        ensureDevice(compositeId);
+
+        String json = """
+                {
+                  "sensors": [
+                    {"sensorName":"s1","sensorType":"temperature","value":20.0},
+                    {"sensorName":"s2","sensorType":"temperature","value":30.0}
+                  ]
+                }
+                """;
+
+        recordService.saveRecord(compositeId, objectMapper.readTree(json));
+
+        var data = sensorDataRepository.findAll().stream()
+                .filter(d -> compositeId.equals(d.getRecord().getDevice().getCompositeId()))
+                .toList();
+        assertEquals(1, data.size());
+        assertEquals("temperature", data.get(0).getSensorType());
+        assertEquals(20.0, data.get(0).getValue());
+    }
+
+    @Test
+    void saveRecord_skips_empty_or_null_sensor_types() throws Exception {
+        final String compositeId = "S07-L01-EMP";
+        ensureDevice(compositeId);
+
+        String json = """
+                {
+                  "sensors": [
+                    {"sensorName":"s1","sensorType":"","value":10.0},
+                    {"sensorName":"s2","sensorType":null,"value":5.0},
+                    {"sensorName":"s3","value":3.0},
+                    {"sensorName":"s4","sensorType":"ph","value":6.0}
+                  ]
+                }
+                """;
+
+        recordService.saveRecord(compositeId, objectMapper.readTree(json));
+
+        var data = sensorDataRepository.findAll().stream()
+                .filter(d -> compositeId.equals(d.getRecord().getDevice().getCompositeId()))
+                .toList();
+        assertEquals(1, data.size());
+        assertEquals("ph", data.get(0).getSensorType());
+    }
 }

@@ -9,10 +9,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import se.hydroleaf.model.ActuatorStatus;
 import se.hydroleaf.model.Device;
-import se.hydroleaf.model.LatestActuatorStatus;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.repository.LatestActuatorStatusRepository;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -25,13 +23,12 @@ class ActuatorServiceTest {
 
     @Mock ActuatorStatusRepository actuatorRepo;
     @Mock DeviceRepository deviceRepo;
-    @Mock LatestActuatorStatusRepository latestActuatorRepo;
 
     private ActuatorService actuatorService;
 
     @BeforeEach
     void setup() {
-        this.actuatorService = new ActuatorService(new ObjectMapper(), actuatorRepo, deviceRepo, latestActuatorRepo);
+        this.actuatorService = new ActuatorService(new ObjectMapper(), actuatorRepo, deviceRepo);
     }
 
     private Device device(String compositeId) {
@@ -44,8 +41,6 @@ class ActuatorServiceTest {
     void saves_status_when_payload_has_airPump_controller_with_string_state() {
         String compositeId = "S01-L02-G01";
         when(deviceRepo.findById(compositeId)).thenReturn(Optional.of(device(compositeId)));
-        when(latestActuatorRepo.findByDeviceCompositeIdAndActuatorType(compositeId, "airPump"))
-                .thenReturn(Optional.empty());
 
         String json = """
                 {
@@ -61,7 +56,6 @@ class ActuatorServiceTest {
 
         ArgumentCaptor<ActuatorStatus> captor = ArgumentCaptor.forClass(ActuatorStatus.class);
         verify(actuatorRepo, times(1)).save(captor.capture());
-        verify(latestActuatorRepo, times(1)).save(any(LatestActuatorStatus.class));
         ActuatorStatus saved = captor.getValue();
 
         assertEquals(compositeId, saved.getDevice().getCompositeId());
@@ -74,8 +68,6 @@ class ActuatorServiceTest {
     void saves_status_when_payload_has_boolean_and_numeric_values() {
         String compositeId = "S02-L01-X1";
         when(deviceRepo.findById(compositeId)).thenReturn(Optional.of(device(compositeId)));
-        when(latestActuatorRepo.findByDeviceCompositeIdAndActuatorType(anyString(), anyString()))
-                .thenReturn(Optional.empty());
 
         String jsonTrue = """
                 {
@@ -99,7 +91,6 @@ class ActuatorServiceTest {
 
         ArgumentCaptor<ActuatorStatus> captor = ArgumentCaptor.forClass(ActuatorStatus.class);
         verify(actuatorRepo, times(2)).save(captor.capture());
-        verify(latestActuatorRepo, times(2)).save(any(LatestActuatorStatus.class));
 
         ActuatorStatus first = captor.getAllValues().get(0);
         ActuatorStatus second = captor.getAllValues().get(1);
@@ -128,7 +119,7 @@ class ActuatorServiceTest {
                 () -> actuatorService.saveActuatorStatus(json));
 
         assertTrue(ex.getMessage().toLowerCase().contains("composite"));
-        verifyNoInteractions(actuatorRepo, latestActuatorRepo);
-    }
+        verifyNoInteractions(actuatorRepo);
+}
 }
 

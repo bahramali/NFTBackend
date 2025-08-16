@@ -11,10 +11,11 @@ import se.hydroleaf.dto.summary.WaterTankSummary;
 import se.hydroleaf.dto.summary.StatusAllAverageResponse;
 import se.hydroleaf.dto.summary.StatusAverageResponse;
 import se.hydroleaf.model.Device;
-import se.hydroleaf.repository.AverageResult;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.repository.LatestActuatorStatusRepository;
-import se.hydroleaf.repository.LatestSensorValueRepository;
+import se.hydroleaf.repository.ActuatorStatusRepository;
+import se.hydroleaf.repository.SensorDataRepository;
+import se.hydroleaf.model.ActuatorStatus;
+import se.hydroleaf.model.SensorData;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -29,31 +30,53 @@ import java.util.function.Function;
 @Transactional(readOnly = true)
 public class StatusService {
 
-    private final LatestSensorValueRepository latestSensorValueRepository;
-    private final LatestActuatorStatusRepository latestActuatorStatusRepository;
+    private final SensorDataRepository sensorDataRepository;
+    private final ActuatorStatusRepository actuatorStatusRepository;
     private final DeviceRepository deviceRepository;
 
-    public StatusService(LatestSensorValueRepository latestSensorValueRepository,
-                         LatestActuatorStatusRepository latestActuatorStatusRepository,
+    public StatusService(SensorDataRepository sensorDataRepository,
+                         ActuatorStatusRepository actuatorStatusRepository,
                          DeviceRepository deviceRepository) {
-        this.latestSensorValueRepository = latestSensorValueRepository;
-        this.latestActuatorStatusRepository = latestActuatorStatusRepository;
+        this.sensorDataRepository = sensorDataRepository;
+        this.actuatorStatusRepository = actuatorStatusRepository;
         this.deviceRepository = deviceRepository;
     }
 
     public StatusAverageResponse getAverage(String system, String layer, String sensorType) {
         String unit = getUnit(sensorType);
+        List<Device> devices = deviceRepository.findBySystemAndLayer(system, layer);
+        if (devices.isEmpty()) {
+            return new StatusAverageResponse(null, unit, 0L);
+        }
+
+        double sum = 0.0;
+        long count = 0L;
+
         if (isActuator(sensorType)) {
-            Boolean state = latestActuatorStatusRepository.getLatestActuatorState(system, layer, sensorType);
-            Long count = state != null ? 1L : 0L;
-            Double avg = state != null ? (state ? 1.0 : 0.0) : null;
+            for (Device d : devices) {
+                ActuatorStatus latest = actuatorStatusRepository
+                        .findTopByDeviceCompositeIdAndActuatorTypeOrderByTimestampDesc(d.getCompositeId(), sensorType)
+                        .orElse(null);
+                if (latest != null) {
+                    count++;
+                    if (Boolean.TRUE.equals(latest.getState())) {
+                        sum += 1.0;
+                    }
+                }
+            }
+            Double avg = count > 0 ? sum / count : null;
             return new StatusAverageResponse(avg, unit, count);
         } else {
-            AverageResult result = latestSensorValueRepository.getLatestSensorAverage(system, layer, sensorType);
-            Double avg = (result != null && result.getAverage() != null)
-                    ? (double) Math.round(result.getAverage() * 10) / 10
-                    : null;
-            long count = result != null && result.getCount() != null ? result.getCount() : 0L;
+            for (Device d : devices) {
+                SensorData latest = sensorDataRepository
+                        .findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc(d.getCompositeId(), sensorType)
+                        .orElse(null);
+                if (latest != null && latest.getValue() != null) {
+                    count++;
+                    sum += latest.getValue();
+                }
+            }
+            Double avg = count > 0 ? Math.round((sum / count) * 10.0) / 10.0 : null;
             return new StatusAverageResponse(avg, unit, count);
         }
     }

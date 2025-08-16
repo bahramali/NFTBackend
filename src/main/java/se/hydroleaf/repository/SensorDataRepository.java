@@ -6,8 +6,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import se.hydroleaf.model.SensorData;
 
+import java.util.Optional;
+
 @Repository
 public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
+
+    /**
+     * Latest sensor reading for a device and sensor type.
+     */
+    Optional<SensorData> findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc(String compositeId,
+                                                                                                   String sensorType);
 
     @Query(value = """
             WITH last_rec AS (

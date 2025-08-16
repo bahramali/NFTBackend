@@ -8,18 +8,18 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.DeviceGroup;
-import se.hydroleaf.model.LatestActuatorStatus;
-import se.hydroleaf.model.LatestSensorValue;
 import se.hydroleaf.repository.DeviceGroupRepository;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.repository.LatestActuatorStatusRepository;
-import se.hydroleaf.repository.LatestSensorValueRepository;
+import se.hydroleaf.repository.ActuatorStatusRepository;
+import se.hydroleaf.repository.SensorDataRepository;
+import se.hydroleaf.model.ActuatorStatus;
+import se.hydroleaf.model.SensorData;
 
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Integration tests verifying that RecordService upserts latest tables. */
+/** Integration tests verifying that RecordService persists data accessible via latest queries. */
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
@@ -29,8 +29,8 @@ class RecordServiceLatestTests {
     @Autowired RecordService recordService;
     @Autowired DeviceRepository deviceRepository;
     @Autowired DeviceGroupRepository deviceGroupRepository;
-    @Autowired LatestSensorValueRepository latestSensorValueRepository;
-    @Autowired LatestActuatorStatusRepository latestActuatorStatusRepository;
+    @Autowired SensorDataRepository sensorDataRepository;
+    @Autowired ActuatorStatusRepository actuatorStatusRepository;
 
     private DeviceGroup ensureGroup() {
         return deviceGroupRepository.findByMqttTopic("test-group").orElseGet(() -> {
@@ -56,7 +56,7 @@ class RecordServiceLatestTests {
     }
 
     @Test
-    void upserts_latest_sensor_and_actuator() throws Exception {
+    void saves_and_fetches_latest_sensor_and_actuator() throws Exception {
         String compositeId = "S05-L01-T01";
         ensureDevice(compositeId);
 
@@ -69,15 +69,15 @@ class RecordServiceLatestTests {
                 """;
         recordService.saveRecord(compositeId, objectMapper.readTree(first));
 
-        LatestSensorValue lsv = latestSensorValueRepository
-                .findByDeviceCompositeIdAndSensorType(compositeId, "light")
+        SensorData lsv = sensorDataRepository
+                .findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc(compositeId, "light")
                 .orElseThrow();
         assertEquals(10.0, lsv.getValue());
         assertEquals("lx", lsv.getUnit());
-        assertEquals(Instant.parse("2024-01-01T00:00:00Z"), lsv.getTimestamp());
+        assertEquals(Instant.parse("2024-01-01T00:00:00Z"), lsv.getRecord().getTimestamp());
 
-        LatestActuatorStatus las = latestActuatorStatusRepository
-                .findByDeviceCompositeIdAndActuatorType(compositeId, "airPump")
+        ActuatorStatus las = actuatorStatusRepository
+                .findTopByDeviceCompositeIdAndActuatorTypeOrderByTimestampDesc(compositeId, "airPump")
                 .orElseThrow();
         assertTrue(las.getState());
         assertEquals(Instant.parse("2024-01-01T00:00:00Z"), las.getTimestamp());
@@ -91,14 +91,14 @@ class RecordServiceLatestTests {
                 """;
         recordService.saveRecord(compositeId, objectMapper.readTree(second));
 
-        LatestSensorValue lsv2 = latestSensorValueRepository
-                .findByDeviceCompositeIdAndSensorType(compositeId, "light")
+        SensorData lsv2 = sensorDataRepository
+                .findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc(compositeId, "light")
                 .orElseThrow();
         assertEquals(15.5, lsv2.getValue());
-        assertEquals(Instant.parse("2024-01-01T00:05:00Z"), lsv2.getTimestamp());
+        assertEquals(Instant.parse("2024-01-01T00:05:00Z"), lsv2.getRecord().getTimestamp());
 
-        LatestActuatorStatus las2 = latestActuatorStatusRepository
-                .findByDeviceCompositeIdAndActuatorType(compositeId, "airPump")
+        ActuatorStatus las2 = actuatorStatusRepository
+                .findTopByDeviceCompositeIdAndActuatorTypeOrderByTimestampDesc(compositeId, "airPump")
                 .orElseThrow();
         assertFalse(las2.getState());
         assertEquals(Instant.parse("2024-01-01T00:05:00Z"), las2.getTimestamp());

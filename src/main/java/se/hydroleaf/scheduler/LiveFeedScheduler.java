@@ -3,11 +3,10 @@ package se.hydroleaf.scheduler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
+import se.hydroleaf.mqtt.TopicPublisher;
 import se.hydroleaf.service.StatusService;
 
 import java.time.Duration;
@@ -21,20 +20,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class LiveFeedScheduler {
 
-    private final boolean publishEnabled;
     private final StatusService statusService;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final TopicPublisher topicPublisher;
     private final ConcurrentHashMap<String, Instant> lastSeen;
     private final ObjectMapper objectMapper;
     private Instant lastInvocation;
-    public LiveFeedScheduler(@Value("${mqtt.publishEnabled:true}") boolean publishEnabled,
-                             StatusService statusService,
-                             SimpMessagingTemplate messagingTemplate,
+    public LiveFeedScheduler(StatusService statusService,
+                             TopicPublisher topicPublisher,
                              ConcurrentHashMap<String, Instant> lastSeen,
                              ObjectMapper objectMapper) {
-        this.publishEnabled = publishEnabled;
         this.statusService = statusService;
-        this.messagingTemplate = messagingTemplate;
+        this.topicPublisher = topicPublisher;
         this.lastSeen = lastSeen;
         this.objectMapper = objectMapper;
     }
@@ -63,13 +59,9 @@ public class LiveFeedScheduler {
             log.warn("Failed to serialize LiveNowSnapshot", e);
             return;
         }
-        if (!publishEnabled) {
-            log.info("Should publish to /topic/live_now with payload: {}", payload);
-            return; // block in local
-        }
         try {
             Instant sendStart = Instant.now();
-            messagingTemplate.convertAndSend("/topic/live_now", payload);
+            topicPublisher.publish("/topic/live_now", payload);
             log.debug("convertAndSend took {} ms", Duration.between(sendStart, Instant.now()).toMillis());
         } catch (Exception e) {
             log.warn("sendLiveNow failed: {}", e.getMessage());

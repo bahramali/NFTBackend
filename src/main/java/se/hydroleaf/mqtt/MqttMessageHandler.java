@@ -3,8 +3,6 @@ package se.hydroleaf.mqtt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 import se.hydroleaf.service.DeviceProvisionService;
 import se.hydroleaf.service.RecordService;
@@ -22,34 +20,27 @@ import java.util.regex.Pattern;
 @Component
 public class MqttMessageHandler {
 
-    private final boolean publishEnabled;
     private final ObjectMapper objectMapper;
     private final RecordService recordService;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final TopicPublisher topicPublisher;
     private final DeviceProvisionService deviceProvisionService;
 
     private final ConcurrentHashMap<String, Instant> lastSeen;
 
-    public MqttMessageHandler(@Value("${mqtt.publishEnabled:true}") boolean publishEnabled,
-                              ObjectMapper objectMapper,
+    public MqttMessageHandler(ObjectMapper objectMapper,
                               RecordService recordService,
-                              SimpMessagingTemplate messagingTemplate,
+                              TopicPublisher topicPublisher,
                               DeviceProvisionService deviceProvisionService,
                               ConcurrentHashMap<String, Instant> lastSeen) {
-        this.publishEnabled = publishEnabled;
         this.objectMapper = objectMapper;
         this.recordService = recordService;
-        this.messagingTemplate = messagingTemplate;
+        this.topicPublisher = topicPublisher;
         this.deviceProvisionService = deviceProvisionService;
         this.lastSeen = lastSeen;
     }
 
     public void handle(String topic, String payload) {
-        if (publishEnabled) {
-            messagingTemplate.convertAndSend("/topic/" + topic, payload);
-        } else {
-            log.info("publishing to /topic/{}, payload: {}", topic, payload);
-        }
+        topicPublisher.publish("/topic/" + topic, payload);
         try {
             JsonNode node = objectMapper.readTree(payload);
 

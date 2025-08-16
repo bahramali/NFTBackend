@@ -7,15 +7,22 @@ spring:
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
     open-in-view: false
-
+  cache:
+    type: caffeine
+    cache-names: aggregatedHistory
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=5m
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    placeholders:
+      enable_timescale: false
 mqtt:
   brokerUri: ${MQTT_BROKER:tcp://192.168.8.3:1883}
   clientId: hydroleaf-backend-local
@@ -24,6 +31,8 @@ mqtt:
   topicPrefix: ""
   enabled: true
   publishEnabled: false
+livefeed:
+  rate: 2000
 server:
   ssl:
     enabled: false

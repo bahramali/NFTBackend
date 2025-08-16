@@ -99,3 +99,15 @@ docker compose up -d
 This brings up a Postgres instance and an MQTT broker on the default ports (`5432` and `1883`).
 
 Modify the values in `src/main/resources/application-local.yaml` if your database settings differ.
+
+## TimescaleDB Setup
+
+This application relies on [TimescaleDB](https://www.timescale.com/) for time-series functions. Ensure your PostgreSQL instance has the extension installed:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+```
+
+The supplied `docker-compose.yml` uses the `timescale/timescaledb` image (PostgreSQL 15) so the extension is available out of the box. When deploying to other environments, install TimescaleDB for your PostgreSQL version and enable the extension manually.
+
+TimescaleDB 2.x on PostgreSQL 15 has been tested. If you build your own PostgreSQL, make sure `shared_preload_libraries` includes `timescaledb`.

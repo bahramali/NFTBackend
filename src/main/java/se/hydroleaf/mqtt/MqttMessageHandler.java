@@ -54,12 +54,12 @@ public class MqttMessageHandler {
                 }
                 return;
             }
+            topicPublisher.publish("/topic/" + topic, payload);
 
             deviceProvisionService.ensureDevice(compositeId, topic);
             recordService.saveRecord(compositeId, node);
             lastSeen.update(compositeId);
 
-            topicPublisher.publish("/topic/" + topic, payload);
         } catch (Exception ex) {
             log.error("MQTT handle error for topic {}: {}", topic, ex.getMessage(), ex);
         }

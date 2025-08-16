@@ -6,10 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.ActuatorStatus;
-import se.hydroleaf.model.LatestActuatorStatus;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.ActuatorStatusRepository;
-import se.hydroleaf.repository.LatestActuatorStatusRepository;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -29,16 +27,12 @@ public class ActuatorService {
     private final ObjectMapper objectMapper;
     private final ActuatorStatusRepository actuatorRepo;
     private final DeviceRepository deviceRepo;
-    private final LatestActuatorStatusRepository latestActuatorRepo;
-
     public ActuatorService(ObjectMapper objectMapper,
                            ActuatorStatusRepository actuatorRepo,
-                           DeviceRepository deviceRepo,
-                           LatestActuatorStatusRepository latestActuatorRepo) {
+                           DeviceRepository deviceRepo) {
         this.objectMapper = objectMapper;
         this.actuatorRepo = actuatorRepo;
         this.deviceRepo = deviceRepo;
-        this.latestActuatorRepo = latestActuatorRepo;
     }
 
     /** Entry point used by tests and other layers. */
@@ -81,18 +75,6 @@ public class ActuatorService {
                     row.setActuatorType(name);
                     row.setState(status);
                     actuatorRepo.save(row);
-                    // Upsert latest actuator status
-                    LatestActuatorStatus latest = latestActuatorRepo
-                            .findByDeviceCompositeIdAndActuatorType(device.getCompositeId(), name)
-                            .orElseGet(() -> {
-                                LatestActuatorStatus l = new LatestActuatorStatus();
-                                l.setDevice(device);
-                                l.setActuatorType(name);
-                                return l;
-                            });
-                    latest.setState(status);
-                    latest.setTimestamp(ts);
-                    latestActuatorRepo.save(latest);
                     savedAny = true;
                 }
             }

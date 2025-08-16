@@ -11,10 +11,11 @@ import se.hydroleaf.dto.summary.StatusAllAverageResponse;
 import se.hydroleaf.dto.summary.StatusAverageResponse;
 import se.hydroleaf.dto.snapshot.SystemSnapshot;
 import se.hydroleaf.model.Device;
-import se.hydroleaf.repository.AverageResult;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.repository.LatestActuatorStatusRepository;
-import se.hydroleaf.repository.LatestSensorValueRepository;
+import se.hydroleaf.repository.ActuatorStatusRepository;
+import se.hydroleaf.repository.SensorDataRepository;
+import se.hydroleaf.model.ActuatorStatus;
+import se.hydroleaf.model.SensorData;
 
 import java.util.List;
 
@@ -26,10 +27,10 @@ import static org.mockito.Mockito.*;
 class StatusServiceTest {
 
     @Mock
-    private LatestSensorValueRepository latestSensorValueRepository;
+    private SensorDataRepository sensorDataRepository;
 
     @Mock
-    private LatestActuatorStatusRepository latestActuatorStatusRepository;
+    private ActuatorStatusRepository actuatorStatusRepository;
 
     @Mock
     private DeviceRepository deviceRepository;
@@ -40,66 +41,80 @@ class StatusServiceTest {
 
     @Test
     void getAverageUsesSensorDataRepository() {
-        AverageResult avg = simpleResult(10.0, 3L);
-        when(latestSensorValueRepository.getLatestSensorAverage("Sys", "Layer", "light"))
-                .thenReturn(avg);
+        Device d = Device.builder().compositeId("d1").build();
+        when(deviceRepository.findBySystemAndLayer("Sys", "Layer")).thenReturn(List.of(d));
+        SensorData sd = SensorData.builder().value(10.0).build();
+        when(sensorDataRepository
+                .findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "light"))
+                .thenReturn(java.util.Optional.of(sd));
 
         StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "light");
         assertEquals(10.0, response.average());
         assertEquals("lux", response.unit());
-        assertEquals(3L, response.deviceCount());
-        verify(latestSensorValueRepository).getLatestSensorAverage("Sys", "Layer", "light");
-        verifyNoInteractions(latestActuatorStatusRepository);
+        assertEquals(1L, response.deviceCount());
+        verify(sensorDataRepository)
+                .findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "light");
+        verifyNoInteractions(actuatorStatusRepository);
     }
 
     @Test
     void getAverageUsesSensorDataRepositoryForWaterTankSensor() {
-        AverageResult avg = simpleResult(9.9, 4L);
-        when(latestSensorValueRepository.getLatestSensorAverage("Sys", "Layer", "dissolvedOxygen"))
-                .thenReturn(avg);
+        Device d = Device.builder().compositeId("d1").build();
+        when(deviceRepository.findBySystemAndLayer("Sys", "Layer")).thenReturn(List.of(d));
+        SensorData sd = SensorData.builder().value(9.9).build();
+        when(sensorDataRepository
+                .findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "dissolvedOxygen"))
+                .thenReturn(java.util.Optional.of(sd));
 
         StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "dissolvedOxygen");
         assertEquals(9.9, response.average());
         assertEquals("mg/L", response.unit());
-        assertEquals(4L, response.deviceCount());
-        verify(latestSensorValueRepository).getLatestSensorAverage("Sys", "Layer", "dissolvedOxygen");
-        verifyNoInteractions(latestActuatorStatusRepository);
+        assertEquals(1L, response.deviceCount());
+        verify(sensorDataRepository)
+                .findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "dissolvedOxygen");
+        verifyNoInteractions(actuatorStatusRepository);
     }
 
     @Test
-    void getAverageUsesLatestActuatorStatusRepositoryForAirpump() {
-        when(latestActuatorStatusRepository.getLatestActuatorState("Sys", "Layer", "airpump"))
-                .thenReturn(true);
+    void getAverageUsesActuatorStatusRepositoryForAirpump() {
+        Device d = Device.builder().compositeId("d1").build();
+        when(deviceRepository.findBySystemAndLayer("Sys", "Layer")).thenReturn(List.of(d));
+        ActuatorStatus as = ActuatorStatus.builder().state(true).build();
+        when(actuatorStatusRepository
+                .findTopByDeviceCompositeIdAndActuatorTypeOrderByTimestampDesc("d1", "airpump"))
+                .thenReturn(java.util.Optional.of(as));
 
         StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "airpump");
         assertEquals(1.0, response.average());
         assertEquals("status", response.unit());
         assertEquals(1L, response.deviceCount());
-        verify(latestActuatorStatusRepository).getLatestActuatorState("Sys", "Layer", "airpump");
-        verifyNoMoreInteractions(latestActuatorStatusRepository);
-        verifyNoInteractions(latestSensorValueRepository);
+        verify(actuatorStatusRepository)
+                .findTopByDeviceCompositeIdAndActuatorTypeOrderByTimestampDesc("d1", "airpump");
+        verifyNoInteractions(sensorDataRepository);
     }
 
     @Test
     void getAllAveragesAggregatesAllSensorTypes() {
-        when(latestSensorValueRepository.getLatestSensorAverage("sys", "layer", "light"))
-                .thenReturn(simpleResult(1.0, 1L));
-        when(latestSensorValueRepository.getLatestSensorAverage("sys", "layer", "humidity"))
-                .thenReturn(simpleResult(2.0, 2L));
-        when(latestSensorValueRepository.getLatestSensorAverage("sys", "layer", "temperature"))
-                .thenReturn(simpleResult(3.0, 3L));
-        when(latestSensorValueRepository.getLatestSensorAverage("sys", "layer", "dissolvedOxygen"))
-                .thenReturn(simpleResult(4.0, 4L));
-        when(latestSensorValueRepository.getLatestSensorAverage("sys", "layer", "dissolvedTemp"))
-                .thenReturn(simpleResult(5.0, 5L));
-        when(latestSensorValueRepository.getLatestSensorAverage("sys", "layer", "pH"))
-                .thenReturn(simpleResult(6.0, 6L));
-        when(latestSensorValueRepository.getLatestSensorAverage("sys", "layer", "dissolvedEC"))
-                .thenReturn(simpleResult(7.0, 7L));
-        when(latestSensorValueRepository.getLatestSensorAverage("sys", "layer", "dissolvedTDS"))
-                .thenReturn(simpleResult(8.0, 8L));
-        when(latestActuatorStatusRepository.getLatestActuatorState("sys", "layer", "airPump"))
-                .thenReturn(true);
+        Device device = Device.builder().compositeId("d1").build();
+        when(deviceRepository.findBySystemAndLayer("sys", "layer")).thenReturn(List.of(device));
+        when(sensorDataRepository.findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "light"))
+                .thenReturn(java.util.Optional.of(SensorData.builder().value(1.0).build()));
+        when(sensorDataRepository.findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "humidity"))
+                .thenReturn(java.util.Optional.of(SensorData.builder().value(2.0).build()));
+        when(sensorDataRepository.findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "temperature"))
+                .thenReturn(java.util.Optional.of(SensorData.builder().value(3.0).build()));
+        when(sensorDataRepository.findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "dissolvedOxygen"))
+                .thenReturn(java.util.Optional.of(SensorData.builder().value(4.0).build()));
+        when(sensorDataRepository.findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "dissolvedTemp"))
+                .thenReturn(java.util.Optional.of(SensorData.builder().value(5.0).build()));
+        when(sensorDataRepository.findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "pH"))
+                .thenReturn(java.util.Optional.of(SensorData.builder().value(6.0).build()));
+        when(sensorDataRepository.findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "dissolvedEC"))
+                .thenReturn(java.util.Optional.of(SensorData.builder().value(7.0).build()));
+        when(sensorDataRepository.findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "dissolvedTDS"))
+                .thenReturn(java.util.Optional.of(SensorData.builder().value(8.0).build()));
+        when(actuatorStatusRepository.findTopByDeviceCompositeIdAndActuatorTypeOrderByTimestampDesc("d1", "airPump"))
+                .thenReturn(java.util.Optional.of(ActuatorStatus.builder().state(true).build()));
 
         StatusAllAverageResponse response = statusService.getAllAverages("sys", "layer");
 
@@ -113,11 +128,11 @@ class StatusServiceTest {
         assertEquals(8.0, response.waterTank().get("dissolvedTDS").average());
         assertEquals(1.0, response.airpump().average());
 
-        verify(latestSensorValueRepository).getLatestSensorAverage("sys", "layer", "dissolvedTemp");
-        verify(latestSensorValueRepository).getLatestSensorAverage("sys", "layer", "pH");
-        verify(latestSensorValueRepository).getLatestSensorAverage("sys", "layer", "dissolvedEC");
-        verify(latestSensorValueRepository).getLatestSensorAverage("sys", "layer", "dissolvedTDS");
-        verify(latestActuatorStatusRepository).getLatestActuatorState("sys", "layer", "airPump");
+        verify(sensorDataRepository).findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "dissolvedTemp");
+        verify(sensorDataRepository).findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "pH");
+        verify(sensorDataRepository).findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "dissolvedEC");
+        verify(sensorDataRepository).findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc("d1", "dissolvedTDS");
+        verify(actuatorStatusRepository).findTopByDeviceCompositeIdAndActuatorTypeOrderByTimestampDesc("d1", "airPump");
     }
 
     @Test
@@ -240,17 +255,4 @@ class StatusServiceTest {
         verify(statusService, atLeastOnce()).getAverage("S01", "L01", "airPump");
     }
 
-    private AverageResult simpleResult(Double avg, Long count) {
-        return new AverageResult() {
-            @Override
-            public Double getAverage() {
-                return avg;
-            }
-
-            @Override
-            public Long getCount() {
-                return count;
-            }
-        };
-    }
 }

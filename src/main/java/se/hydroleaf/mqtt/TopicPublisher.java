@@ -25,8 +25,11 @@ public class TopicPublisher {
     public void publish(String destination, Object payload) {
         if (publishEnabled) {
             messagingTemplate.convertAndSend(destination, payload);
+            log.debug("STOMP send -> {} : {}", destination, payload);
         } else {
-            log.info("Should publish to {} with payload: {}", destination, payload);
+            if ("/topic/live_now".equalsIgnoreCase(destination)) {
+                log.info("Should publish to {} with payload: {}", destination, payload);
+            }
         }
     }
 }

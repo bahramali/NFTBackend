@@ -41,7 +41,6 @@ public class MqttMessageHandler {
     public void handle(String topic, String payload) {
         try {
             JsonNode node = objectMapper.readTree(payload);
-            topicPublisher.publish("/topic/" + topic, payload);
 
             String compositeId = readCompositeId(node);
             if (compositeId == null) {
@@ -60,6 +59,7 @@ public class MqttMessageHandler {
             recordService.saveRecord(compositeId, node);
             lastSeen.update(compositeId);
 
+            topicPublisher.publish("/topic/" + topic, payload);
         } catch (Exception ex) {
             log.error("MQTT handle error for topic {}: {}", topic, ex.getMessage(), ex);
         }

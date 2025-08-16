@@ -18,6 +18,11 @@ spring:
       ddl-auto: update
     show-sql: false
     open-in-view: false
+  cache:
+    type: caffeine
+    cache-names: aggregatedHistory
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=5m
   flyway:
     enabled: false
     baseline-on-migrate: true

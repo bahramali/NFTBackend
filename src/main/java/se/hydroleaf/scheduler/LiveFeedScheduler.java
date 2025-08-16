@@ -11,7 +11,6 @@ import se.hydroleaf.service.StatusService;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Periodic tasks related to live device feed.
@@ -22,12 +21,12 @@ public class LiveFeedScheduler {
 
     private final StatusService statusService;
     private final TopicPublisher topicPublisher;
-    private final ConcurrentHashMap<String, Instant> lastSeen;
+    private final LastSeenRegistry lastSeen;
     private final ObjectMapper objectMapper;
     private Instant lastInvocation;
     public LiveFeedScheduler(StatusService statusService,
                              TopicPublisher topicPublisher,
-                             ConcurrentHashMap<String, Instant> lastSeen,
+                             LastSeenRegistry lastSeen,
                              ObjectMapper objectMapper) {
         this.statusService = statusService;
         this.topicPublisher = topicPublisher;

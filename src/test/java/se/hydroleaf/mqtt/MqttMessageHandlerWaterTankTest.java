@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import se.hydroleaf.service.DeviceProvisionService;
 import se.hydroleaf.service.RecordService;
 
@@ -25,7 +24,7 @@ class MqttMessageHandlerWaterTankTest {
     @Mock
     RecordService recordService;
     @Mock
-    SimpMessagingTemplate messagingTemplate;
+    TopicPublisher topicPublisher;
     @Mock
     DeviceProvisionService deviceProvisionService;
 
@@ -37,7 +36,7 @@ class MqttMessageHandlerWaterTankTest {
     void setup() {
         objectMapper = new ObjectMapper();
         lastSeen = new ConcurrentHashMap<>();
-        handler = new MqttMessageHandler(false, objectMapper, recordService, messagingTemplate, deviceProvisionService, lastSeen);
+        handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher, deviceProvisionService, lastSeen);
     }
 
     @Test

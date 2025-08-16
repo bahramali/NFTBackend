@@ -6,6 +6,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import se.hydroleaf.mqtt.TopicPublisher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -81,7 +82,8 @@ class LiveFeedSchedulerTest {
         ObjectMapper mapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(true, statusService, messagingTemplate, new ConcurrentHashMap<>(), mapper);
+        TopicPublisher topicPublisher = new TopicPublisher(true, messagingTemplate);
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, new ConcurrentHashMap<>(), mapper);
         scheduler.sendLiveNow();
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
@@ -107,7 +109,8 @@ class LiveFeedSchedulerTest {
                 .thenThrow(new com.fasterxml.jackson.core.JsonProcessingException("boom") {})
                 .thenReturn("{}");
 
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(true, statusService, messagingTemplate, new ConcurrentHashMap<>(), mapper);
+        TopicPublisher topicPublisher = new TopicPublisher(true, messagingTemplate);
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, new ConcurrentHashMap<>(), mapper);
 
         assertDoesNotThrow(scheduler::sendLiveNow);
         scheduler.sendLiveNow();

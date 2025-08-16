@@ -7,7 +7,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import se.hydroleaf.dto.*;
+import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
+import se.hydroleaf.dto.snapshot.SystemSnapshot;
+import se.hydroleaf.dto.summary.ActuatorStatusSummary;
+import se.hydroleaf.dto.summary.GrowSensorSummary;
+import se.hydroleaf.dto.summary.StatusAllAverageResponse;
+import se.hydroleaf.dto.summary.StatusAverageResponse;
+import se.hydroleaf.dto.summary.WaterTankSummary;
 import se.hydroleaf.service.StatusService;
 import java.util.Map;
 

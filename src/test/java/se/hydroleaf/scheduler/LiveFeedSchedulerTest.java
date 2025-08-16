@@ -11,7 +11,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import se.hydroleaf.dto.*;
+import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
+import se.hydroleaf.dto.snapshot.SystemSnapshot;
+import se.hydroleaf.dto.summary.ActuatorStatusSummary;
+import se.hydroleaf.dto.summary.GrowSensorSummary;
+import se.hydroleaf.dto.summary.StatusAverageResponse;
+import se.hydroleaf.dto.summary.WaterTankSummary;
 import se.hydroleaf.service.StatusService;
 
 import java.util.List;

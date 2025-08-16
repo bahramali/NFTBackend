@@ -1,4 +1,4 @@
-package se.hydroleaf.dto;
+package se.hydroleaf.dto.summary;
 
 /**
  * Represents an average value for a sensor or actuator together with its unit

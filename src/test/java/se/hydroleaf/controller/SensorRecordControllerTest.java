@@ -7,7 +7,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import se.hydroleaf.dto.*;
+import se.hydroleaf.dto.history.AggregatedHistoryResponse;
+import se.hydroleaf.dto.history.AggregatedSensorData;
+import se.hydroleaf.dto.history.TimestampValue;
 import se.hydroleaf.service.RecordService;
 
 import java.time.Instant;

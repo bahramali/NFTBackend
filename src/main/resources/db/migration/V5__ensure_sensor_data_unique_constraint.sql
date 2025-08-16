@@ -8,6 +8,9 @@ WITH dup AS (
 )
 DELETE FROM sensor_data WHERE ctid IN (SELECT ctid FROM dup);
 
+-- Remove rows with empty sensor_type before enforcing constraint
+DELETE FROM sensor_data WHERE sensor_type = '';
+
 -- Ensure unique (record_id, sensor_type) pairs in sensor_data
 DO $$
 BEGIN

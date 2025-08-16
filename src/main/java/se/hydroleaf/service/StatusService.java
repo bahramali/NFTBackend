@@ -14,8 +14,7 @@ import se.hydroleaf.model.Device;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.SensorDataRepository;
-import se.hydroleaf.model.ActuatorStatus;
-import se.hydroleaf.model.SensorData;
+import se.hydroleaf.repository.AverageCount;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -44,39 +43,16 @@ public class StatusService {
 
     public StatusAverageResponse getAverage(String system, String layer, String sensorType) {
         String unit = getUnit(sensorType);
-        List<Device> devices = deviceRepository.findBySystemAndLayer(system, layer);
-        if (devices.isEmpty()) {
-            return new StatusAverageResponse(null, unit, 0L);
-        }
-
-        double sum = 0.0;
-        long count = 0L;
 
         if (isActuator(sensorType)) {
-            for (Device d : devices) {
-                ActuatorStatus latest = actuatorStatusRepository
-                        .findTopByDeviceCompositeIdAndActuatorTypeOrderByTimestampDesc(d.getCompositeId(), sensorType)
-                        .orElse(null);
-                if (latest != null) {
-                    count++;
-                    if (Boolean.TRUE.equals(latest.getState())) {
-                        sum += 1.0;
-                    }
-                }
-            }
-            Double avg = count > 0 ? sum / count : null;
+            AverageCount ac = actuatorStatusRepository.getLatestActuatorAverage(system, layer, sensorType);
+            long count = ac != null ? ac.getCount() : 0L;
+            Double avg = ac != null && count > 0 ? ac.getAverage() : null;
             return new StatusAverageResponse(avg, unit, count);
         } else {
-            for (Device d : devices) {
-                SensorData latest = sensorDataRepository
-                        .findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc(d.getCompositeId(), sensorType)
-                        .orElse(null);
-                if (latest != null && latest.getValue() != null) {
-                    count++;
-                    sum += latest.getValue();
-                }
-            }
-            Double avg = count > 0 ? Math.round((sum / count) * 10.0) / 10.0 : null;
+            AverageCount ac = sensorDataRepository.getLatestAverage(system, layer, sensorType);
+            long count = ac != null ? ac.getCount() : 0L;
+            Double avg = ac != null && count > 0 ? Math.round(ac.getAverage() * 10.0) / 10.0 : null;
             return new StatusAverageResponse(avg, unit, count);
         }
     }

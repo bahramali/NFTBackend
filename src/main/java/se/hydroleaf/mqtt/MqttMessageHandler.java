@@ -7,8 +7,7 @@ import org.springframework.stereotype.Component;
 import se.hydroleaf.service.DeviceProvisionService;
 import se.hydroleaf.service.RecordService;
 
-import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
+import se.hydroleaf.scheduler.LastSeenRegistry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,13 +24,13 @@ public class MqttMessageHandler {
     private final TopicPublisher topicPublisher;
     private final DeviceProvisionService deviceProvisionService;
 
-    private final ConcurrentHashMap<String, Instant> lastSeen;
+    private final LastSeenRegistry lastSeen;
 
     public MqttMessageHandler(ObjectMapper objectMapper,
                               RecordService recordService,
                               TopicPublisher topicPublisher,
                               DeviceProvisionService deviceProvisionService,
-                              ConcurrentHashMap<String, Instant> lastSeen) {
+                              LastSeenRegistry lastSeen) {
         this.objectMapper = objectMapper;
         this.recordService = recordService;
         this.topicPublisher = topicPublisher;
@@ -59,7 +58,7 @@ public class MqttMessageHandler {
 
             deviceProvisionService.ensureDevice(compositeId, topic);
             recordService.saveRecord(compositeId, node);
-            lastSeen.put(compositeId, Instant.now());
+            lastSeen.update(compositeId);
         } catch (Exception ex) {
             log.error("MQTT handle error for topic {}: {}", topic, ex.getMessage(), ex);
         }

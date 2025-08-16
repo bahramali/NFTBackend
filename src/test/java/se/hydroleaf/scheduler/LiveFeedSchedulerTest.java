@@ -22,7 +22,6 @@ import se.hydroleaf.service.StatusService;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -83,7 +82,7 @@ class LiveFeedSchedulerTest {
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         TopicPublisher topicPublisher = new TopicPublisher(true, messagingTemplate);
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, new ConcurrentHashMap<>(), mapper);
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, new LastSeenRegistry(), mapper);
         scheduler.sendLiveNow();
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
@@ -110,7 +109,7 @@ class LiveFeedSchedulerTest {
                 .thenReturn("{}");
 
         TopicPublisher topicPublisher = new TopicPublisher(true, messagingTemplate);
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, new ConcurrentHashMap<>(), mapper);
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, new LastSeenRegistry(), mapper);
 
         assertDoesNotThrow(scheduler::sendLiveNow);
         scheduler.sendLiveNow();

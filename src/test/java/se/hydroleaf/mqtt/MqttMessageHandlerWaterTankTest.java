@@ -9,8 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import se.hydroleaf.service.DeviceProvisionService;
 import se.hydroleaf.service.RecordService;
 
-import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
+import se.hydroleaf.scheduler.LastSeenRegistry;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,13 +28,13 @@ class MqttMessageHandlerWaterTankTest {
     DeviceProvisionService deviceProvisionService;
 
     ObjectMapper objectMapper;
-    ConcurrentHashMap<String, Instant> lastSeen;
+    LastSeenRegistry lastSeen;
     MqttMessageHandler handler;
 
     @BeforeEach
     void setup() {
         objectMapper = new ObjectMapper();
-        lastSeen = new ConcurrentHashMap<>();
+        lastSeen = new LastSeenRegistry();
         handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher, deviceProvisionService, lastSeen);
     }
 
@@ -48,7 +47,7 @@ class MqttMessageHandlerWaterTankTest {
 
         verify(deviceProvisionService).ensureDevice(eq("S01-L01-probe1"), eq(topic));
         verify(recordService).saveRecord(eq("S01-L01-probe1"), any());
-        assertTrue(lastSeen.containsKey("S01-L01-probe1"));
+        assertTrue(lastSeen.contains("S01-L01-probe1"));
     }
 
     @Test

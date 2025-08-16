@@ -55,7 +55,7 @@ public class AggregateRepository {
             )
             SELECT
               COALESCE(AVG(val), 0) AS average,
-              CAST(COUNT(val) AS INTEGER) AS count
+              CAST(COUNT(val) AS BIGINT) AS count
             FROM latest
             WHERE rn = 1
             """, cfg.deviceCol, cfg.valueExpr, cfg.typeCol, cfg.from, cfg.timeCol);

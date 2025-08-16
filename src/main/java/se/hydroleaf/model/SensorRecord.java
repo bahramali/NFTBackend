@@ -3,8 +3,11 @@ package se.hydroleaf.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -17,10 +20,13 @@ import java.util.List;
                 @Index(name = "ix_record_device_time", columnList = "device_composite_id, record_time DESC")
         }
 )
+@Getter
+@Setter
+@EqualsAndHashCode(exclude = {"device", "values", "healthItems"})
+@ToString(exclude = {"device", "values", "healthItems"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 public class SensorRecord {
 
     @Id

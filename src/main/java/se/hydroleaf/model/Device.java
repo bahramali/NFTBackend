@@ -3,14 +3,20 @@ package se.hydroleaf.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
+@Getter
+@Setter
+@EqualsAndHashCode(exclude = "group")
+@ToString(exclude = "group")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 @Table(
         name = "device",
         uniqueConstraints = {

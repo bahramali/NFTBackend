@@ -3,8 +3,11 @@ package se.hydroleaf.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.Instant;
 
@@ -16,7 +19,10 @@ import java.time.Instant;
         indexes = {
                 @Index(name = "ix_as_device_time", columnList = "composite_id, status_time DESC")
         })
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(exclude = "device")
+@ToString(exclude = "device")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

@@ -1,9 +1,12 @@
 -- Remove duplicates before adding the constraint
-DELETE FROM sensor_data a
-USING sensor_data b
-WHERE a.record_id = b.record_id
-  AND a.sensor_type = b.sensor_type
-  AND a.ctid < b.ctid;
+WITH dup AS (
+    SELECT ctid FROM (
+        SELECT ctid,
+               row_number() OVER (PARTITION BY record_id, sensor_type ORDER BY ctid) AS rn
+        FROM sensor_data
+    ) s WHERE s.rn > 1
+)
+DELETE FROM sensor_data WHERE ctid IN (SELECT ctid FROM dup);
 
 -- Ensure unique (record_id, sensor_type) pairs in sensor_data
 DO $$

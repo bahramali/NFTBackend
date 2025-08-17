@@ -38,7 +38,7 @@ public class LiveFeedScheduler {
         this.messagingTemplate = messagingTemplate;
     }
 
-    @Scheduled(fixedRateString = "${livefeed.rate:2000}", scheduler = "scheduler")
+//    @Scheduled(fixedRateString = "${livefeed.rate:2000}", scheduler = "scheduler")
     public void sendLiveNow() {
         log.info("sendLiveNow invoked");
         try {
@@ -56,7 +56,7 @@ public class LiveFeedScheduler {
         }
     }
 
-    @Scheduled(fixedDelay = 10000, scheduler = "scheduler")
+//    @Scheduled(fixedDelay = 10000, scheduler = "scheduler")
     public void logLaggingDevices() {
         Instant now = Instant.now();
         lastSeen.forEach((id, ts) -> {

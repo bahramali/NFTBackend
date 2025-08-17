@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
 import se.hydroleaf.service.DeviceProvisionService;
 import se.hydroleaf.service.RecordService;
 
 import se.hydroleaf.scheduler.LastSeenRegistry;
+import se.hydroleaf.service.StatusService;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,18 +26,20 @@ public class MqttMessageHandler {
     private final RecordService recordService;
     private final TopicPublisher topicPublisher;
     private final DeviceProvisionService deviceProvisionService;
+    private final StatusService statusService;
 
     private final LastSeenRegistry lastSeen;
 
     public MqttMessageHandler(ObjectMapper objectMapper,
                               RecordService recordService,
                               TopicPublisher topicPublisher,
-                              DeviceProvisionService deviceProvisionService,
+                              DeviceProvisionService deviceProvisionService, StatusService statusService,
                               LastSeenRegistry lastSeen) {
         this.objectMapper = objectMapper;
         this.recordService = recordService;
         this.topicPublisher = topicPublisher;
         this.deviceProvisionService = deviceProvisionService;
+        this.statusService = statusService;
         this.lastSeen = lastSeen;
     }
 
@@ -55,6 +60,10 @@ public class MqttMessageHandler {
                 return;
             }
             topicPublisher.publish("/topic/" + topic, payload);
+            LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
+            String livenow = objectMapper.writeValueAsString(snapshot);
+            topicPublisher.publish("/topic/live_now" , livenow);
+
 
             deviceProvisionService.ensureDevice(compositeId, topic);
             recordService.saveRecord(compositeId, node);

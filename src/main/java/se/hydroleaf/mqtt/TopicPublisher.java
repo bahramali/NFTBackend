@@ -24,7 +24,6 @@ public class TopicPublisher {
 
     public void publish(String destination, String payload) {
         if (publishEnabled) {
-            log.debug("STOMP send -> {} : {}", destination, payload);
             messagingTemplate.convertAndSend(destination, payload);
         } else {
             if ("/topic/live_now".equalsIgnoreCase(destination)) {

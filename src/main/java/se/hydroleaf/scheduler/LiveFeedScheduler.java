@@ -60,6 +60,7 @@ public class LiveFeedScheduler {
         }
         try {
             Instant sendStart = Instant.now();
+            log.debug("STOMP send -> /topic/live_now : {}", payload);
             topicPublisher.publish("/topic/live_now", payload);
             log.debug("convertAndSend took {} ms", Duration.between(sendStart, Instant.now()).toMillis());
         } catch (Exception e) {

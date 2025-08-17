@@ -19,3 +19,4 @@ public record LiveNowRow(
     public Long getDeviceCount() { return deviceCount; }
     public Instant getRecordTime() { return recordTime; }
 }
+

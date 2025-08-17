@@ -108,19 +108,15 @@ public class StatusService {
         List<LiveNowRow> actuatorRows = actuatorStatusRepository.fetchLatestActuatorAverages(ACTUATOR_TYPES);
 
         Map<String, Map<String, LayerData>> aggregated = new HashMap<>();
-        for (LiveNowRow row : sensorRows) {
-            accumulate(aggregated, row, false);
-        }
-        for (LiveNowRow row : actuatorRows) {
-            accumulate(aggregated, row, true);
-        }
+        sensorRows.forEach(row -> accumulate(aggregated, row));
+        actuatorRows.forEach(row -> accumulate(aggregated, row));
 
         return assembleSnapshot(aggregated);
     }
 
-    private void accumulate(Map<String, Map<String, LayerData>> acc, LiveNowRow row, boolean actuator) {
-        String system = row.system();
-        String layer = row.layer();
+    private void accumulate(Map<String, Map<String, LayerData>> acc, LiveNowRow row) {
+        String system = row.getSystem();
+        String layer = row.getLayer();
         if (system == null || system.isBlank() || layer == null || layer.isBlank()) {
             return;
         }
@@ -128,19 +124,14 @@ public class StatusService {
         Map<String, LayerData> layers = acc.computeIfAbsent(system, s -> new HashMap<>());
         LayerData data = layers.computeIfAbsent(layer, l -> new LayerData());
 
-        Instant time = row.recordTime();
-        if (time != null && (data.lastUpdate == null || time.isAfter(data.lastUpdate))) {
-            data.lastUpdate = time;
-        }
-
-        Double avg = row.avgValue();
-        if (!actuator && avg != null) {
+        Double avg = row.getAverage();
+        if (avg != null) {
             avg = Math.round(avg * 10.0) / 10.0;
         }
-        long count = row.deviceCount() != null ? row.deviceCount() : 0L;
-        String unit = row.unit() != null ? row.unit() : unitOf(row.sensorType());
+        long count = row.getCount() != null ? row.getCount() : 0L;
+        String unit = unitOf(row.getType());
 
-        data.values.put(row.sensorType(), new StatusAverageResponse(avg, unit, count));
+        data.values.put(row.getType(), new StatusAverageResponse(avg, unit, count));
     }
 
     private LiveNowSnapshot assembleSnapshot(Map<String, Map<String, LayerData>> acc) {

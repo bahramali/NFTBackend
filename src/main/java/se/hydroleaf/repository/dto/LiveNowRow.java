@@ -1,13 +1,12 @@
 package se.hydroleaf.repository.dto;
 
-import java.time.Instant;
-
-public record LiveNowRow(
-        String system,
-        String layer,
-        String sensorType,
-        String unit,
-        Double avgValue,
-        Long deviceCount,
-        Instant recordTime
-) {}
+/**
+ * Projection for live-now aggregation rows.
+ */
+public interface LiveNowRow {
+    String getSystem();
+    String getLayer();
+    String getType();
+    Double getAverage();
+    Long getCount();
+}

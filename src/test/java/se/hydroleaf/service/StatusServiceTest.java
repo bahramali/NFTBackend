@@ -15,10 +15,9 @@ import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 import se.hydroleaf.repository.AverageCount;
-import se.hydroleaf.model.ActuatorStatus;
-import se.hydroleaf.model.SensorData;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -129,31 +128,25 @@ class StatusServiceTest {
         Device d2 = Device.builder().compositeId("2").system("S02").layer("L01").build();
         when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, dDup, d2));
 
-        StatusAverageResponse pump = new StatusAverageResponse(1.0, "status",1L);
-        StatusAverageResponse light = new StatusAverageResponse(2.0, "lux",2L);
-        StatusAverageResponse humidity = new StatusAverageResponse(3.0, "%",3L);
-        StatusAverageResponse temp = new StatusAverageResponse(4.0, "°C",4L);
-        StatusAverageResponse dTemp = new StatusAverageResponse(5.0, "°C",5L);
-        StatusAverageResponse dOxy = new StatusAverageResponse(6.0, "mg/L",6L);
-        StatusAverageResponse dPh = new StatusAverageResponse(7.0, "pH",7L);
-        StatusAverageResponse dEc = new StatusAverageResponse(8.0, "mS/cm",8L);
-        StatusAverageResponse dTds = new StatusAverageResponse(9.0, "ppm",9L);
-
-        doAnswer(invocation -> {
-            String type = invocation.getArgument(2);
-            return switch (type) {
-                case "airPump" -> pump;
-                case "light" -> light;
-                case "humidity" -> humidity;
-                case "temperature" -> temp;
-                case "dissolvedTemp" -> dTemp;
-                case "dissolvedOxygen" -> dOxy;
-                case "pH" -> dPh;
-                case "dissolvedEC" -> dEc;
-                case "dissolvedTDS" -> dTds;
-                default -> null;
-            };
-        }).when(statusService).getAverage(anyString(), anyString(), anyString());
+        Map<String, AverageCount> s01Sensors = Map.of(
+                "light", new AverageCount(2.0, 2L),
+                "humidity", new AverageCount(3.0, 3L),
+                "temperature", new AverageCount(4.0, 4L),
+                "dissolvedTemp", new AverageCount(5.0, 5L),
+                "dissolvedOxygen", new AverageCount(6.0, 6L),
+                "pH", new AverageCount(7.0, 7L),
+                "dissolvedEC", new AverageCount(8.0, 8L),
+                "dissolvedTDS", new AverageCount(9.0, 9L)
+        );
+        Map<String, AverageCount> s02Sensors = Map.of(
+                "dissolvedOxygen", new AverageCount(6.0, 6L)
+        );
+        Map<String, AverageCount> s01Actuators = Map.of("airPump", new AverageCount(1.0, 1L));
+        Map<String, AverageCount> s02Actuators = Map.of();
+        when(sensorDataRepository.getLatestAverages("S01", "L01")).thenReturn(s01Sensors);
+        when(sensorDataRepository.getLatestAverages("S02", "L01")).thenReturn(s02Sensors);
+        when(actuatorStatusRepository.getLatestActuatorAverages("S01", "L01")).thenReturn(s01Actuators);
+        when(actuatorStatusRepository.getLatestActuatorAverages("S02", "L01")).thenReturn(s02Actuators);
 
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
         SystemSnapshot s01System = result.systems().get("S01");
@@ -161,17 +154,17 @@ class StatusServiceTest {
         assertEquals(1, s01Layers.size());
         SystemSnapshot.LayerSnapshot s01Layer = s01Layers.get(0);
         SystemSnapshot.LayerSnapshot s02Layer = result.systems().get("S02").layers().get(0);
-        assertEquals(pump, s01Layer.actuators().airPump());
-        assertEquals(light, s01Layer.environment().light());
-        assertEquals(dOxy, s02Layer.water().dissolvedOxygen());
+        assertEquals(new StatusAverageResponse(1.0, "status",1L), s01Layer.actuators().airPump());
+        assertEquals(new StatusAverageResponse(2.0, "lux",2L), s01Layer.environment().light());
+        assertEquals(new StatusAverageResponse(6.0, "mg/L",6L), s02Layer.water().dissolvedOxygen());
         assertNotNull(s01Layer.lastUpdate());
-        assertEquals(pump, s01System.actuators().airPump());
-        assertEquals(light, s01System.environment().light());
-        assertEquals(dOxy, result.systems().get("S02").water().dissolvedOxygen());
+        assertEquals(new StatusAverageResponse(1.0, "status",1L), s01System.actuators().airPump());
+        assertEquals(new StatusAverageResponse(2.0, "lux",2L), s01System.environment().light());
+        assertEquals(new StatusAverageResponse(6.0, "mg/L",6L), result.systems().get("S02").water().dissolvedOxygen());
 
-        verify(statusService, times(1)).getAverage("S01", "L01", "airPump");
-        verify(statusService, times(1)).getAverage("S01", "L01", "light");
-        verify(statusService, atLeastOnce()).getAverage("S02", "L01", "dissolvedOxygen");
+        verify(sensorDataRepository).getLatestAverages("S01", "L01");
+        verify(sensorDataRepository).getLatestAverages("S02", "L01");
+        verify(actuatorStatusRepository).getLatestActuatorAverages("S01", "L01");
     }
 
     @Test
@@ -180,22 +173,14 @@ class StatusServiceTest {
         Device d2 = Device.builder().compositeId("2").system("S01").layer("L02").build();
         when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2));
 
-        StatusAverageResponse pumpL1 = new StatusAverageResponse(1.0, "status",1L);
-        StatusAverageResponse pumpL2 = new StatusAverageResponse(3.0, "status",1L);
-        StatusAverageResponse waterL1 = new StatusAverageResponse(10.0, "°C",1L);
-        StatusAverageResponse waterL2 = new StatusAverageResponse(30.0, "°C",1L);
-
-        doAnswer(invocation -> {
-            String layer = invocation.getArgument(1);
-            String type = invocation.getArgument(2);
-            return switch (layer + type) {
-                case "L01airPump" -> pumpL1;
-                case "L02airPump" -> pumpL2;
-                case "L01dissolvedTemp" -> waterL1;
-                case "L02dissolvedTemp" -> waterL2;
-                default -> new StatusAverageResponse(null, null,0L);
-            };
-        }).when(statusService).getAverage(anyString(), anyString(), anyString());
+        Map<String, AverageCount> l1Sensors = Map.of("dissolvedTemp", new AverageCount(10.0, 1L));
+        Map<String, AverageCount> l2Sensors = Map.of("dissolvedTemp", new AverageCount(30.0, 1L));
+        Map<String, AverageCount> l1Actuators = Map.of("airPump", new AverageCount(1.0, 1L));
+        Map<String, AverageCount> l2Actuators = Map.of("airPump", new AverageCount(3.0, 1L));
+        when(sensorDataRepository.getLatestAverages("S01", "L01")).thenReturn(l1Sensors);
+        when(sensorDataRepository.getLatestAverages("S01", "L02")).thenReturn(l2Sensors);
+        when(actuatorStatusRepository.getLatestActuatorAverages("S01", "L01")).thenReturn(l1Actuators);
+        when(actuatorStatusRepository.getLatestActuatorAverages("S01", "L02")).thenReturn(l2Actuators);
 
         LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
 
@@ -210,8 +195,8 @@ class StatusServiceTest {
         assertEquals(2.0, system.actuators().airPump().average());
         assertEquals(20.0, system.water().dissolvedTemp().average());
         assertEquals(layer2.lastUpdate(), system.lastUpdate());
-        assertEquals(pumpL1, layer1.actuators().airPump());
-        assertEquals(waterL2, layer2.water().dissolvedTemp());
+        assertEquals(new StatusAverageResponse(1.0, "status",1L), layer1.actuators().airPump());
+        assertEquals(new StatusAverageResponse(30.0, "°C",1L), layer2.water().dissolvedTemp());
     }
 
     @Test
@@ -223,11 +208,10 @@ class StatusServiceTest {
         Device valid = Device.builder().compositeId("5").system("S01").layer("L01").build();
         when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2, d3, d4, valid));
 
-        StatusAverageResponse pump = new StatusAverageResponse(1.0, "status",1L);
-        doAnswer(invocation -> {
-            String type = invocation.getArgument(2);
-            return "airPump".equals(type) ? pump : new StatusAverageResponse(null, null,0L);
-        }).when(statusService).getAverage(anyString(), anyString(), anyString());
+        Map<String, AverageCount> sensors = Map.of();
+        Map<String, AverageCount> actuators = Map.of("airPump", new AverageCount(1.0, 1L));
+        when(sensorDataRepository.getLatestAverages("S01", "L01")).thenReturn(sensors);
+        when(actuatorStatusRepository.getLatestActuatorAverages("S01", "L01")).thenReturn(actuators);
 
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
@@ -236,10 +220,11 @@ class StatusServiceTest {
         List<SystemSnapshot.LayerSnapshot> layers = system.layers();
         assertEquals(1, layers.size());
         SystemSnapshot.LayerSnapshot layerSnapshot = layers.get(0);
-        assertEquals(pump, layerSnapshot.actuators().airPump());
+        assertEquals(new StatusAverageResponse(1.0, "status",1L), layerSnapshot.actuators().airPump());
         assertNotNull(layerSnapshot.lastUpdate());
-        assertEquals(pump, system.actuators().airPump());
-        verify(statusService, atLeastOnce()).getAverage("S01", "L01", "airPump");
+        assertEquals(new StatusAverageResponse(1.0, "status",1L), system.actuators().airPump());
+        verify(sensorDataRepository, atLeastOnce()).getLatestAverages("S01", "L01");
+        verify(actuatorStatusRepository, atLeastOnce()).getLatestActuatorAverages("S01", "L01");
     }
 
 }

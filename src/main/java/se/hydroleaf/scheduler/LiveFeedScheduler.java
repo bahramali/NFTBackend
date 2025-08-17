@@ -23,7 +23,6 @@ public class LiveFeedScheduler {
     private final TopicPublisher topicPublisher;
     private final LastSeenRegistry lastSeen;
     private final ObjectMapper objectMapper;
-    private Instant lastInvocation;
     public LiveFeedScheduler(StatusService statusService,
                              TopicPublisher topicPublisher,
                              LastSeenRegistry lastSeen,
@@ -36,38 +35,15 @@ public class LiveFeedScheduler {
 
     @Scheduled(fixedRateString = "${livefeed.rate:2000}")
     public void sendLiveNow() {
-        Instant start = Instant.now();
-        if (log.isDebugEnabled()) {
-            if (lastInvocation != null) {
-                long sinceLast = Duration.between(lastInvocation, start).toMillis();
-                log.debug("sendLiveNow invoked at {} ({} ms since last)", start, sinceLast);
-            } else {
-                log.debug("sendLiveNow invoked at {}", start);
-            }
-        }
-        lastInvocation = start;
-
-        LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
-        Instant afterSnapshot = Instant.now();
-        log.debug("getLiveNowSnapshot took {} ms", Duration.between(start, afterSnapshot).toMillis());
-
-        String payload= "{'test':'test'}";
         try {
-            payload = objectMapper.writeValueAsString(snapshot);
+            LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
+            String payload = objectMapper.writeValueAsString(snapshot);
+            topicPublisher.publish("/topic/live_now", payload);
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize LiveNowSnapshot", e);
-            return;
-        }
-        try {
-            Instant sendStart = Instant.now();
-            log.debug("STOMP send -> /topic/live_now : {}", payload);
-            topicPublisher.publish("/topic/live_now", payload);
-            log.debug("convertAndSend took {} ms", Duration.between(sendStart, Instant.now()).toMillis());
         } catch (Exception e) {
             log.warn("sendLiveNow failed: {}", e.getMessage());
         }
-
-        log.debug("sendLiveNow completed in {} ms", Duration.between(start, Instant.now()).toMillis());
     }
 
     @Scheduled(fixedDelay = 10000)

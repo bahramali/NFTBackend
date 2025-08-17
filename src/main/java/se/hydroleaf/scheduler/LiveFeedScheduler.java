@@ -41,7 +41,7 @@ public class LiveFeedScheduler {
             LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
             String payload = objectMapper.writeValueAsString(snapshot);
             log.info("payload: {}", payload);
-            topicPublisher.publish("/topic/live_now", payload);
+            topicPublisher.publish("/topic/live_now", "payload");
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize LiveNowSnapshot", e);
         } catch (Exception e) {

@@ -18,6 +18,7 @@ import se.hydroleaf.repository.dto.LiveNowRow;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -120,7 +121,7 @@ class StatusServiceTest {
 
     @Test
     void getLiveNowSnapshotAggregatesByDevice() {
-        List<LiveNowRow> sensorRows = List.of(
+        List<LiveNowRow> sensorRows = Arrays.asList(
                 new LiveNowRow("S01", "L01", "light", "lux", 2.0, 2L, Instant.now()),
                 new LiveNowRow("S01", "L01", "humidity", "%", 3.0, 3L, Instant.now()),
                 new LiveNowRow("S01", "L01", "temperature", "°C", 4.0, 4L, Instant.now()),
@@ -131,7 +132,7 @@ class StatusServiceTest {
                 new LiveNowRow("S01", "L01", "dissolvedTDS", "ppm", 9.0, 9L, Instant.now()),
                 new LiveNowRow("S02", "L01", "dissolvedOxygen", "mg/L", 6.0, 6L, Instant.now())
         );
-        List<LiveNowRow> actuatorRows = List.of(
+        List<LiveNowRow> actuatorRows = Arrays.asList(
                 new LiveNowRow("S01", "L01", "airPump", "status", 1.0, 1L, Instant.now())
         );
 
@@ -161,11 +162,11 @@ class StatusServiceTest {
         Instant t1 = Instant.parse("2023-01-01T00:00:00Z");
         Instant t2 = Instant.parse("2023-01-02T00:00:00Z");
 
-        List<LiveNowRow> sensorRows = List.of(
+        List<LiveNowRow> sensorRows = Arrays.asList(
                 new LiveNowRow("S01", "L01", "dissolvedTemp", "°C", 10.0, 1L, t1),
                 new LiveNowRow("S01", "L02", "dissolvedTemp", "°C", 30.0, 1L, t2)
         );
-        List<LiveNowRow> actuatorRows = List.of(
+        List<LiveNowRow> actuatorRows = Arrays.asList(
                 new LiveNowRow("S01", "L01", "airPump", "status", 1.0, 1L, t1),
                 new LiveNowRow("S01", "L02", "airPump", "status", 3.0, 1L, t2)
         );
@@ -193,14 +194,14 @@ class StatusServiceTest {
     @Test
     void getLiveNowSnapshotSkipsBlankSystemOrLayer() {
         Instant now = Instant.now();
-        List<LiveNowRow> sensorRows = List.of(
+        List<LiveNowRow> sensorRows = Arrays.asList(
                 new LiveNowRow("", "L01", "light", "lux", 1.0, 1L, now),
                 new LiveNowRow("S01", " ", "light", "lux", 1.0, 1L, now),
                 new LiveNowRow(null, "L02", "light", "lux", 1.0, 1L, now),
                 new LiveNowRow("S01", null, "light", "lux", 1.0, 1L, now),
                 new LiveNowRow("S01", "L01", "light", "lux", 1.0, 1L, now)
         );
-        List<LiveNowRow> actuatorRows = List.of(
+        List<LiveNowRow> actuatorRows = Arrays.asList(
                 new LiveNowRow("S01", "L01", "airPump", "status", 1.0, 1L, now)
         );
 

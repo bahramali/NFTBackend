@@ -7,15 +7,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Spy;
 import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
+import se.hydroleaf.dto.snapshot.SystemSnapshot;
 import se.hydroleaf.dto.summary.StatusAllAverageResponse;
 import se.hydroleaf.dto.summary.StatusAverageResponse;
-import se.hydroleaf.dto.snapshot.SystemSnapshot;
-import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.ActuatorStatusRepository;
-import se.hydroleaf.repository.SensorDataRepository;
 import se.hydroleaf.repository.AverageCount;
-import se.hydroleaf.repository.SystemLayer;
+import se.hydroleaf.repository.SensorDataRepository;
+import se.hydroleaf.repository.dto.LiveNowRow;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -32,9 +32,6 @@ class StatusServiceTest {
     @Mock
     private ActuatorStatusRepository actuatorStatusRepository;
 
-    @Mock
-    private DeviceRepository deviceRepository;
-
     @Spy
     @InjectMocks
     private StatusService statusService;
@@ -50,7 +47,7 @@ class StatusServiceTest {
         assertEquals("lux", response.unit());
         assertEquals(1L, response.deviceCount());
         verify(sensorDataRepository).getLatestAverage("Sys", "Layer", "light");
-        verifyNoInteractions(actuatorStatusRepository, deviceRepository);
+        verifyNoInteractions(actuatorStatusRepository);
     }
 
     @Test
@@ -64,7 +61,7 @@ class StatusServiceTest {
         assertEquals("mg/L", response.unit());
         assertEquals(1L, response.deviceCount());
         verify(sensorDataRepository).getLatestAverage("Sys", "Layer", "dissolvedOxygen");
-        verifyNoInteractions(actuatorStatusRepository, deviceRepository);
+        verifyNoInteractions(actuatorStatusRepository);
     }
 
     @Test
@@ -78,7 +75,7 @@ class StatusServiceTest {
         assertEquals("status", response.unit());
         assertEquals(1L, response.deviceCount());
         verify(actuatorStatusRepository).getLatestActuatorAverage("Sys", "Layer", "airpump");
-        verifyNoInteractions(sensorDataRepository, deviceRepository);
+        verifyNoInteractions(sensorDataRepository);
     }
 
     @Test
@@ -123,28 +120,23 @@ class StatusServiceTest {
 
     @Test
     void getLiveNowSnapshotAggregatesByDevice() {
-        when(deviceRepository.findDistinctSystemAndLayer()).thenReturn(
-                List.of(new SystemLayer("S01", "L01"), new SystemLayer("S02", "L01")));
+        List<LiveNowRow> sensorRows = List.of(
+                new LiveNowRow("S01", "L01", "light", "lux", 2.0, 2L, Instant.now()),
+                new LiveNowRow("S01", "L01", "humidity", "%", 3.0, 3L, Instant.now()),
+                new LiveNowRow("S01", "L01", "temperature", "°C", 4.0, 4L, Instant.now()),
+                new LiveNowRow("S01", "L01", "dissolvedTemp", "°C", 5.0, 5L, Instant.now()),
+                new LiveNowRow("S01", "L01", "dissolvedOxygen", "mg/L", 6.0, 6L, Instant.now()),
+                new LiveNowRow("S01", "L01", "pH", "pH", 7.0, 7L, Instant.now()),
+                new LiveNowRow("S01", "L01", "dissolvedEC", "mS/cm", 8.0, 8L, Instant.now()),
+                new LiveNowRow("S01", "L01", "dissolvedTDS", "ppm", 9.0, 9L, Instant.now()),
+                new LiveNowRow("S02", "L01", "dissolvedOxygen", "mg/L", 6.0, 6L, Instant.now())
+        );
+        List<LiveNowRow> actuatorRows = List.of(
+                new LiveNowRow("S01", "L01", "airPump", "status", 1.0, 1L, Instant.now())
+        );
 
-        Map<String, AverageCount> s01Sensors = Map.of(
-                "light", new AverageCount(2.0, 2L),
-                "humidity", new AverageCount(3.0, 3L),
-                "temperature", new AverageCount(4.0, 4L),
-                "dissolvedTemp", new AverageCount(5.0, 5L),
-                "dissolvedOxygen", new AverageCount(6.0, 6L),
-                "pH", new AverageCount(7.0, 7L),
-                "dissolvedEC", new AverageCount(8.0, 8L),
-                "dissolvedTDS", new AverageCount(9.0, 9L)
-        );
-        Map<String, AverageCount> s02Sensors = Map.of(
-                "dissolvedOxygen", new AverageCount(6.0, 6L)
-        );
-        Map<String, AverageCount> s01Actuators = Map.of("airPump", new AverageCount(1.0, 1L));
-        Map<String, AverageCount> s02Actuators = Map.of();
-        when(sensorDataRepository.getLatestAverages("S01", "L01")).thenReturn(s01Sensors);
-        when(sensorDataRepository.getLatestAverages("S02", "L01")).thenReturn(s02Sensors);
-        when(actuatorStatusRepository.getLatestActuatorAverages("S01", "L01")).thenReturn(s01Actuators);
-        when(actuatorStatusRepository.getLatestActuatorAverages("S02", "L01")).thenReturn(s02Actuators);
+        when(sensorDataRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
+        when(actuatorStatusRepository.fetchLatestActuatorAverages(anyList())).thenReturn(actuatorRows);
 
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
         SystemSnapshot s01System = result.systems().get("S01");
@@ -160,24 +152,26 @@ class StatusServiceTest {
         assertEquals(new StatusAverageResponse(2.0, "lux",2L), s01System.environment().light());
         assertEquals(new StatusAverageResponse(6.0, "mg/L",6L), result.systems().get("S02").water().dissolvedOxygen());
 
-        verify(sensorDataRepository).getLatestAverages("S01", "L01");
-        verify(sensorDataRepository).getLatestAverages("S02", "L01");
-        verify(actuatorStatusRepository).getLatestActuatorAverages("S01", "L01");
+        verify(sensorDataRepository).fetchLatestSensorAverages(anyList());
+        verify(actuatorStatusRepository).fetchLatestActuatorAverages(anyList());
     }
 
     @Test
     void getLiveNowSnapshotAggregatesMultipleLayers() {
-        when(deviceRepository.findDistinctSystemAndLayer()).thenReturn(
-                List.of(new SystemLayer("S01", "L01"), new SystemLayer("S01", "L02")));
+        Instant t1 = Instant.parse("2023-01-01T00:00:00Z");
+        Instant t2 = Instant.parse("2023-01-02T00:00:00Z");
 
-        Map<String, AverageCount> l1Sensors = Map.of("dissolvedTemp", new AverageCount(10.0, 1L));
-        Map<String, AverageCount> l2Sensors = Map.of("dissolvedTemp", new AverageCount(30.0, 1L));
-        Map<String, AverageCount> l1Actuators = Map.of("airPump", new AverageCount(1.0, 1L));
-        Map<String, AverageCount> l2Actuators = Map.of("airPump", new AverageCount(3.0, 1L));
-        when(sensorDataRepository.getLatestAverages("S01", "L01")).thenReturn(l1Sensors);
-        when(sensorDataRepository.getLatestAverages("S01", "L02")).thenReturn(l2Sensors);
-        when(actuatorStatusRepository.getLatestActuatorAverages("S01", "L01")).thenReturn(l1Actuators);
-        when(actuatorStatusRepository.getLatestActuatorAverages("S01", "L02")).thenReturn(l2Actuators);
+        List<LiveNowRow> sensorRows = List.of(
+                new LiveNowRow("S01", "L01", "dissolvedTemp", "°C", 10.0, 1L, t1),
+                new LiveNowRow("S01", "L02", "dissolvedTemp", "°C", 30.0, 1L, t2)
+        );
+        List<LiveNowRow> actuatorRows = List.of(
+                new LiveNowRow("S01", "L01", "airPump", "status", 1.0, 1L, t1),
+                new LiveNowRow("S01", "L02", "airPump", "status", 3.0, 1L, t2)
+        );
+
+        when(sensorDataRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
+        when(actuatorStatusRepository.fetchLatestActuatorAverages(anyList())).thenReturn(actuatorRows);
 
         LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
 
@@ -198,19 +192,20 @@ class StatusServiceTest {
 
     @Test
     void getLiveNowSnapshotSkipsBlankSystemOrLayer() {
-        when(deviceRepository.findDistinctSystemAndLayer()).thenReturn(
-                List.of(
-                        new SystemLayer("", "L01"),
-                        new SystemLayer("S01", " "),
-                        new SystemLayer(null, "L02"),
-                        new SystemLayer("S01", null),
-                        new SystemLayer("S01", "L01")
-                ));
+        Instant now = Instant.now();
+        List<LiveNowRow> sensorRows = List.of(
+                new LiveNowRow("", "L01", "light", "lux", 1.0, 1L, now),
+                new LiveNowRow("S01", " ", "light", "lux", 1.0, 1L, now),
+                new LiveNowRow(null, "L02", "light", "lux", 1.0, 1L, now),
+                new LiveNowRow("S01", null, "light", "lux", 1.0, 1L, now),
+                new LiveNowRow("S01", "L01", "light", "lux", 1.0, 1L, now)
+        );
+        List<LiveNowRow> actuatorRows = List.of(
+                new LiveNowRow("S01", "L01", "airPump", "status", 1.0, 1L, now)
+        );
 
-        Map<String, AverageCount> sensors = Map.of();
-        Map<String, AverageCount> actuators = Map.of("airPump", new AverageCount(1.0, 1L));
-        when(sensorDataRepository.getLatestAverages("S01", "L01")).thenReturn(sensors);
-        when(actuatorStatusRepository.getLatestActuatorAverages("S01", "L01")).thenReturn(actuators);
+        when(sensorDataRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
+        when(actuatorStatusRepository.fetchLatestActuatorAverages(anyList())).thenReturn(actuatorRows);
 
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
 
@@ -222,8 +217,8 @@ class StatusServiceTest {
         assertEquals(new StatusAverageResponse(1.0, "status",1L), layerSnapshot.actuators().airPump());
         assertNotNull(layerSnapshot.lastUpdate());
         assertEquals(new StatusAverageResponse(1.0, "status",1L), system.actuators().airPump());
-        verify(sensorDataRepository, atLeastOnce()).getLatestAverages("S01", "L01");
-        verify(actuatorStatusRepository, atLeastOnce()).getLatestActuatorAverages("S01", "L01");
+        verify(sensorDataRepository).fetchLatestSensorAverages(anyList());
+        verify(actuatorStatusRepository).fetchLatestActuatorAverages(anyList());
     }
 
 }

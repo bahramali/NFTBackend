@@ -38,6 +38,8 @@ mqtt:
 
 livefeed:
   rate: 2000
+scheduler:
+  pool-size: 4
 server:
   ssl:
     enabled: ${SSL_ENABLED:false}

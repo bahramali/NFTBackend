@@ -29,7 +29,8 @@ public class LiveFeedScheduler {
     public LiveFeedScheduler(StatusService statusService,
                              TopicPublisher topicPublisher,
                              LastSeenRegistry lastSeen,
-                             ObjectMapper objectMapper, SimpMessagingTemplate messagingTemplate) {
+                             ObjectMapper objectMapper,
+                             SimpMessagingTemplate messagingTemplate) {
         this.statusService = statusService;
         this.topicPublisher = topicPublisher;
         this.lastSeen = lastSeen;

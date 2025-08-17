@@ -64,9 +64,9 @@ public class MqttMessageHandler {
 
 //            LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
 //            String livenow = objectMapper.writeValueAsString(snapshot);
-//            log.info("live_now message {} done!", snapshot);
 
-//            topicPublisher.publish("/topic/live_now" , livenow);
+            topicPublisher.publish("/topic/live_now" , "livenow_test");
+            log.info("live_now message test done!");
 
 
             deviceProvisionService.ensureDevice(compositeId, topic);

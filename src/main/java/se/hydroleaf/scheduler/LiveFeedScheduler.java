@@ -46,6 +46,7 @@ public class LiveFeedScheduler {
             log.info("snapshot ready: {}", snapshot);
             String payload = objectMapper.writeValueAsString(snapshot);
             log.info("STOMP send -> /topic/live_now : {}", payload);
+
 //            topicPublisher.publish("/topic/live_now", payload);
             messagingTemplate.convertAndSend("/topic/live_now", payload);
             log.info("STOMP send complete");

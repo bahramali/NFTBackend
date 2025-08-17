@@ -10,11 +10,11 @@ import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
 import se.hydroleaf.dto.summary.StatusAllAverageResponse;
 import se.hydroleaf.dto.summary.StatusAverageResponse;
 import se.hydroleaf.dto.snapshot.SystemSnapshot;
-import se.hydroleaf.model.Device;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 import se.hydroleaf.repository.AverageCount;
+import se.hydroleaf.repository.SystemLayer;
 
 import java.util.List;
 import java.util.Map;
@@ -123,10 +123,8 @@ class StatusServiceTest {
 
     @Test
     void getLiveNowSnapshotAggregatesByDevice() {
-        Device d1 = Device.builder().compositeId("1").system("S01").layer("L01").build();
-        Device dDup = Device.builder().compositeId("3").system("S01").layer("L01").build();
-        Device d2 = Device.builder().compositeId("2").system("S02").layer("L01").build();
-        when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, dDup, d2));
+        when(deviceRepository.findDistinctSystemAndLayer()).thenReturn(
+                List.of(new SystemLayer("S01", "L01"), new SystemLayer("S02", "L01")));
 
         Map<String, AverageCount> s01Sensors = Map.of(
                 "light", new AverageCount(2.0, 2L),
@@ -169,9 +167,8 @@ class StatusServiceTest {
 
     @Test
     void getLiveNowSnapshotAggregatesMultipleLayers() {
-        Device d1 = Device.builder().compositeId("1").system("S01").layer("L01").build();
-        Device d2 = Device.builder().compositeId("2").system("S01").layer("L02").build();
-        when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2));
+        when(deviceRepository.findDistinctSystemAndLayer()).thenReturn(
+                List.of(new SystemLayer("S01", "L01"), new SystemLayer("S01", "L02")));
 
         Map<String, AverageCount> l1Sensors = Map.of("dissolvedTemp", new AverageCount(10.0, 1L));
         Map<String, AverageCount> l2Sensors = Map.of("dissolvedTemp", new AverageCount(30.0, 1L));
@@ -201,12 +198,14 @@ class StatusServiceTest {
 
     @Test
     void getLiveNowSnapshotSkipsBlankSystemOrLayer() {
-        Device d1 = Device.builder().compositeId("1").system("").layer("L01").build();
-        Device d2 = Device.builder().compositeId("2").system("S01").layer(" ").build();
-        Device d3 = Device.builder().compositeId("3").system(null).layer("L02").build();
-        Device d4 = Device.builder().compositeId("4").system("S01").layer(null).build();
-        Device valid = Device.builder().compositeId("5").system("S01").layer("L01").build();
-        when(deviceRepository.findAll()).thenReturn(java.util.List.of(d1, d2, d3, d4, valid));
+        when(deviceRepository.findDistinctSystemAndLayer()).thenReturn(
+                List.of(
+                        new SystemLayer("", "L01"),
+                        new SystemLayer("S01", " "),
+                        new SystemLayer(null, "L02"),
+                        new SystemLayer("S01", null),
+                        new SystemLayer("S01", "L01")
+                ));
 
         Map<String, AverageCount> sensors = Map.of();
         Map<String, AverageCount> actuators = Map.of("airPump", new AverageCount(1.0, 1L));

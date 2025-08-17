@@ -60,9 +60,12 @@ public class MqttMessageHandler {
                 return;
             }
             topicPublisher.publish("/topic/" + topic, payload);
+            log.info("publish with {} done!", topic);
 
-//            LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
-//            String livenow = objectMapper.writeValueAsString(snapshot);
+            LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
+            String livenow = objectMapper.writeValueAsString(snapshot);
+            log.info("live_now message {} done!", livenow);
+
 //            topicPublisher.publish("/topic/live_now" , livenow);
 
 

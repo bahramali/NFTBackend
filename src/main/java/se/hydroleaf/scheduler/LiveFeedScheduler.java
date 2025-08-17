@@ -51,7 +51,7 @@ public class LiveFeedScheduler {
         Instant afterSnapshot = Instant.now();
         log.debug("getLiveNowSnapshot took {} ms", Duration.between(start, afterSnapshot).toMillis());
 
-        String payload;
+        String payload= "{'test':'test'}";
         try {
             payload = objectMapper.writeValueAsString(snapshot);
         } catch (JsonProcessingException e) {

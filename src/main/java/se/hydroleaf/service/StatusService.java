@@ -109,7 +109,7 @@ public class StatusService {
 
             Map<String, SystemSnapshot.LayerSnapshot> layers = systemLayers.computeIfAbsent(system, s -> new HashMap<>());
             layers.computeIfAbsent(layer, l -> {
-                  ActuatorStatusSummary actuator = new ActuatorStatusSummary(getAverage(system, layer, "airPump"));
+                ActuatorStatusSummary actuator = new ActuatorStatusSummary(getAverage(system, layer, "airPump"));
                 GrowSensorSummary environment = new GrowSensorSummary(
                         getAverage(system, layer, "light"),
                         getAverage(system, layer, "humidity"),
@@ -140,8 +140,8 @@ public class StatusService {
                     .map(SystemSnapshot.LayerSnapshot::lastUpdate)
                     .max(Comparator.naturalOrder())
                     .orElse(null);
-              StatusAverageResponse airPump = aggregate(layers, l -> l.actuators().airPump());
-              ActuatorStatusSummary actuators = new ActuatorStatusSummary(airPump);
+            StatusAverageResponse airPump = aggregate(layers, l -> l.actuators().airPump());
+            ActuatorStatusSummary actuators = new ActuatorStatusSummary(airPump);
             WaterTankSummary water = new WaterTankSummary(
                     aggregate(layers, l -> l.water().dissolvedTemp()),
                     aggregate(layers, l -> l.water().dissolvedOxygen()),

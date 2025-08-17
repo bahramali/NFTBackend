@@ -23,6 +23,7 @@ public class LiveFeedScheduler {
     private final TopicPublisher topicPublisher;
     private final LastSeenRegistry lastSeen;
     private final ObjectMapper objectMapper;
+
     public LiveFeedScheduler(StatusService statusService,
                              TopicPublisher topicPublisher,
                              LastSeenRegistry lastSeen,
@@ -35,10 +36,11 @@ public class LiveFeedScheduler {
 
     @Scheduled(fixedRateString = "${livefeed.rate:2000}")
     public void sendLiveNow() {
-        log.debug("sendLiveNow invoked");
+        log.info("sendLiveNow invoked");
         try {
             LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
             String payload = objectMapper.writeValueAsString(snapshot);
+            log.info("payload: {}", payload);
             topicPublisher.publish("/topic/live_now", payload);
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize LiveNowSnapshot", e);

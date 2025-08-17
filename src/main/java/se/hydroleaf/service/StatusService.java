@@ -109,18 +109,21 @@ public class StatusService {
 
             Map<String, SystemSnapshot.LayerSnapshot> layers = systemLayers.computeIfAbsent(system, s -> new HashMap<>());
             layers.computeIfAbsent(layer, l -> {
-                ActuatorStatusSummary actuator = new ActuatorStatusSummary(getAverage(system, layer, "airPump"));
+                Map<String, AverageCount> sensorMap = sensorDataRepository.getLatestAverages(system, layer);
+                Map<String, AverageCount> actuatorMap = actuatorStatusRepository.getLatestActuatorAverages(system, layer);
+
+                ActuatorStatusSummary actuator = new ActuatorStatusSummary(createAverageResponse(sensorMap, actuatorMap, "airPump"));
                 GrowSensorSummary environment = new GrowSensorSummary(
-                        getAverage(system, layer, "light"),
-                        getAverage(system, layer, "humidity"),
-                        getAverage(system, layer, "temperature")
+                        createAverageResponse(sensorMap, actuatorMap, "light"),
+                        createAverageResponse(sensorMap, actuatorMap, "humidity"),
+                        createAverageResponse(sensorMap, actuatorMap, "temperature")
                 );
                 WaterTankSummary water = new WaterTankSummary(
-                        getAverage(system, layer, "dissolvedTemp"),
-                        getAverage(system, layer, "dissolvedOxygen"),
-                        getAverage(system, layer, "pH"),
-                        getAverage(system, layer, "dissolvedEC"),
-                        getAverage(system, layer, "dissolvedTDS")
+                        createAverageResponse(sensorMap, actuatorMap, "dissolvedTemp"),
+                        createAverageResponse(sensorMap, actuatorMap, "dissolvedOxygen"),
+                        createAverageResponse(sensorMap, actuatorMap, "pH"),
+                        createAverageResponse(sensorMap, actuatorMap, "dissolvedEC"),
+                        createAverageResponse(sensorMap, actuatorMap, "dissolvedTDS")
                 );
 
                 return new SystemSnapshot.LayerSnapshot(
@@ -157,6 +160,21 @@ public class StatusService {
             result.put(entry.getKey(), new SystemSnapshot(lastUpdate, actuators, water, environment, layers));
         }
         return new LiveNowSnapshot(result);
+    }
+
+    private StatusAverageResponse createAverageResponse(Map<String, AverageCount> sensorMap,
+                                                        Map<String, AverageCount> actuatorMap,
+                                                        String sensorType) {
+        String unit = getUnit(sensorType);
+        boolean actuator = isActuator(sensorType);
+        Map<String, AverageCount> map = actuator ? actuatorMap : sensorMap;
+        AverageCount ac = map != null ? map.get(sensorType) : null;
+        long count = ac != null ? ac.getCount() : 0L;
+        Double avg = ac != null && count > 0 ? ac.getAverage() : null;
+        if (!actuator && avg != null) {
+            avg = Math.round(avg * 10.0) / 10.0;
+        }
+        return new StatusAverageResponse(avg, unit, count);
     }
 
     private StatusAverageResponse aggregate(List<SystemSnapshot.LayerSnapshot> layers,

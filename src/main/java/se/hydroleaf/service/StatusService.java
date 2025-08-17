@@ -1,6 +1,7 @@
 package se.hydroleaf.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
@@ -101,6 +102,7 @@ public class StatusService {
     /**
      * Collects the latest readings for all systems and layers and assembles a snapshot.
      */
+    @Cacheable(cacheNames = "liveNow", key = "'default'", condition = "@environment.getProperty('cache.liveNow.enabled','true') == 'true'")
     public LiveNowSnapshot getLiveNowSnapshot() {
         List<LiveNowRow> sensorRows = sensorDataRepository.fetchLatestSensorAverages(SENSOR_TYPES);
         List<LiveNowRow> actuatorRows = actuatorStatusRepository.fetchLatestActuatorAverages(ACTUATOR_TYPES);

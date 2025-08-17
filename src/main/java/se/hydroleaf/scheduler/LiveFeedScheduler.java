@@ -3,6 +3,7 @@ package se.hydroleaf.scheduler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
@@ -23,15 +24,17 @@ public class LiveFeedScheduler {
     private final TopicPublisher topicPublisher;
     private final LastSeenRegistry lastSeen;
     private final ObjectMapper objectMapper;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public LiveFeedScheduler(StatusService statusService,
                              TopicPublisher topicPublisher,
                              LastSeenRegistry lastSeen,
-                             ObjectMapper objectMapper) {
+                             ObjectMapper objectMapper, SimpMessagingTemplate messagingTemplate) {
         this.statusService = statusService;
         this.topicPublisher = topicPublisher;
         this.lastSeen = lastSeen;
         this.objectMapper = objectMapper;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Scheduled(fixedRateString = "${livefeed.rate:2000}", scheduler = "scheduler")
@@ -39,10 +42,11 @@ public class LiveFeedScheduler {
         log.info("sendLiveNow invoked");
         try {
             LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
-            log.info("snapshot ready");
+            log.info("snapshot ready: {}", snapshot);
             String payload = objectMapper.writeValueAsString(snapshot);
             log.info("STOMP send -> /topic/live_now : {}", payload);
-            topicPublisher.publish("/topic/live_now", payload);
+//            topicPublisher.publish("/topic/live_now", payload);
+            messagingTemplate.convertAndSend("/topic/live_now", payload);
             log.info("STOMP send complete");
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize LiveNowSnapshot", e);

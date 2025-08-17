@@ -30,7 +30,7 @@ public class TopicPublisher {
             messagingTemplate.convertAndSend(destination, payload);
         } else {
             if ("/topic/live_now".equalsIgnoreCase(destination)) {
-                log.info("Should publish to {} with payload: {}", destination, payload);
+                log.info("Publishing disabled. Should publish to {} with payload: {}", destination, payload);
             }
         }
     }

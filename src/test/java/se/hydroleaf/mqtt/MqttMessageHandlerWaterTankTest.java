@@ -10,7 +10,6 @@ import se.hydroleaf.service.DeviceProvisionService;
 import se.hydroleaf.service.RecordService;
 
 import se.hydroleaf.scheduler.LastSeenRegistry;
-import se.hydroleaf.service.StatusService;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,8 +26,6 @@ class MqttMessageHandlerWaterTankTest {
     TopicPublisher topicPublisher;
     @Mock
     DeviceProvisionService deviceProvisionService;
-    @Mock
-    StatusService statusService;
 
     ObjectMapper objectMapper;
     LastSeenRegistry lastSeen;
@@ -38,7 +35,7 @@ class MqttMessageHandlerWaterTankTest {
     void setup() {
         objectMapper = new ObjectMapper();
         lastSeen = new LastSeenRegistry();
-        handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher, deviceProvisionService,statusService ,lastSeen);
+        handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher, deviceProvisionService, lastSeen);
     }
 
     @Test

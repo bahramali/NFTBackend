@@ -132,7 +132,6 @@ public class StatusService {
         Instant lastUpdate;
         Map<String, LayerData> layers = new HashMap<>();
         Map<String, SumCount> totals = new HashMap<>();
-
         void accumulate(LiveNowRow row) {
             Instant time = row.getRecordTime();
             if (time != null) {

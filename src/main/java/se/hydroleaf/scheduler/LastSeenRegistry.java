@@ -77,7 +77,7 @@ public class LastSeenRegistry {
     /**
      * Removes entries exceeding max age or size.
      */
-    @Scheduled(fixedDelayString = "${lastseen.cleanup-interval:60000}")
+    @Scheduled(fixedDelayString = "${lastseen.cleanup-interval:60000}", scheduler = "scheduler")
     public void cleanup() {
         enforceLimits();
     }

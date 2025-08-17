@@ -71,49 +71,5 @@ public class AggregateRepository {
         );
     }
 
-    public Map<String, AverageCount> getLatestAverages(String system, String layer, String tableName) {
-        Config cfg = CONFIGS.get(tableName);
-        if (cfg == null) {
-            throw new IllegalArgumentException("Unknown table: " + tableName);
-        }
-
-        String sql = String.format("""
-            WITH latest AS (
-              SELECT
-                %1$s AS composite_id,
-                %2$s AS val,
-                %3$s AS type,
-                %5$s AS ts,
-                ROW_NUMBER() OVER (
-                  PARTITION BY %1$s, %3$s
-                  ORDER BY %5$s DESC
-                ) AS rn
-              FROM %4$s
-              JOIN device d ON d.composite_id = %1$s
-              WHERE d.system = :system AND d.layer = :layer
-            )
-            SELECT
-              type,
-              COALESCE(AVG(val), 0) AS average,
-              CAST(COUNT(val) AS BIGINT) AS count
-            FROM latest
-            WHERE rn = 1
-            GROUP BY type
-            """, cfg.deviceCol, cfg.valueExpr, cfg.typeCol, cfg.from, cfg.timeCol);
-
-        Map<String, Object> params = Map.of(
-                "system", system,
-                "layer", layer
-        );
-
-        return jdbcTemplate.query(sql, params, rs -> {
-            Map<String, AverageCount> result = new java.util.HashMap<>();
-            while (rs.next()) {
-                result.put(rs.getString("type"),
-                        new AverageCount(rs.getDouble("average"), rs.getLong("count")));
-            }
-            return result;
-        });
-    }
 }
 

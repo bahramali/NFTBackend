@@ -34,11 +34,13 @@ public interface ActuatorStatusRepository extends JpaRepository<ActuatorStatus, 
               WHERE a.actuator_type IN (:types)
             )
             SELECT
-              d.system AS system,
-              d.layer AS layer,
-              l.actuator_type AS sensor_type,
-              MAX(l.status_time) AS last_update,
-              AVG(l.val) AS avg_value
+              d.system       AS system,
+              d.layer        AS layer,
+              l.actuator_type AS "sensorType",
+              NULL           AS unit,
+              AVG(l.val)     AS "avgValue",
+              CAST(COUNT(l.val) AS BIGINT) AS "deviceCount",
+              MAX(l.status_time) AS "recordTime"
             FROM latest l
             JOIN device d ON d.composite_id = l.composite_id
             WHERE l.rn = 1

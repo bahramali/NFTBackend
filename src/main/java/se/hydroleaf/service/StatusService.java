@@ -10,11 +10,11 @@ import se.hydroleaf.dto.snapshot.SystemSnapshot;
 import se.hydroleaf.dto.summary.WaterTankSummary;
 import se.hydroleaf.dto.summary.StatusAllAverageResponse;
 import se.hydroleaf.dto.summary.StatusAverageResponse;
-import se.hydroleaf.model.Device;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 import se.hydroleaf.repository.AverageCount;
+import se.hydroleaf.repository.SystemLayer;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -95,10 +95,10 @@ public class StatusService {
 
     public LiveNowSnapshot getLiveNowSnapshot() {
         Map<String, Map<String, SystemSnapshot.LayerSnapshot>> systemLayers = new HashMap<>();
-        List<Device> devices = deviceRepository.findAll();
-        for (Device device : devices) {
-            String system = device.getSystem();
-            String layer = device.getLayer();
+        List<SystemLayer> distinctPairs = deviceRepository.findDistinctSystemAndLayer();
+        for (SystemLayer pair : distinctPairs) {
+            String system = pair.getSystem();
+            String layer = pair.getLayer();
 
             if (system == null || system.isBlank()) {
                 continue;
@@ -108,32 +108,7 @@ public class StatusService {
             }
 
             Map<String, SystemSnapshot.LayerSnapshot> layers = systemLayers.computeIfAbsent(system, s -> new HashMap<>());
-            layers.computeIfAbsent(layer, l -> {
-                Map<String, AverageCount> sensorMap = sensorDataRepository.getLatestAverages(system, layer);
-                Map<String, AverageCount> actuatorMap = actuatorStatusRepository.getLatestActuatorAverages(system, layer);
-
-                ActuatorStatusSummary actuator = new ActuatorStatusSummary(createAverageResponse(sensorMap, actuatorMap, "airPump"));
-                GrowSensorSummary environment = new GrowSensorSummary(
-                        createAverageResponse(sensorMap, actuatorMap, "light"),
-                        createAverageResponse(sensorMap, actuatorMap, "humidity"),
-                        createAverageResponse(sensorMap, actuatorMap, "temperature")
-                );
-                WaterTankSummary water = new WaterTankSummary(
-                        createAverageResponse(sensorMap, actuatorMap, "dissolvedTemp"),
-                        createAverageResponse(sensorMap, actuatorMap, "dissolvedOxygen"),
-                        createAverageResponse(sensorMap, actuatorMap, "pH"),
-                        createAverageResponse(sensorMap, actuatorMap, "dissolvedEC"),
-                        createAverageResponse(sensorMap, actuatorMap, "dissolvedTDS")
-                );
-
-                return new SystemSnapshot.LayerSnapshot(
-                        layer,
-                        Instant.now(),
-                        actuator,
-                        water,
-                        environment
-                );
-            });
+            layers.computeIfAbsent(layer, l -> createLayerSnapshot(system, layer));
         }
 
         Map<String, SystemSnapshot> result = new HashMap<>();
@@ -160,6 +135,33 @@ public class StatusService {
             result.put(entry.getKey(), new SystemSnapshot(lastUpdate, actuators, water, environment, layers));
         }
         return new LiveNowSnapshot(result);
+    }
+
+    private SystemSnapshot.LayerSnapshot createLayerSnapshot(String system, String layer) {
+        Map<String, AverageCount> sensorMap = sensorDataRepository.getLatestAverages(system, layer);
+        Map<String, AverageCount> actuatorMap = actuatorStatusRepository.getLatestActuatorAverages(system, layer);
+
+        ActuatorStatusSummary actuator = new ActuatorStatusSummary(createAverageResponse(sensorMap, actuatorMap, "airPump"));
+        GrowSensorSummary environment = new GrowSensorSummary(
+                createAverageResponse(sensorMap, actuatorMap, "light"),
+                createAverageResponse(sensorMap, actuatorMap, "humidity"),
+                createAverageResponse(sensorMap, actuatorMap, "temperature")
+        );
+        WaterTankSummary water = new WaterTankSummary(
+                createAverageResponse(sensorMap, actuatorMap, "dissolvedTemp"),
+                createAverageResponse(sensorMap, actuatorMap, "dissolvedOxygen"),
+                createAverageResponse(sensorMap, actuatorMap, "pH"),
+                createAverageResponse(sensorMap, actuatorMap, "dissolvedEC"),
+                createAverageResponse(sensorMap, actuatorMap, "dissolvedTDS")
+        );
+
+        return new SystemSnapshot.LayerSnapshot(
+                layer,
+                Instant.now(),
+                actuator,
+                water,
+                environment
+        );
     }
 
     private StatusAverageResponse createAverageResponse(Map<String, AverageCount> sensorMap,

@@ -82,7 +82,7 @@ class LiveFeedSchedulerTest {
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         TopicPublisher topicPublisher = new TopicPublisher(true, messagingTemplate);
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, new LastSeenRegistry(), mapper);
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, mapper);
         scheduler.sendLiveNow();
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
@@ -110,7 +110,7 @@ class LiveFeedSchedulerTest {
                 .thenReturn("{}");
 
         TopicPublisher topicPublisher = new TopicPublisher(true, messagingTemplate);
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, new LastSeenRegistry(), mapper);
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, mapper);
 
         assertDoesNotThrow(scheduler::sendLiveNow);
         scheduler.sendLiveNow();

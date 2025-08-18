@@ -9,9 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import se.hydroleaf.service.DeviceProvisionService;
 import se.hydroleaf.service.RecordService;
 
-import se.hydroleaf.scheduler.LastSeenRegistry;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -28,14 +26,12 @@ class MqttMessageHandlerWaterTankTest {
     DeviceProvisionService deviceProvisionService;
 
     ObjectMapper objectMapper;
-    LastSeenRegistry lastSeen;
     MqttMessageHandler handler;
 
     @BeforeEach
     void setup() {
         objectMapper = new ObjectMapper();
-        lastSeen = new LastSeenRegistry();
-        handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher, deviceProvisionService, lastSeen);
+        handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher, deviceProvisionService);
     }
 
     @Test
@@ -48,7 +44,6 @@ class MqttMessageHandlerWaterTankTest {
         verify(deviceProvisionService).ensureDevice(eq("S01-L01-probe1"), eq(topic));
         verify(recordService).saveRecord(eq("S01-L01-probe1"), any());
         verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
-        assertTrue(lastSeen.contains("S01-L01-probe1"));
     }
 
     @Test
@@ -59,7 +54,6 @@ class MqttMessageHandlerWaterTankTest {
         handler.handle(topic, payload);
 
         verifyNoInteractions(deviceProvisionService, recordService, topicPublisher);
-        assertTrue(lastSeen.isEmpty());
     }
 
     @Test
@@ -70,6 +64,5 @@ class MqttMessageHandlerWaterTankTest {
         handler.handle(topic, payload);
 
         verifyNoInteractions(deviceProvisionService, recordService, topicPublisher);
-        assertTrue(lastSeen.isEmpty());
     }
 }

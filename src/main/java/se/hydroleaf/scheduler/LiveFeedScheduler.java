@@ -9,8 +9,6 @@ import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
 import se.hydroleaf.mqtt.TopicPublisher;
 import se.hydroleaf.service.StatusService;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -22,16 +20,13 @@ public class LiveFeedScheduler {
 
     private final StatusService statusService;
     private final TopicPublisher topicPublisher;
-    private final LastSeenRegistry lastSeen;
     private final ObjectMapper objectMapper;
 
     public LiveFeedScheduler(StatusService statusService,
                              TopicPublisher topicPublisher,
-                             LastSeenRegistry lastSeen,
                              ObjectMapper objectMapper) {
         this.statusService = statusService;
         this.topicPublisher = topicPublisher;
-        this.lastSeen = lastSeen;
         this.objectMapper = objectMapper;
     }
 
@@ -56,15 +51,4 @@ public class LiveFeedScheduler {
         }
     }
 
-    @Scheduled(fixedDelay = 10000, scheduler = "scheduler")
-    public void logLaggingDevices() {
-        Instant now = Instant.now();
-        lastSeen.forEach((id, ts) -> {
-            if (Duration.between(ts, now).toSeconds() > 60) {
-/*
-//                log.debug("Device {} no message for >60s (lastSeen={})", id, ts);
-*/
-            }
-        });
-    }
 }

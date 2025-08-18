@@ -14,12 +14,13 @@ import se.hydroleaf.repository.AverageCount;
 import se.hydroleaf.repository.SensorDataRepository;
 import se.hydroleaf.repository.dto.LiveNowRow;
 
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class StatusServiceTest {
@@ -81,24 +82,23 @@ class StatusServiceTest {
 
     @Test
     void getAllAveragesAggregatesAllSensorTypes() {
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "light"))
-                .thenReturn(new AverageCount(1.0, 1L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "humidity"))
-                .thenReturn(new AverageCount(2.0, 1L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "temperature"))
-                .thenReturn(new AverageCount(3.0, 1L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedOxygen"))
-                .thenReturn(new AverageCount(4.0, 1L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedTemp"))
-                .thenReturn(new AverageCount(5.0, 1L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "pH"))
-                .thenReturn(new AverageCount(6.0, 1L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedEC"))
-                .thenReturn(new AverageCount(7.0, 1L));
-        when(sensorDataRepository.getLatestAverage("sys", "layer", "dissolvedTDS"))
-                .thenReturn(new AverageCount(8.0, 1L));
-        when(actuatorStatusRepository.getLatestActuatorAverage("sys", "layer", "airPump"))
-                .thenReturn(new AverageCount(1.0, 1L));
+        Map<String, AverageCount> sensorMap = Map.of(
+                "light", new AverageCount(1.0, 1L),
+                "humidity", new AverageCount(2.0, 1L),
+                "temperature", new AverageCount(3.0, 1L),
+                "dissolvedOxygen", new AverageCount(4.0, 1L),
+                "dissolvedTemp", new AverageCount(5.0, 1L),
+                "pH", new AverageCount(6.0, 1L),
+                "dissolvedEC", new AverageCount(7.0, 1L),
+                "dissolvedTDS", new AverageCount(8.0, 1L)
+        );
+        when(sensorDataRepository.getLatestAverages(eq("sys"), eq("layer"), anyList()))
+                .thenReturn(sensorMap);
+        Map<String, AverageCount> actuatorMap = Map.of(
+                "airPump", new AverageCount(1.0, 1L)
+        );
+        when(actuatorStatusRepository.getLatestActuatorAverages(eq("sys"), eq("layer"), anyList()))
+                .thenReturn(actuatorMap);
 
         StatusAllAverageResponse response = statusService.getAllAverages("sys", "layer");
 
@@ -112,11 +112,8 @@ class StatusServiceTest {
         assertEquals(8.0, response.waterTank().get("dissolvedTDS").average());
         assertEquals(1.0, response.airpump().average());
 
-        verify(sensorDataRepository).getLatestAverage("sys", "layer", "dissolvedTemp");
-        verify(sensorDataRepository).getLatestAverage("sys", "layer", "pH");
-        verify(sensorDataRepository).getLatestAverage("sys", "layer", "dissolvedEC");
-        verify(sensorDataRepository).getLatestAverage("sys", "layer", "dissolvedTDS");
-        verify(actuatorStatusRepository).getLatestActuatorAverage("sys", "layer", "airPump");
+        verify(sensorDataRepository).getLatestAverages(eq("sys"), eq("layer"), anyList());
+        verify(actuatorStatusRepository).getLatestActuatorAverages(eq("sys"), eq("layer"), anyList());
     }
 
     @Test

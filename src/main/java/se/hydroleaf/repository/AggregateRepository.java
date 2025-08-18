@@ -3,6 +3,8 @@ package se.hydroleaf.repository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Repository
@@ -69,6 +71,53 @@ public class AggregateRepository {
         return jdbcTemplate.queryForObject(sql, params, (rs, rowNum) ->
                 new AverageCount(rs.getDouble("average"), rs.getLong("count"))
         );
+    }
+
+    public Map<String, AverageCount> getLatestAverages(String system, String layer, List<String> types, String tableName) {
+        Config cfg = CONFIGS.get(tableName);
+        if (cfg == null) {
+            throw new IllegalArgumentException("Unknown table: " + tableName);
+        }
+
+        String sql = String.format("""
+            WITH latest AS (
+              SELECT
+                %1$s AS composite_id,
+                %2$s AS val,
+                %5$s AS ts,
+                %3$s AS type,
+                ROW_NUMBER() OVER (
+                  PARTITION BY %1$s, %3$s
+                  ORDER BY %5$s DESC
+                ) AS rn
+              FROM %4$s
+              JOIN device d ON d.composite_id = %1$s
+              WHERE d.system = :system AND d.layer = :layer AND %3$s IN (:types)
+            )
+            SELECT
+              type AS type,
+              COALESCE(AVG(val), 0) AS average,
+              CAST(COUNT(val) AS BIGINT) AS count
+            FROM latest
+            WHERE rn = 1
+            GROUP BY type
+            """, cfg.deviceCol, cfg.valueExpr, cfg.typeCol, cfg.from, cfg.timeCol);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("system", system);
+        params.put("layer", layer);
+        params.put("types", types);
+
+        return jdbcTemplate.query(sql, params, rs -> {
+            Map<String, AverageCount> result = new HashMap<>();
+            while (rs.next()) {
+                result.put(
+                        rs.getString("type"),
+                        new AverageCount(rs.getDouble("average"), rs.getLong("count"))
+                );
+            }
+            return result;
+        });
     }
 
 }

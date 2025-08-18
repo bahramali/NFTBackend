@@ -10,6 +10,7 @@ import se.hydroleaf.repository.dto.LiveNowRow;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -92,11 +93,13 @@ class LatestAveragesRepositoryTest {
 
         assertInstanceOf(Double.class, row.avgValue());
         assertInstanceOf(Long.class, row.deviceCount());
-        assertInstanceOf(Timestamp.class, row.recordTime());
+        assertTrue(row.recordTime() instanceof Timestamp || row.recordTime() instanceof OffsetDateTime,
+                "recordTime should be Timestamp or OffsetDateTime");
 
         assertEquals(15.0, row.getAvgValue());
         assertEquals(2L, row.getDeviceCount());
         assertNotNull(row.getRecordTime());
+        assertInstanceOf(Instant.class, row.getRecordTime());
     }
 
     @Test
@@ -145,11 +148,13 @@ class LatestAveragesRepositoryTest {
 
         assertInstanceOf(Double.class, row.avgValue());
         assertInstanceOf(Long.class, row.deviceCount());
-        assertInstanceOf(Timestamp.class, row.recordTime());
+        assertTrue(row.recordTime() instanceof Timestamp || row.recordTime() instanceof OffsetDateTime,
+                "recordTime should be Timestamp or OffsetDateTime");
 
         assertEquals(0.5, row.getAvgValue());
         assertEquals(2L, row.getDeviceCount());
         assertNotNull(row.getRecordTime());
+        assertInstanceOf(Instant.class, row.getRecordTime());
     }
 }
 

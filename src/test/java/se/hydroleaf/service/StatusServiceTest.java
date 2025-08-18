@@ -1,11 +1,10 @@
 package se.hydroleaf.service;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.Spy;
 import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
 import se.hydroleaf.dto.snapshot.SystemSnapshot;
 import se.hydroleaf.dto.summary.StatusAllAverageResponse;
@@ -15,13 +14,13 @@ import se.hydroleaf.repository.AverageCount;
 import se.hydroleaf.repository.SensorDataRepository;
 import se.hydroleaf.repository.dto.LiveNowRow;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Map;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyList;
 
 @ExtendWith(MockitoExtension.class)
 class StatusServiceTest {
@@ -32,9 +31,12 @@ class StatusServiceTest {
     @Mock
     private ActuatorStatusRepository actuatorStatusRepository;
 
-    @Spy
-    @InjectMocks
     private StatusService statusService;
+
+    @BeforeEach
+    void setUp() {
+        statusService = new StatusService(sensorDataRepository, actuatorStatusRepository);
+    }
 
     @Test
     void getAverageUsesSensorDataRepository() {
@@ -120,19 +122,20 @@ class StatusServiceTest {
 
     @Test
     void getLiveNowSnapshotAggregatesByDevice() {
-        List<LiveNowRow> sensorRows = List.of(
-                new LiveNowRow("S01", "L01", "light", "lux", 2.0, 2L, Instant.now()),
-                new LiveNowRow("S01", "L01", "humidity", "%", 3.0, 3L, Instant.now()),
-                new LiveNowRow("S01", "L01", "temperature", "°C", 4.0, 4L, Instant.now()),
-                new LiveNowRow("S01", "L01", "dissolvedTemp", "°C", 5.0, 5L, Instant.now()),
-                new LiveNowRow("S01", "L01", "dissolvedOxygen", "mg/L", 6.0, 6L, Instant.now()),
-                new LiveNowRow("S01", "L01", "pH", "pH", 7.0, 7L, Instant.now()),
-                new LiveNowRow("S01", "L01", "dissolvedEC", "mS/cm", 8.0, 8L, Instant.now()),
-                new LiveNowRow("S01", "L01", "dissolvedTDS", "ppm", 9.0, 9L, Instant.now()),
-                new LiveNowRow("S02", "L01", "dissolvedOxygen", "mg/L", 6.0, 6L, Instant.now())
+        java.time.Instant now = java.time.Instant.now();
+        List<LiveNowRow> sensorRows = Arrays.asList(
+                new LiveNowRow("S01", "L01", "light", "lux", 2.0, 2L, now),
+                new LiveNowRow("S01", "L01", "humidity", "%", 3.0, 3L, now),
+                new LiveNowRow("S01", "L01", "temperature", "°C", 4.0, 4L, now),
+                new LiveNowRow("S01", "L01", "dissolvedTemp", "°C", 5.0, 5L, now),
+                new LiveNowRow("S01", "L01", "dissolvedOxygen", "mg/L", 6.0, 6L, now),
+                new LiveNowRow("S01", "L01", "pH", "pH", 7.0, 7L, now),
+                new LiveNowRow("S01", "L01", "dissolvedEC", "mS/cm", 8.0, 8L, now),
+                new LiveNowRow("S01", "L01", "dissolvedTDS", "ppm", 9.0, 9L, now),
+                new LiveNowRow("S02", "L01", "dissolvedOxygen", "mg/L", 6.0, 6L, now)
         );
-        List<LiveNowRow> actuatorRows = List.of(
-                new LiveNowRow("S01", "L01", "airPump", "status", 1.0, 1L, Instant.now())
+        List<LiveNowRow> actuatorRows = Arrays.asList(
+                new LiveNowRow("S01", "L01", "airPump", "status", 1.0, 1L, now)
         );
 
         when(sensorDataRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
@@ -158,14 +161,14 @@ class StatusServiceTest {
 
     @Test
     void getLiveNowSnapshotAggregatesMultipleLayers() {
-        Instant t1 = Instant.parse("2023-01-01T00:00:00Z");
-        Instant t2 = Instant.parse("2023-01-02T00:00:00Z");
+        java.time.Instant t1 = java.time.Instant.parse("2023-01-01T00:00:00Z");
+        java.time.Instant t2 = java.time.Instant.parse("2023-01-02T00:00:00Z");
 
-        List<LiveNowRow> sensorRows = List.of(
+        List<LiveNowRow> sensorRows = Arrays.asList(
                 new LiveNowRow("S01", "L01", "dissolvedTemp", "°C", 10.0, 1L, t1),
                 new LiveNowRow("S01", "L02", "dissolvedTemp", "°C", 30.0, 1L, t2)
         );
-        List<LiveNowRow> actuatorRows = List.of(
+        List<LiveNowRow> actuatorRows = Arrays.asList(
                 new LiveNowRow("S01", "L01", "airPump", "status", 1.0, 1L, t1),
                 new LiveNowRow("S01", "L02", "airPump", "status", 3.0, 1L, t2)
         );
@@ -192,15 +195,15 @@ class StatusServiceTest {
 
     @Test
     void getLiveNowSnapshotSkipsBlankSystemOrLayer() {
-        Instant now = Instant.now();
-        List<LiveNowRow> sensorRows = List.of(
+        java.time.Instant now = java.time.Instant.now();
+        List<LiveNowRow> sensorRows = Arrays.asList(
                 new LiveNowRow("", "L01", "light", "lux", 1.0, 1L, now),
                 new LiveNowRow("S01", " ", "light", "lux", 1.0, 1L, now),
                 new LiveNowRow(null, "L02", "light", "lux", 1.0, 1L, now),
                 new LiveNowRow("S01", null, "light", "lux", 1.0, 1L, now),
                 new LiveNowRow("S01", "L01", "light", "lux", 1.0, 1L, now)
         );
-        List<LiveNowRow> actuatorRows = List.of(
+        List<LiveNowRow> actuatorRows = Arrays.asList(
                 new LiveNowRow("S01", "L01", "airPump", "status", 1.0, 1L, now)
         );
 

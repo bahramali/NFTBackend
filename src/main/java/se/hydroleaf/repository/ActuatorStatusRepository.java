@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import se.hydroleaf.model.ActuatorStatus;
 import se.hydroleaf.repository.dto.LiveNowRow;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,7 +33,7 @@ public interface ActuatorStatusRepository extends JpaRepository<ActuatorStatus, 
                 ) AS rn
               FROM actuator_status a
               JOIN device d ON d.composite_id = a.composite_id
-              WHERE a.actuator_type = ANY(:types)
+              WHERE a.actuator_type IN (:types)
             )
             SELECT
               system AS system,
@@ -44,6 +45,6 @@ public interface ActuatorStatusRepository extends JpaRepository<ActuatorStatus, 
             WHERE rn = 1
             GROUP BY system, layer, actuator_type
             """, nativeQuery = true)
-    List<LiveNowRow> fetchLatestActuatorAverages(@Param("types") List<String> types);
+    List<LiveNowRow> fetchLatestActuatorAverages(@Param("types") Collection<String> types);
 
 }

@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import se.hydroleaf.model.SensorData;
 import se.hydroleaf.repository.dto.LiveNowRow;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,7 +35,7 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long>, S
               FROM sensor_data sd
               JOIN sensor_record sr ON sr.id = sd.record_id
               JOIN device d ON d.composite_id = sr.device_composite_id
-              WHERE sd.sensor_type = ANY(:types)
+              WHERE sd.sensor_type IN (:types)
             )
             SELECT
               system AS system,
@@ -46,5 +47,5 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long>, S
             WHERE rn = 1
             GROUP BY system, layer, sensor_type
             """, nativeQuery = true)
-    List<LiveNowRow> fetchLatestSensorAverages(@Param("types") List<String> types);
+    List<LiveNowRow> fetchLatestSensorAverages(@Param("types") Collection<String> types);
 }

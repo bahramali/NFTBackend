@@ -29,13 +29,13 @@ class LatestAveragesRepositoryTest {
     private ActuatorStatusRepository actuatorStatusRepository;
 
     @Autowired
-    private SensorRecordRepository sensorRecordRepository;
-
-    @Autowired
     private DeviceRepository deviceRepository;
 
     @Autowired
     private DeviceGroupRepository deviceGroupRepository;
+
+    @Autowired
+    private LatestSensorValueRepository latestSensorValueRepository;
 
     @Test
     void fetchLatestSensorAveragesReturnsTypedValues() {
@@ -61,31 +61,25 @@ class LatestAveragesRepositoryTest {
 
         Instant now = Instant.now();
 
-        SensorRecord r1 = new SensorRecord();
-        r1.setDevice(device1);
-        r1.setTimestamp(now.minusSeconds(5));
-        sensorRecordRepository.saveAndFlush(r1);
+        LatestSensorValue v1 = LatestSensorValue.builder()
+                .device(device1)
+                .sensorType("temperature")
+                .value(10.0)
+                .unit("C")
+                .valueTime(now.minusSeconds(5))
+                .build();
+        latestSensorValueRepository.save(v1);
 
-        SensorRecord r2 = new SensorRecord();
-        r2.setDevice(device2);
-        r2.setTimestamp(now.minusSeconds(3));
-        sensorRecordRepository.saveAndFlush(r2);
+        LatestSensorValue v2 = LatestSensorValue.builder()
+                .device(device2)
+                .sensorType("temperature")
+                .value(20.0)
+                .unit("C")
+                .valueTime(now.minusSeconds(3))
+                .build();
+        latestSensorValueRepository.save(v2);
 
-        SensorData d1 = new SensorData();
-        d1.setRecord(r1);
-        d1.setSensorType("temperature");
-        d1.setValue(10.0);
-        d1.setUnit("C");
-        sensorDataRepository.save(d1);
-
-        SensorData d2 = new SensorData();
-        d2.setRecord(r2);
-        d2.setSensorType("temperature");
-        d2.setValue(20.0);
-        d2.setUnit("C");
-        sensorDataRepository.save(d2);
-
-        sensorDataRepository.flush();
+        latestSensorValueRepository.flush();
 
         List<LiveNowRow> rows = sensorDataRepository.fetchLatestSensorAverages(List.of("temperature"));
         assertEquals(1, rows.size());

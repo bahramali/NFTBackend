@@ -22,34 +22,18 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long>, S
      * Batch query returning the latest average per system/layer and sensor type.
      */
     @Query(value = """
-            WITH latest AS (
-              SELECT
-                d.system,
-                d.layer,
-                sd.sensor_type,
-                sd.sensor_value AS sensor_value,
-                sd.unit,
-                sr.record_time,
-                ROW_NUMBER() OVER (
-                  PARTITION BY sr.device_composite_id, sd.sensor_type
-                  ORDER BY sr.record_time DESC
-                ) AS rn
-              FROM sensor_data sd
-              JOIN sensor_record sr ON sr.id = sd.record_id
-              JOIN device d ON d.composite_id = sr.device_composite_id
-              WHERE sd.sensor_type IN (:types)
-            )
             SELECT
-              system AS system,
-              layer AS layer,
-              sensor_type AS sensor_type,
-              MAX(unit) AS unit,
-              AVG(sensor_value)::double precision AS avg_value,
+              d.system AS system,
+              d.layer AS layer,
+              lsv.sensor_type AS sensor_type,
+              MAX(lsv.unit) AS unit,
+              AVG(lsv.sensor_value)::double precision AS avg_value,
               COUNT(*)::bigint AS device_count,
-              MAX(record_time) AS record_time
-            FROM latest
-            WHERE rn = 1
-            GROUP BY system, layer, sensor_type
+              MAX(lsv.value_time) AS record_time
+            FROM latest_sensor_value lsv
+            JOIN device d ON d.composite_id = lsv.composite_id
+            WHERE lsv.sensor_type IN (:types)
+            GROUP BY d.system, d.layer, lsv.sensor_type
             """, nativeQuery = true)
     List<LiveNowRow> fetchLatestSensorAverages(@Param("types") Collection<String> types);
 }

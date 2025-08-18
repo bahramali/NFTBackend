@@ -36,7 +36,6 @@ public class LiveFeedScheduler {
 
     @Scheduled(fixedRateString = "${livefeed.rate:2000}", scheduler = "scheduler")
     public void sendLiveNow() {
-        log.info("sendLiveNow invoked");
         try {
             LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
             String payload = objectMapper.writeValueAsString(snapshot);

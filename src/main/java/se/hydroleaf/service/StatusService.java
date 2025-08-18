@@ -172,11 +172,17 @@ public class StatusService {
             }
 
             Double avg = row.getAvgValue();
+            Long deviceCount = row.getDeviceCount();
+            if (avg == null || deviceCount == null) {
+                log.warn("Skipping accumulation for system {} layer {} type {} due to null avg or device count", row.getSystem(), row.getLayer(), row.getSensorType());
+                return;
+            }
+
             boolean actuator = type.isActuator();
-            if (!actuator && avg != null) {
+            if (!actuator) {
                 avg = Math.round(avg * 10.0) / 10.0;
             }
-            long count = row.getDeviceCount() != null ? row.getDeviceCount() : 0L;
+            long count = deviceCount;
             String unit = row.getUnit() != null ? row.getUnit() : type.getUnit();
 
             StatusAverageResponse resp = new StatusAverageResponse(avg, unit, count);
@@ -188,9 +194,7 @@ public class StatusService {
                 return s;
             });
             sc.unit = unit;
-            if (avg != null) {
-                sc.sum += avg * count;
-            }
+            sc.sum += avg * count;
             sc.count += count;
         }
 

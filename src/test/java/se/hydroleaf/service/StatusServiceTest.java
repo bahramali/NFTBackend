@@ -218,4 +218,28 @@ class StatusServiceTest {
         verify(actuatorStatusRepository).fetchLatestActuatorAverages(anyList());
     }
 
+    @Test
+    void getLiveNowSnapshotSkipsRowsWithNullAvgOrDeviceCount() {
+        java.time.Instant now = java.time.Instant.now();
+        List<LiveNowRow> sensorRows = Arrays.asList(
+                new LiveNowRow("S01", "L01", "light", "lux", null, 1L, now),
+                new LiveNowRow("S01", "L01", "humidity", "%", 2.0, null, now),
+                new LiveNowRow("S01", "L01", "temperature", "°C", 3.0, 3L, now)
+        );
+        when(sensorDataRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
+        when(actuatorStatusRepository.fetchLatestActuatorAverages(anyList())).thenReturn(List.of());
+
+        LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
+
+        SystemSnapshot system = snapshot.systems().get("S01");
+        SystemSnapshot.LayerSnapshot layer = system.layers().get(0);
+
+        assertEquals(new StatusAverageResponse(3.0, "°C",3L), layer.environment().temperature());
+        assertEquals(null, layer.environment().light());
+        assertEquals(null, layer.environment().humidity());
+        assertEquals(new StatusAverageResponse(3.0, "°C",3L), system.environment().temperature());
+        assertEquals(null, system.environment().light());
+        assertEquals(null, system.environment().humidity());
+    }
+
 }

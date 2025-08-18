@@ -38,6 +38,7 @@ public class LiveFeedScheduler {
     private final AtomicBoolean sending = new AtomicBoolean(false);
 
     @Scheduled(fixedRateString = "${livefeed.rate:2000}", scheduler = "scheduler")
+
     public void sendLiveNow() {
         if (!sending.compareAndSet(false, true)) {
             log.debug("sendLiveNow already running; skipping");

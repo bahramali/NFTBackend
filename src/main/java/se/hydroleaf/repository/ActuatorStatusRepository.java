@@ -42,7 +42,7 @@ public interface ActuatorStatusRepository extends JpaRepository<ActuatorStatus, 
               layer AS layer,
               actuator_type AS sensor_type,
               MAX(unit) AS unit,
-              AVG(value) AS avg_value,
+              AVG(value)::double precision AS avg_value,
               COUNT(*)::bigint AS device_count,
               MAX(status_time) AS record_time
             FROM latest

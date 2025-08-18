@@ -1,16 +1,12 @@
 package se.hydroleaf.repository.dto;
 
+import lombok.Builder;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 
-/**
- * Projection for native queries returning a mix of numeric and temporal columns.
- * The numeric and time-based fields are defined with broad types so that
- * Hibernate can instantiate the record regardless of the exact JDBC types
- * produced by different dialects. Accessors convert the values to the expected
- * Java types used by the service layer.
- */
+@Builder
 public record LiveNowRow(
         String system,
         String layer,

@@ -50,8 +50,7 @@ public class SensorRecordController {
             @RequestParam("from") String from,
             @RequestParam("to") String to,
             @RequestParam(name = "bucket", defaultValue = "5m") String bucket,
-            @RequestParam(name = "sensorType", required = false) String sensorType,
-            @RequestParam(name = "cache", defaultValue = "true") boolean cache
+            @RequestParam(name = "sensorType", required = false) String sensorType
     ) {
         Instant fromInst = parseInstant(from);
         Instant toInst = parseInstant(to);
@@ -62,7 +61,7 @@ public class SensorRecordController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "'to' must be after 'from'");
         }
         try {
-            return recordService.aggregatedHistory(compositeId, fromInst, toInst, bucket, sensorType, cache);
+            return recordService.aggregatedHistory(compositeId, fromInst, toInst, bucket, sensorType);
         } catch (IllegalArgumentException iae) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, iae.getMessage(), iae);
         }

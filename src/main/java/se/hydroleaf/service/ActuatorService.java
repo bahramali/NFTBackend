@@ -2,7 +2,6 @@ package se.hydroleaf.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.model.Device;
@@ -38,7 +37,6 @@ public class ActuatorService {
 
     /** Entry point used by tests and other layers. */
     @Transactional
-    @CacheEvict(cacheNames = "liveNow", allEntries = true)
     public void saveActuatorStatus(String jsonString) {
         Objects.requireNonNull(jsonString, "payload is null");
         try {

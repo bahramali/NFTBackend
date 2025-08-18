@@ -27,6 +27,8 @@ public interface ActuatorStatusRepository extends JpaRepository<ActuatorStatus, 
                 d.layer,
                 a.actuator_type,
                 CASE WHEN a.state THEN 1.0 ELSE 0.0 END AS value,
+                'status' AS unit,
+                a.status_time,
                 ROW_NUMBER() OVER (
                   PARTITION BY a.composite_id, a.actuator_type
                   ORDER BY a.status_time DESC
@@ -38,9 +40,11 @@ public interface ActuatorStatusRepository extends JpaRepository<ActuatorStatus, 
             SELECT
               system AS system,
               layer AS layer,
-              actuator_type AS type,
-              AVG(value) AS average,
-              COUNT(*)::bigint AS count
+              actuator_type AS sensor_type,
+              MAX(unit) AS unit,
+              AVG(value) AS avg_value,
+              COUNT(*)::bigint AS device_count,
+              MAX(status_time) AS record_time
             FROM latest
             WHERE rn = 1
             GROUP BY system, layer, actuator_type

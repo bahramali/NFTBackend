@@ -13,6 +13,7 @@ import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.AverageCount;
 import se.hydroleaf.repository.SensorDataRepository;
 import se.hydroleaf.repository.dto.LiveNowRow;
+import se.hydroleaf.model.DeviceType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +41,7 @@ class StatusServiceTest {
 
     @Test
     void getAverageUsesSensorDataRepository() {
-        when(sensorDataRepository.getLatestAverage("Sys", "Layer", "light"))
+        when(sensorDataRepository.getLatestAverage("Sys", "Layer", DeviceType.LIGHT))
                 .thenReturn(new AverageCount(10.0, 1L));
 
         StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "light");
@@ -48,13 +49,13 @@ class StatusServiceTest {
         assertEquals(10.0, response.average());
         assertEquals("lux", response.unit());
         assertEquals(1L, response.deviceCount());
-        verify(sensorDataRepository).getLatestAverage("Sys", "Layer", "light");
+        verify(sensorDataRepository).getLatestAverage("Sys", "Layer", DeviceType.LIGHT);
         verifyNoInteractions(actuatorStatusRepository);
     }
 
     @Test
     void getAverageUsesSensorDataRepositoryForWaterTankSensor() {
-        when(sensorDataRepository.getLatestAverage("Sys", "Layer", "dissolvedOxygen"))
+        when(sensorDataRepository.getLatestAverage("Sys", "Layer", DeviceType.DISSOLVED_OXYGEN))
                 .thenReturn(new AverageCount(9.9, 1L));
 
         StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "dissolvedOxygen");
@@ -62,13 +63,13 @@ class StatusServiceTest {
         assertEquals(9.9, response.average());
         assertEquals("mg/L", response.unit());
         assertEquals(1L, response.deviceCount());
-        verify(sensorDataRepository).getLatestAverage("Sys", "Layer", "dissolvedOxygen");
+        verify(sensorDataRepository).getLatestAverage("Sys", "Layer", DeviceType.DISSOLVED_OXYGEN);
         verifyNoInteractions(actuatorStatusRepository);
     }
 
     @Test
     void getAverageUsesActuatorStatusRepositoryForAirpump() {
-        when(actuatorStatusRepository.getLatestActuatorAverage("Sys", "Layer", "airpump"))
+        when(actuatorStatusRepository.getLatestActuatorAverage("Sys", "Layer", DeviceType.AIR_PUMP))
                 .thenReturn(new AverageCount(1.0, 1L));
 
         StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "airpump");
@@ -76,26 +77,26 @@ class StatusServiceTest {
         assertEquals(1.0, response.average());
         assertEquals("status", response.unit());
         assertEquals(1L, response.deviceCount());
-        verify(actuatorStatusRepository).getLatestActuatorAverage("Sys", "Layer", "airpump");
+        verify(actuatorStatusRepository).getLatestActuatorAverage("Sys", "Layer", DeviceType.AIR_PUMP);
         verifyNoInteractions(sensorDataRepository);
     }
 
     @Test
     void getAllAveragesAggregatesAllSensorTypes() {
-        Map<String, AverageCount> sensorMap = Map.of(
-                "light", new AverageCount(1.0, 1L),
-                "humidity", new AverageCount(2.0, 1L),
-                "temperature", new AverageCount(3.0, 1L),
-                "dissolvedOxygen", new AverageCount(4.0, 1L),
-                "dissolvedTemp", new AverageCount(5.0, 1L),
-                "pH", new AverageCount(6.0, 1L),
-                "dissolvedEC", new AverageCount(7.0, 1L),
-                "dissolvedTDS", new AverageCount(8.0, 1L)
+        Map<DeviceType, AverageCount> sensorMap = Map.of(
+                DeviceType.LIGHT, new AverageCount(1.0, 1L),
+                DeviceType.HUMIDITY, new AverageCount(2.0, 1L),
+                DeviceType.TEMPERATURE, new AverageCount(3.0, 1L),
+                DeviceType.DISSOLVED_OXYGEN, new AverageCount(4.0, 1L),
+                DeviceType.DISSOLVED_TEMP, new AverageCount(5.0, 1L),
+                DeviceType.PH, new AverageCount(6.0, 1L),
+                DeviceType.DISSOLVED_EC, new AverageCount(7.0, 1L),
+                DeviceType.DISSOLVED_TDS, new AverageCount(8.0, 1L)
         );
         when(sensorDataRepository.getLatestAverages(eq("sys"), eq("layer"), anyList()))
                 .thenReturn(sensorMap);
-        Map<String, AverageCount> actuatorMap = Map.of(
-                "airPump", new AverageCount(1.0, 1L)
+        Map<DeviceType, AverageCount> actuatorMap = Map.of(
+                DeviceType.AIR_PUMP, new AverageCount(1.0, 1L)
         );
         when(actuatorStatusRepository.getLatestActuatorAverages(eq("sys"), eq("layer"), anyList()))
                 .thenReturn(actuatorMap);

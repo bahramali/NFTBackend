@@ -3,10 +3,12 @@ package se.hydroleaf.repository;
 import java.util.List;
 import java.util.Map;
 
+import se.hydroleaf.model.DeviceType;
+
 public interface SensorDataRepositoryCustom {
 
-    AverageCount getLatestAverage(String system, String layer, String sensorType);
+    AverageCount getLatestAverage(String system, String layer, DeviceType sensorType);
 
-    Map<String, AverageCount> getLatestAverages(String system, String layer, List<String> sensorTypes);
+    Map<DeviceType, AverageCount> getLatestAverages(String system, String layer, List<DeviceType> sensorTypes);
 }
 

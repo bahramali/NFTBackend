@@ -28,6 +28,8 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long>, S
                 d.layer,
                 sd.sensor_type,
                 sd.sensor_value AS value,
+                sd.unit,
+                sr.record_time,
                 ROW_NUMBER() OVER (
                   PARTITION BY sr.device_composite_id, sd.sensor_type
                   ORDER BY sr.record_time DESC
@@ -40,9 +42,11 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long>, S
             SELECT
               system AS system,
               layer AS layer,
-              sensor_type AS type,
-              AVG(value) AS average,
-              COUNT(*)::bigint AS count
+              sensor_type AS sensor_type,
+              MAX(unit) AS unit,
+              AVG(value) AS avg_value,
+              COUNT(*)::bigint AS device_count,
+              MAX(record_time) AS record_time
             FROM latest
             WHERE rn = 1
             GROUP BY system, layer, sensor_type

@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
+
 /**
  * Publishes messages to STOMP topics when publishing is enabled.
  * If disabled, it logs the intended destination and payload instead.
@@ -25,7 +27,7 @@ public class TopicPublisher {
     public void publish(String destination, String payload) {
         if (publishEnabled) {
             if (destination.contains("live_now")) {
-                log.debug("Publishing to {} : ", destination);
+                log.debug("Publishing to {} ",destination);
             }
             messagingTemplate.convertAndSend(destination, payload);
         } else {

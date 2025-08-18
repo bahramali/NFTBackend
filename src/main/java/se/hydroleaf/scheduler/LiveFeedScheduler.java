@@ -38,7 +38,6 @@ public class LiveFeedScheduler {
     private final AtomicBoolean sending = new AtomicBoolean(false);
 
     @Scheduled(fixedRateString = "${livefeed.rate:2000}", scheduler = "scheduler")
-
     public void sendLiveNow() {
         if (!sending.compareAndSet(false, true)) {
             log.debug("sendLiveNow already running; skipping");
@@ -62,7 +61,9 @@ public class LiveFeedScheduler {
         Instant now = Instant.now();
         lastSeen.forEach((id, ts) -> {
             if (Duration.between(ts, now).toSeconds() > 60) {
-                log.debug("Device {} no message for >60s (lastSeen={})", id, ts);
+/*
+//                log.debug("Device {} no message for >60s (lastSeen={})", id, ts);
+*/
             }
         });
     }

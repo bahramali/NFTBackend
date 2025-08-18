@@ -132,7 +132,8 @@ public class StatusService {
                 ACTUATOR_TYPES.stream().map(DeviceType::getName).toList());
 
         Map<String, SystemData> systems = Stream
-                .concat(sensorRows.parallelStream(), actuatorRows.parallelStream())
+                // Sequential streams are sufficient here; reintroduce parallelism only with proper benchmarks
+                .concat(sensorRows.stream(), actuatorRows.stream())
                 .filter(r -> r.getSystem() != null && !r.getSystem().isBlank()
                         && r.getLayer() != null && !r.getLayer().isBlank())
                 .collect(Collectors.groupingBy(

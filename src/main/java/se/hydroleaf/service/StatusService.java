@@ -17,7 +17,6 @@ import se.hydroleaf.repository.SensorDataRepository;
 import se.hydroleaf.repository.dto.LiveNowRow;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,13 +75,25 @@ public class StatusService {
     }
 
     public StatusAllAverageResponse getAllAverages(String system, String layer) {
-        String oxygenPumpType = "airPump";
-        List<String> sensorTypes = new ArrayList<>(SENSOR_TYPES);
-        sensorTypes.add(oxygenPumpType);
+        Map<String, AverageCount> sensorAverages =
+                sensorDataRepository.getLatestAverages(system, layer, SENSOR_TYPES);
+        Map<String, AverageCount> actuatorAverages =
+                actuatorStatusRepository.getLatestActuatorAverages(system, layer, ACTUATOR_TYPES);
+
         Map<String, StatusAverageResponse> responses = new HashMap<>();
-        for (String type : sensorTypes) {
-            responses.put(type, getAverage(system, layer, type));
+        for (String type : SENSOR_TYPES) {
+            AverageCount ac = sensorAverages.get(type);
+            long count = ac != null ? ac.getCount() : 0L;
+            Double avg = ac != null && count > 0 ? Math.round(ac.getAverage() * 10.0) / 10.0 : null;
+            responses.put(type, new StatusAverageResponse(avg, unitOf(type), count));
         }
+        for (String type : ACTUATOR_TYPES) {
+            AverageCount ac = actuatorAverages.get(type);
+            long count = ac != null ? ac.getCount() : 0L;
+            Double avg = ac != null && count > 0 ? ac.getAverage() : null;
+            responses.put(type, new StatusAverageResponse(avg, unitOf(type), count));
+        }
+
         Map<String, StatusAverageResponse> growSensors = Map.of(
                 "light", responses.get("light"),
                 "humidity", responses.get("humidity"),
@@ -95,6 +106,7 @@ public class StatusService {
                 Map.entry("dissolvedEC", responses.get("dissolvedEC")),
                 Map.entry("dissolvedTDS", responses.get("dissolvedTDS"))
         );
+        String oxygenPumpType = ACTUATOR_TYPES.get(0);
         return new StatusAllAverageResponse(
                 growSensors,
                 waterTank,

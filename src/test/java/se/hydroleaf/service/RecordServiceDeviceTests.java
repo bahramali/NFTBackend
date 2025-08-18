@@ -10,11 +10,13 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.DeviceGroup;
+import se.hydroleaf.model.LatestSensorValue;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.DeviceGroupRepository;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 import se.hydroleaf.repository.SensorHealthItemRepository;
+import se.hydroleaf.repository.LatestSensorValueRepository;
 import se.hydroleaf.model.DeviceType;
 import se.hydroleaf.repository.dto.LiveNowRow;
 
@@ -49,6 +51,8 @@ class RecordServiceDeviceTests {
     ActuatorStatusRepository actuatorStatusRepository;
     @Autowired
     SensorHealthItemRepository sensorHealthItemRepository;
+    @Autowired
+    LatestSensorValueRepository latestSensorValueRepository;
     private DeviceGroup defaultGroup;
 
 
@@ -115,6 +119,14 @@ class RecordServiceDeviceTests {
         assertEquals(compositeId, saved.getCompositeId());
 
         // Latest-average for a specific metric should include our record
+        latestSensorValueRepository.save(
+                LatestSensorValue.builder()
+                        .device(saved)
+                        .sensorType("light")
+                        .value(549.3)
+                        .unit("lx")
+                        .valueTime(Instant.parse("2025-01-01T00:00:00Z"))
+                        .build());
         List<LiveNowRow> rows = sensorDataRepository.fetchLatestSensorAverages(List.of(DeviceType.LIGHT.getName()));
         LiveNowRow lightAvg = rows.stream()
                 .filter(r -> "S02".equals(r.getSystem()) && "L02".equals(r.getLayer()))

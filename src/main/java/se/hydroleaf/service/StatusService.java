@@ -21,6 +21,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Service providing aggregated status information about sensors and actuators.
@@ -107,58 +110,83 @@ public class StatusService {
         List<LiveNowRow> sensorRows = sensorDataRepository.fetchLatestSensorAverages(SENSOR_TYPES);
         List<LiveNowRow> actuatorRows = actuatorStatusRepository.fetchLatestActuatorAverages(ACTUATOR_TYPES);
 
-        Map<String, Map<String, LayerData>> aggregated = new HashMap<>();
-        for (LiveNowRow row : sensorRows) {
-            accumulate(aggregated, row, false);
-        }
-        for (LiveNowRow row : actuatorRows) {
-            accumulate(aggregated, row, true);
-        }
+        Map<String, SystemData> systems = Stream
+                .concat(sensorRows.parallelStream(), actuatorRows.parallelStream())
+                .filter(r -> r.getSystem() != null && !r.getSystem().isBlank()
+                        && r.getLayer() != null && !r.getLayer().isBlank())
+                .collect(Collectors.groupingBy(
+                        LiveNowRow::getSystem,
+                        Collector.of(SystemData::new, SystemData::accumulate, (a, b) -> {
+                            a.merge(b);
+                            return a;
+                        })
+                ));
 
-        return assembleSnapshot(aggregated);
+        Map<String, SystemSnapshot> snapshots = systems.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toSnapshot()));
+
+        return new LiveNowSnapshot(snapshots);
     }
 
-    private void accumulate(Map<String, Map<String, LayerData>> acc, LiveNowRow row, boolean actuator) {
-        String system = row.system();
-        String layer = row.layer();
-        if (system == null || system.isBlank() || layer == null || layer.isBlank()) {
-            return;
+    private class SystemData {
+        Instant lastUpdate;
+        Map<String, LayerData> layers = new HashMap<>();
+        Map<String, SumCount> totals = new HashMap<>();
+
+        void accumulate(LiveNowRow row) {
+            Instant time = row.getRecordTime();
+            if (time != null) {
+                lastUpdate = latest(lastUpdate, time);
+            }
+
+            LayerData layer = layers.computeIfAbsent(row.getLayer(), l -> new LayerData());
+            if (time != null) {
+                layer.lastUpdate = latest(layer.lastUpdate, time);
+            }
+
+            Double avg = row.getAvgValue();
+            boolean actuator = isActuator(row.getSensorType());
+            if (!actuator && avg != null) {
+                avg = Math.round(avg * 10.0) / 10.0;
+            }
+            long count = row.getDeviceCount() != null ? row.getDeviceCount() : 0L;
+            String unit = row.getUnit() != null ? row.getUnit() : unitOf(row.getSensorType());
+
+            StatusAverageResponse resp = new StatusAverageResponse(avg, unit, count);
+            layer.values.put(row.getSensorType(), resp);
+
+            SumCount sc = totals.computeIfAbsent(row.getSensorType(), t -> {
+                SumCount s = new SumCount();
+                s.unit = unit;
+                return s;
+            });
+            sc.unit = unit;
+            if (avg != null) {
+                sc.sum += avg * count;
+            }
+            sc.count += count;
         }
 
-        Map<String, LayerData> layers = acc.computeIfAbsent(system, s -> new HashMap<>());
-        LayerData data = layers.computeIfAbsent(layer, l -> new LayerData());
-
-        Instant time = row.recordTime();
-        if (time != null && (data.lastUpdate == null || time.isAfter(data.lastUpdate))) {
-            data.lastUpdate = time;
+        void merge(SystemData other) {
+            lastUpdate = latest(lastUpdate, other.lastUpdate);
+            other.layers.forEach((layerId, otherLayer) ->
+                    layers.merge(layerId, otherLayer, (l1, l2) -> {
+                        l1.lastUpdate = latest(l1.lastUpdate, l2.lastUpdate);
+                        l1.values.putAll(l2.values);
+                        return l1;
+                    }));
+            other.totals.forEach((type, scOther) ->
+                    totals.merge(type, scOther, (sc1, sc2) -> {
+                        sc1.sum += sc2.sum;
+                        sc1.count += sc2.count;
+                        if (sc1.unit == null) sc1.unit = sc2.unit;
+                        return sc1;
+                    }));
         }
 
-        Double avg = row.avgValue();
-        if (!actuator && avg != null) {
-            avg = Math.round(avg * 10.0) / 10.0;
-        }
-        long count = row.deviceCount() != null ? row.deviceCount() : 0L;
-        String unit = row.unit() != null ? row.unit() : unitOf(row.sensorType());
-
-        data.values.put(row.sensorType(), new StatusAverageResponse(avg, unit, count));
-    }
-
-    private LiveNowSnapshot assembleSnapshot(Map<String, Map<String, LayerData>> acc) {
-        Map<String, SystemSnapshot> systems = new HashMap<>();
-
-        for (Map.Entry<String, Map<String, LayerData>> systemEntry : acc.entrySet()) {
-            String systemId = systemEntry.getKey();
-            Map<String, LayerData> layersMap = systemEntry.getValue();
-
+        SystemSnapshot toSnapshot() {
             List<SystemSnapshot.LayerSnapshot> layerSnapshots = new ArrayList<>();
-            Map<String, SumCount> totals = new HashMap<>();
-            Instant systemLast = null;
-
-            for (Map.Entry<String, LayerData> layerEntry : layersMap.entrySet()) {
-                String layerId = layerEntry.getKey();
-                LayerData data = layerEntry.getValue();
-                systemLast = latest(systemLast, data.lastUpdate);
-
+            layers.forEach((layerId, data) -> {
                 ActuatorStatusSummary layerActuators = new ActuatorStatusSummary(data.values.get("airPump"));
                 WaterTankSummary layerWater = new WaterTankSummary(
                         data.values.get("dissolvedTemp"),
@@ -172,22 +200,9 @@ public class StatusService {
                         data.values.get("humidity"),
                         data.values.get("temperature")
                 );
-
                 layerSnapshots.add(new SystemSnapshot.LayerSnapshot(layerId, data.lastUpdate,
                         layerActuators, layerWater, layerEnv));
-
-                data.values.forEach((type, res) -> {
-                    if (res == null) {
-                        return;
-                    }
-                    SumCount sc = totals.computeIfAbsent(type, t -> new SumCount());
-                    sc.unit = res.unit();
-                    if (res.average() != null) {
-                        sc.sum += res.average() * res.deviceCount();
-                    }
-                    sc.count += res.deviceCount();
-                });
-            }
+            });
 
             ActuatorStatusSummary systemActuators = new ActuatorStatusSummary(aggregate(totals.get("airPump")));
             WaterTankSummary systemWater = new WaterTankSummary(
@@ -203,10 +218,8 @@ public class StatusService {
                     aggregate(totals.get("temperature"))
             );
 
-            systems.put(systemId, new SystemSnapshot(systemLast, systemActuators, systemWater, systemEnv, layerSnapshots));
+            return new SystemSnapshot(lastUpdate, systemActuators, systemWater, systemEnv, layerSnapshots);
         }
-
-        return new LiveNowSnapshot(systems);
     }
 
     private Instant latest(Instant a, Instant b) {

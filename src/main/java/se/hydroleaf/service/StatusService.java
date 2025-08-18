@@ -124,7 +124,7 @@ public class StatusService {
     /**
      * Collects the latest readings for all systems and layers and assembles a snapshot.
      */
-    @Cacheable(cacheNames = "liveNow", key = "'default'", condition = "@environment.getProperty('cache.liveNow.enabled','true') == 'true'")
+//    @Cacheable(cacheNames = "liveNow", key = "'default'", condition = "@environment.getProperty('cache.liveNow.enabled','true') == 'true'")
     public LiveNowSnapshot getLiveNowSnapshot() {
         List<LiveNowRow> sensorRows = sensorDataRepository.fetchLatestSensorAverages(
                 SENSOR_TYPES.stream().map(DeviceType::getName).toList());

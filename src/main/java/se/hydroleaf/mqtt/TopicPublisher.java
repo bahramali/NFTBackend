@@ -26,9 +26,6 @@ public class TopicPublisher {
 
     public void publish(String destination, String payload) {
         if (publishEnabled) {
-            if (destination.contains("live_now")) {
-                log.debug("Publishing to {} ",destination);
-            }
             messagingTemplate.convertAndSend(destination, payload);
         } else {
             if ("/topic/live_now".equalsIgnoreCase(destination)) {

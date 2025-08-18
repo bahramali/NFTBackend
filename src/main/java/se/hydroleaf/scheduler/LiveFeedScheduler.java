@@ -11,6 +11,7 @@ import se.hydroleaf.service.StatusService;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Periodic tasks related to live device feed.
@@ -34,8 +35,14 @@ public class LiveFeedScheduler {
         this.objectMapper = objectMapper;
     }
 
+    private final AtomicBoolean sending = new AtomicBoolean(false);
+
     @Scheduled(fixedRateString = "${livefeed.rate:2000}", scheduler = "scheduler")
     public void sendLiveNow() {
+        if (!sending.compareAndSet(false, true)) {
+            log.debug("sendLiveNow already running; skipping");
+            return;
+        }
         try {
             LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
             String payload = objectMapper.writeValueAsString(snapshot);
@@ -44,6 +51,8 @@ public class LiveFeedScheduler {
             log.warn("Failed to serialize LiveNowSnapshot", e);
         } catch (Exception e) {
             log.warn("sendLiveNow failed", e);
+        } finally {
+            sending.set(false);
         }
     }
 

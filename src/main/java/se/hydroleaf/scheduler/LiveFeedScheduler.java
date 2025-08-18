@@ -45,7 +45,7 @@ public class LiveFeedScheduler {
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize LiveNowSnapshot", e);
         } catch (Exception e) {
-            log.warn("sendLiveNow failed: {}", e.getMessage());
+            log.warn("sendLiveNow failed", e);
         }
     }
 

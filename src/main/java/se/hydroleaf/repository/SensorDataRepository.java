@@ -27,7 +27,7 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long>, S
                 d.system,
                 d.layer,
                 sd.sensor_type,
-                sd.sensor_value AS value,
+                sd.sensor_value AS sensor_value,
                 sd.unit,
                 sr.record_time,
                 ROW_NUMBER() OVER (
@@ -44,7 +44,7 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long>, S
               layer AS layer,
               sensor_type AS sensor_type,
               MAX(unit) AS unit,
-              AVG(value)::double precision AS avg_value,
+              AVG(sensor_value)::double precision AS avg_value,
               COUNT(*)::bigint AS device_count,
               MAX(record_time) AS record_time
             FROM latest

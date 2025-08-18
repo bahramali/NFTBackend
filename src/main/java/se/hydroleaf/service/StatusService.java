@@ -124,15 +124,12 @@ public class StatusService {
     /**
      * Collects the latest readings for all systems and layers and assembles a snapshot.
      */
-//    @Cacheable(cacheNames = "liveNow", key = "'default'", condition = "@environment.getProperty('cache.liveNow.enabled','true') == 'true'")
+    @Cacheable(cacheNames = "liveNow", key = "'default'", condition = "@environment.getProperty('cache.liveNow.enabled','true') == 'true'")
     public LiveNowSnapshot getLiveNowSnapshot() {
-        LiveNowRow build = LiveNowRow.builder().avgValue(10.0).build();
-        List<LiveNowRow> sensorRows = List.of(build);
-//                sensorDataRepository.fetchLatestSensorAverages(
-//                SENSOR_TYPES.stream().map(DeviceType::getName).toList());
-        List<LiveNowRow> actuatorRows = List.of(build);
-//                actuatorStatusRepository.fetchLatestActuatorAverages(
-//                ACTUATOR_TYPES.stream().map(DeviceType::getName).toList());
+        List<LiveNowRow> sensorRows = sensorDataRepository.fetchLatestSensorAverages(
+                SENSOR_TYPES.stream().map(DeviceType::getName).toList());
+        List<LiveNowRow> actuatorRows = actuatorStatusRepository.fetchLatestActuatorAverages(
+                ACTUATOR_TYPES.stream().map(DeviceType::getName).toList());
 
         Map<String, SystemData> systems = Stream
                 // Sequential streams are sufficient here; reintroduce parallelism only with proper benchmarks

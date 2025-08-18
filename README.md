@@ -80,7 +80,12 @@ docker run -p 8080:8080 \
 
 ### Caching
 
-The aggregated history endpoint uses Spring Cache backed by Caffeine. Responses are cached for five minutes and automatically cleared whenever new sensor data is saved. Add `cache=false` to the query string to bypass the cache for a single request. The cache can also be cleared programmatically through Spring's `CacheManager` if needed.
+Spring Cache backed by Caffeine is used to avoid repeatedly assembling heavy responses. Two caches are available:
+
+* **`aggregatedHistory`** – stores the results of the historical aggregation endpoint. Entries expire after five minutes (`cache.aggregatedHistory.ttl`) and are cleared whenever new sensor readings are saved. Add `cache=false` to the query string to bypass the cache for a single request.
+* **`liveNow`** – keeps the latest snapshot built by `StatusService`. Configure the time-to-live via `cache.liveNow.ttl` (default `2s`) and disable caching entirely with `cache.liveNow.enabled=false`. The cache is automatically invalidated when new sensor or actuator data is persisted.
+
+Operators can tune these properties in `application.yml` to trade between performance and data freshness. The caches can also be cleared programmatically through Spring's `CacheManager` if needed.
 
 ## Local development
 

@@ -83,7 +83,7 @@ public class RecordService {
      * Unknown keys are ignored. Missing sections are skipped.
      */
     @Transactional
-    @CacheEvict(cacheNames = "aggregatedHistory", allEntries = true)
+    @CacheEvict(cacheNames = {"aggregatedHistory", "liveNow"}, allEntries = true)
     public void saveRecord(String compositeId, JsonNode json) {
         Objects.requireNonNull(compositeId, "compositeId is required");
 

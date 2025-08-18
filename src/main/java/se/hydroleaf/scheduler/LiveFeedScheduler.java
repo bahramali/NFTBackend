@@ -32,7 +32,9 @@ public class LiveFeedScheduler {
 
     private final AtomicBoolean sending = new AtomicBoolean(false);
 
-    @Scheduled(fixedRateString = "${livefeed.rate:2000}", scheduler = "scheduler")
+    // Using fixedDelay ensures that if executions are delayed for any reason,
+    // multiple invocations do not queue up and publish in rapid succession.
+    @Scheduled(fixedDelayString = "${livefeed.rate:2000}", scheduler = "scheduler")
     public void sendLiveNow() {
         if (!sending.compareAndSet(false, true)) {
             log.debug("sendLiveNow already running; skipping");

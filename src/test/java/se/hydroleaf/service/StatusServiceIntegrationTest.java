@@ -40,6 +40,9 @@ class StatusServiceIntegrationTest {
     @Autowired
     private SensorRecordRepository sensorRecordRepository;
 
+    @Autowired
+    private LatestSensorValueRepository latestSensorValueRepository;
+
     @Test
     void getLiveNowSnapshotReturnsData() {
         DeviceGroup group = new DeviceGroup();
@@ -67,6 +70,15 @@ class StatusServiceIntegrationTest {
         data.setValue(5.0);
         data.setUnit("lux");
         sensorDataRepository.save(data);
+
+        LatestSensorValue latest = LatestSensorValue.builder()
+                .device(device)
+                .sensorType("light")
+                .value(5.0)
+                .unit("lux")
+                .valueTime(now)
+                .build();
+        latestSensorValueRepository.save(latest);
 
         ActuatorStatus status = new ActuatorStatus();
         status.setDevice(device);

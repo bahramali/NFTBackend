@@ -42,13 +42,14 @@ public enum DeviceType {
     }
 
     private static final Map<String, DeviceType> BY_NAME =
-            Stream.of(values()).collect(Collectors.toMap(DeviceType::getName, dt -> dt));
+            Stream.of(values())
+                    .collect(Collectors.toMap(dt -> dt.getName().toLowerCase(), dt -> dt));
 
     public static DeviceType fromName(String name) {
         if (name == null) {
             return null;
         }
-        return BY_NAME.get(name);
+        return BY_NAME.get(name.toLowerCase());
     }
 }
 

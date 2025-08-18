@@ -8,23 +8,17 @@ public record LiveNowRow(
         String layer,
         String sensorType,
         String unit,
-        Number avgValue,
-        Number deviceCount,
+        Double avgValue,
+        Long deviceCount,
         Timestamp recordTime
 ) {
     public String getSystem() { return system; }
     public String getLayer() { return layer; }
     public String getSensorType() { return sensorType; }
     public String getUnit() { return unit; }
-    public Double getAvgValue() {
-        return avgValue != null ? avgValue.doubleValue() : null;
-    }
+    public Double getAvgValue() { return avgValue; }
 
-    public Long getDeviceCount() {
-        return deviceCount != null ? deviceCount.longValue() : null;
-    }
+    public Long getDeviceCount() { return deviceCount; }
 
-    public Instant getRecordTime() {
-        return recordTime != null ? recordTime.toInstant() : null;
-    }
+    public Instant getRecordTime() { return recordTime != null ? recordTime.toInstant() : null; }
 }

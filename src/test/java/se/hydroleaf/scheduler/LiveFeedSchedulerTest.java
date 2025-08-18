@@ -22,6 +22,9 @@ import se.hydroleaf.service.StatusService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -117,6 +120,27 @@ class LiveFeedSchedulerTest {
 
         verify(statusService, times(2)).getLiveNowSnapshot();
         verify(messagingTemplate).convertAndSend("/topic/live_now", "{}");
+    }
+
+    @Test
+    void skipsConcurrentExecutions() throws Exception {
+        when(statusService.getLiveNowSnapshot()).thenAnswer(invocation -> {
+            Thread.sleep(50);
+            return new LiveNowSnapshot(Map.of());
+        });
+
+        ObjectMapper mapper = new ObjectMapper();
+        TopicPublisher topicPublisher = new TopicPublisher(true, messagingTemplate);
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, mapper);
+
+        ExecutorService exec = Executors.newFixedThreadPool(10);
+        for (int i = 0; i < 10; i++) {
+            exec.submit(scheduler::sendLiveNow);
+        }
+        exec.shutdown();
+        exec.awaitTermination(1, TimeUnit.SECONDS);
+
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/live_now"), anyString());
     }
 }
 

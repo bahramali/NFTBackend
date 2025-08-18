@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import se.hydroleaf.service.DeviceProvisionService;
 import se.hydroleaf.service.RecordService;
 
-import se.hydroleaf.scheduler.LastSeenRegistry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,18 +23,14 @@ public class MqttMessageHandler {
     private final TopicPublisher topicPublisher;
     private final DeviceProvisionService deviceProvisionService;
 
-    private final LastSeenRegistry lastSeen;
-
     public MqttMessageHandler(ObjectMapper objectMapper,
                               RecordService recordService,
                               TopicPublisher topicPublisher,
-                              DeviceProvisionService deviceProvisionService,
-                              LastSeenRegistry lastSeen) {
+                              DeviceProvisionService deviceProvisionService) {
         this.objectMapper = objectMapper;
         this.recordService = recordService;
         this.topicPublisher = topicPublisher;
         this.deviceProvisionService = deviceProvisionService;
-        this.lastSeen = lastSeen;
     }
 
     public void handle(String topic, String payload) {
@@ -59,7 +54,6 @@ public class MqttMessageHandler {
 
             deviceProvisionService.ensureDevice(compositeId, topic);
             recordService.saveRecord(compositeId, node);
-            lastSeen.update(compositeId);
         } catch (Exception ex) {
             log.error("MQTT handle error for topic {}: {}", topic, ex.getMessage(), ex);
         }

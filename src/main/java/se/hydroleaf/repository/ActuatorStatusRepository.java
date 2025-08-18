@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public interface ActuatorStatusRepository extends JpaRepository<ActuatorStatus, Long>, ActuatorStatusRepositoryCustom {
+public interface ActuatorStatusRepository extends JpaRepository<ActuatorStatus, Long> {
 
     /**
      * Latest actuator state for a device and actuator type.

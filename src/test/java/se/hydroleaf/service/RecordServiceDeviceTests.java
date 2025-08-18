@@ -16,8 +16,10 @@ import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorDataRepository;
 import se.hydroleaf.repository.SensorHealthItemRepository;
 import se.hydroleaf.model.DeviceType;
+import se.hydroleaf.repository.dto.LiveNowRow;
 
 import java.time.Instant;
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -113,10 +115,13 @@ class RecordServiceDeviceTests {
         assertEquals(compositeId, saved.getCompositeId());
 
         // Latest-average for a specific metric should include our record
-        var lightAvg = sensorDataRepository.getLatestAverage("S02", "L02", DeviceType.LIGHT);
+        List<LiveNowRow> rows = sensorDataRepository.fetchLatestSensorAverages(List.of(DeviceType.LIGHT.getName()));
+        LiveNowRow lightAvg = rows.stream()
+                .filter(r -> "S02".equals(r.getSystem()) && "L02".equals(r.getLayer()))
+                .findFirst().orElse(null);
         assertNotNull(lightAvg);
-        assertNotNull(lightAvg.getAverage());
-        assertTrue(lightAvg.getCount() >= 1);
+        assertNotNull(lightAvg.getAvgValue());
+        assertTrue(lightAvg.getDeviceCount() >= 1);
 
         // sensorType persistence check (ph sensor without sensorName)
         assertTrue(sensorDataRepository.findAll().stream()

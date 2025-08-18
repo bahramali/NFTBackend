@@ -11,7 +11,6 @@ import se.hydroleaf.dto.summary.StatusAllAverageResponse;
 import se.hydroleaf.dto.summary.StatusAverageResponse;
 import se.hydroleaf.dto.summary.WaterTankSummary;
 import se.hydroleaf.repository.ActuatorStatusRepository;
-import se.hydroleaf.repository.AverageCount;
 import se.hydroleaf.repository.SensorDataRepository;
 import se.hydroleaf.repository.dto.LiveNowRow;
 import se.hydroleaf.model.DeviceType;
@@ -68,36 +67,65 @@ public class StatusService {
         String unit = type.getUnit();
 
         if (type.isActuator()) {
-            AverageCount ac = actuatorStatusRepository.getLatestActuatorAverage(system, layer, type);
-            long count = ac != null ? ac.getCount() : 0L;
-            Double avg = ac != null && count > 0 ? ac.getAverage() : null;
-            return new StatusAverageResponse(avg, unit, count);
+            List<LiveNowRow> rows = actuatorStatusRepository.fetchLatestActuatorAverages(List.of(type.getName()));
+            LiveNowRow row = rows.stream()
+                    .filter(r -> r.getSystem() != null && r.getLayer() != null
+                            && system.equalsIgnoreCase(r.getSystem())
+                            && layer.equalsIgnoreCase(r.getLayer()))
+                    .findFirst().orElse(null);
+            long count = row != null && row.getDeviceCount() != null ? row.getDeviceCount() : 0L;
+            Double avg = row != null && row.getAvgValue() != null && count > 0 ? row.getAvgValue() : null;
+            String resultUnit = row != null && row.getUnit() != null ? row.getUnit() : unit;
+            return new StatusAverageResponse(avg, resultUnit, count);
         } else {
-            AverageCount ac = sensorDataRepository.getLatestAverage(system, layer, type);
-            long count = ac != null ? ac.getCount() : 0L;
-            Double avg = ac != null && count > 0 ? Math.round(ac.getAverage() * 10.0) / 10.0 : null;
-            return new StatusAverageResponse(avg, unit, count);
+            List<LiveNowRow> rows = sensorDataRepository.fetchLatestSensorAverages(List.of(type.getName()));
+            LiveNowRow row = rows.stream()
+                    .filter(r -> r.getSystem() != null && r.getLayer() != null
+                            && system.equalsIgnoreCase(r.getSystem())
+                            && layer.equalsIgnoreCase(r.getLayer()))
+                    .findFirst().orElse(null);
+            long count = row != null && row.getDeviceCount() != null ? row.getDeviceCount() : 0L;
+            Double avg = row != null && row.getAvgValue() != null && count > 0
+                    ? Math.round(row.getAvgValue() * 10.0) / 10.0
+                    : null;
+            String resultUnit = row != null && row.getUnit() != null ? row.getUnit() : unit;
+            return new StatusAverageResponse(avg, resultUnit, count);
         }
     }
 
     public StatusAllAverageResponse getAllAverages(String system, String layer) {
-        Map<DeviceType, AverageCount> sensorAverages =
-                sensorDataRepository.getLatestAverages(system, layer, SENSOR_TYPES);
-        Map<DeviceType, AverageCount> actuatorAverages =
-                actuatorStatusRepository.getLatestActuatorAverages(system, layer, ACTUATOR_TYPES);
+        List<LiveNowRow> sensorRows = sensorDataRepository.fetchLatestSensorAverages(
+                SENSOR_TYPES.stream().map(DeviceType::getName).toList());
+        List<LiveNowRow> actuatorRows = actuatorStatusRepository.fetchLatestActuatorAverages(
+                ACTUATOR_TYPES.stream().map(DeviceType::getName).toList());
+
+        Map<String, LiveNowRow> sensorMap = sensorRows.stream()
+                .filter(r -> r.getSystem() != null && r.getLayer() != null
+                        && system.equalsIgnoreCase(r.getSystem())
+                        && layer.equalsIgnoreCase(r.getLayer()))
+                .collect(Collectors.toMap(LiveNowRow::getSensorType, r -> r));
+        Map<String, LiveNowRow> actuatorMap = actuatorRows.stream()
+                .filter(r -> r.getSystem() != null && r.getLayer() != null
+                        && system.equalsIgnoreCase(r.getSystem())
+                        && layer.equalsIgnoreCase(r.getLayer()))
+                .collect(Collectors.toMap(LiveNowRow::getSensorType, r -> r));
 
         Map<DeviceType, StatusAverageResponse> responses = new EnumMap<>(DeviceType.class);
         for (DeviceType type : SENSOR_TYPES) {
-            AverageCount ac = sensorAverages.get(type);
-            long count = ac != null ? ac.getCount() : 0L;
-            Double avg = ac != null && count > 0 ? Math.round(ac.getAverage() * 10.0) / 10.0 : null;
-            responses.put(type, new StatusAverageResponse(avg, type.getUnit(), count));
+            LiveNowRow row = sensorMap.get(type.getName());
+            long count = row != null && row.getDeviceCount() != null ? row.getDeviceCount() : 0L;
+            Double avg = row != null && row.getAvgValue() != null && count > 0
+                    ? Math.round(row.getAvgValue() * 10.0) / 10.0
+                    : null;
+            String unit = row != null && row.getUnit() != null ? row.getUnit() : type.getUnit();
+            responses.put(type, new StatusAverageResponse(avg, unit, count));
         }
         for (DeviceType type : ACTUATOR_TYPES) {
-            AverageCount ac = actuatorAverages.get(type);
-            long count = ac != null ? ac.getCount() : 0L;
-            Double avg = ac != null && count > 0 ? ac.getAverage() : null;
-            responses.put(type, new StatusAverageResponse(avg, type.getUnit(), count));
+            LiveNowRow row = actuatorMap.get(type.getName());
+            long count = row != null && row.getDeviceCount() != null ? row.getDeviceCount() : 0L;
+            Double avg = row != null && row.getAvgValue() != null && count > 0 ? row.getAvgValue() : null;
+            String unit = row != null && row.getUnit() != null ? row.getUnit() : type.getUnit();
+            responses.put(type, new StatusAverageResponse(avg, unit, count));
         }
 
         Map<String, StatusAverageResponse> growSensors = Map.of(

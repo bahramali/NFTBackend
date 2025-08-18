@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public interface SensorDataRepository extends JpaRepository<SensorData, Long>, SensorDataRepositoryCustom {
+public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
 
     /**
      * Latest sensor reading for a device and sensor type.

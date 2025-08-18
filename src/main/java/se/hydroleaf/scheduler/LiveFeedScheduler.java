@@ -34,7 +34,7 @@ public class LiveFeedScheduler {
         this.objectMapper = objectMapper;
     }
 
-    @Scheduled(fixedRateString = "${livefeed.rate:2000}", scheduler = "scheduler")
+    @Scheduled(fixedDelayString = "${livefeed.rate:2000}", scheduler = "scheduler")
     public void sendLiveNow() {
         try {
             LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();

@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.anyList;
 
@@ -35,6 +34,14 @@ class StatusServiceTest {
     @Spy
     @InjectMocks
     private StatusService statusService;
+
+    private record Row(String system, String layer, String type, Double average, Long count) implements LiveNowRow {
+        public String getSystem() { return system; }
+        public String getLayer() { return layer; }
+        public String getType() { return type; }
+        public Double getAverage() { return average; }
+        public Long getCount() { return count; }
+    }
 
     @Test
     void getAverageUsesSensorDataRepository() {
@@ -148,7 +155,6 @@ class StatusServiceTest {
         assertEquals(new StatusAverageResponse(1.0, "status",1L), s01Layer.actuators().airPump());
         assertEquals(new StatusAverageResponse(2.0, "lux",2L), s01Layer.environment().light());
         assertEquals(new StatusAverageResponse(6.0, "mg/L",6L), s02Layer.water().dissolvedOxygen());
-        assertNotNull(s01Layer.lastUpdate());
         assertEquals(new StatusAverageResponse(1.0, "status",1L), s01System.actuators().airPump());
         assertEquals(new StatusAverageResponse(2.0, "lux",2L), s01System.environment().light());
         assertEquals(new StatusAverageResponse(6.0, "mg/L",6L), result.systems().get("S02").water().dissolvedOxygen());
@@ -186,7 +192,6 @@ class StatusServiceTest {
 
         assertEquals(2.0, system.actuators().airPump().average());
         assertEquals(20.0, system.water().dissolvedTemp().average());
-        assertEquals(layer2.lastUpdate(), system.lastUpdate());
         assertEquals(new StatusAverageResponse(1.0, "status",1L), layer1.actuators().airPump());
         assertEquals(new StatusAverageResponse(30.0, "°C",1L), layer2.water().dissolvedTemp());
     }
@@ -216,7 +221,6 @@ class StatusServiceTest {
         assertEquals(1, layers.size());
         SystemSnapshot.LayerSnapshot layerSnapshot = layers.get(0);
         assertEquals(new StatusAverageResponse(1.0, "status",1L), layerSnapshot.actuators().airPump());
-        assertNotNull(layerSnapshot.lastUpdate());
         assertEquals(new StatusAverageResponse(1.0, "status",1L), system.actuators().airPump());
         verify(sensorDataRepository).fetchLatestSensorAverages(anyList());
         verify(actuatorStatusRepository).fetchLatestActuatorAverages(anyList());

@@ -78,15 +78,6 @@ docker run -p 8080:8080 \
 
 * `GET /api/records/history/aggregated` - groups values by sensor and lists timestamp/value pairs. Results are automatically downsampled to roughly 300 points based on the requested time range, discarding zero values when possible. An optional `sensorType` parameter filters the data before aggregation, and bucketing uses TimescaleDB's `time_bucket` for efficiency.
 
-### Caching
-
-Spring Cache backed by Caffeine is used to avoid repeatedly assembling heavy responses. Two caches are available:
-
-* **`aggregatedHistory`** – stores the results of the historical aggregation endpoint. Entries expire after five minutes (`cache.aggregatedHistory.ttl`) and are cleared whenever new sensor readings are saved. Add `cache=false` to the query string to bypass the cache for a single request.
-* **`liveNow`** – keeps the latest snapshot built by `StatusService`. Configure the time-to-live via `cache.liveNow.ttl` (default `2s`) and disable caching entirely with `cache.liveNow.enabled=false`. The cache is automatically invalidated when new sensor or actuator data is persisted.
-
-Operators can tune these properties in `application.yml` to trade between performance and data freshness. The caches can also be cleared programmatically through Spring's `CacheManager` if needed.
-
 ## Local development
 
 A separate `application-local.yaml` allows running the service with a Postgres instance on your machine. Start the app using the `local` profile:

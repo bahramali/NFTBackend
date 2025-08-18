@@ -18,20 +18,11 @@ spring:
       ddl-auto: validate
     show-sql: false
     open-in-view: false
-  cache:
-    type: caffeine
-    cache-names: aggregatedHistory, liveNow
   flyway:
     enabled: true
     baseline-on-migrate: true
     locations: classpath:db/migration
 
-cache:
-  aggregatedHistory:
-    ttl: 5m
-  liveNow:
-    ttl: 2s
-    enabled: true
 mqtt:
   brokerUri: ${MQTT_BROKER:tcp://100.113.16.30:1883}
   clientId: hydroleaf-backend

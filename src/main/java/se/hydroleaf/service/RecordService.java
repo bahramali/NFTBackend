@@ -137,6 +137,21 @@ public class RecordService {
             String bucket, // e.g., "5m","1h","1d"
             String sensorType // optional filter
     ) {
+        return aggregatedHistory(compositeId, from, to, bucket, sensorType, null, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public AggregatedHistoryResponse aggregatedHistory(
+            String compositeId,
+            Instant from,
+            Instant to,
+            String bucket,
+            String sensorType,
+            Integer bucketLimit,
+            Integer bucketOffset,
+            Integer sensorLimit,
+            Integer sensorOffset
+    ) {
         if (from == null || to == null) throw new IllegalArgumentException("from/to are required");
         if (!deviceRepository.existsById(compositeId)) {
             throw new IllegalArgumentException("Unknown device composite_id: " + compositeId);
@@ -158,7 +173,24 @@ public class RecordService {
             agg.data().add(new TimestampValue(r.getBucketTime(), r.getAvgValue()));
         }
 
-        return new AggregatedHistoryResponse(bucketFrom, bucketTo, new ArrayList<>(map.values()));
+        List<AggregatedSensorData> sensors = new ArrayList<>();
+        for (AggregatedSensorData agg : map.values()) {
+            List<TimestampValue> data = agg.data();
+            int bFrom = bucketOffset == null ? 0 : Math.max(0, bucketOffset);
+            int bTo = bucketLimit == null ? data.size() : Math.min(data.size(), bFrom + bucketLimit);
+            bFrom = Math.min(bFrom, data.size());
+            bTo = Math.min(bTo, data.size());
+            List<TimestampValue> slice = new ArrayList<>(data.subList(bFrom, bTo));
+            sensors.add(new AggregatedSensorData(agg.sensorType(), agg.unit(), slice));
+        }
+
+        int sFrom = sensorOffset == null ? 0 : Math.max(0, sensorOffset);
+        int sTo = sensorLimit == null ? sensors.size() : Math.min(sensors.size(), sFrom + sensorLimit);
+        sFrom = Math.min(sFrom, sensors.size());
+        sTo = Math.min(sTo, sensors.size());
+        List<AggregatedSensorData> finalSensors = new ArrayList<>(sensors.subList(sFrom, sTo));
+
+        return new AggregatedHistoryResponse(bucketFrom, bucketTo, finalSensors);
     }
 
     // ---------- helpers ----------

@@ -44,7 +44,7 @@ class RecordControllerTest {
                 Instant.parse("2023-01-02T00:00:00Z"),
                 List.of(tempData)
         );
-        when(recordService.aggregatedHistory(eq("dev1"), any(), any(), eq("5m"), isNull()))
+        when(recordService.aggregatedHistory(eq("dev1"), any(), any(), eq("5m"), isNull(), isNull(), isNull(), isNull(), isNull()))
                 .thenReturn(response);
 
         mockMvc.perform(get("/api/records/history/aggregated")

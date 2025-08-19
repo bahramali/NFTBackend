@@ -11,7 +11,7 @@ import se.hydroleaf.dto.summary.StatusAllAverageResponse;
 import se.hydroleaf.dto.summary.StatusAverageResponse;
 import se.hydroleaf.dto.summary.WaterTankSummary;
 import se.hydroleaf.repository.ActuatorStatusRepository;
-import se.hydroleaf.repository.SensorReadingRepository;
+import se.hydroleaf.repository.LatestSensorValueAggregationRepository;
 import se.hydroleaf.repository.dto.LiveNowRow;
 import se.hydroleaf.model.DeviceType;
 
@@ -52,10 +52,10 @@ public class StatusService {
 
     private static final List<DeviceType> ACTUATOR_TYPES = List.of(DeviceType.AIR_PUMP);
 
-    private final SensorReadingRepository sensorReadingRepository;
+    private final LatestSensorValueAggregationRepository sensorReadingRepository;
     private final ActuatorStatusRepository actuatorStatusRepository;
 
-    public StatusService(SensorReadingRepository sensorReadingRepository,
+    public StatusService(LatestSensorValueAggregationRepository sensorReadingRepository,
                          ActuatorStatusRepository actuatorStatusRepository) {
         this.sensorReadingRepository = sensorReadingRepository;
         this.actuatorStatusRepository = actuatorStatusRepository;

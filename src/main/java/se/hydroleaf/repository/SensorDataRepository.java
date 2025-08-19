@@ -20,6 +20,9 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
 
     /**
      * Batch query returning the latest average per system/layer and sensor type.
+     *
+     * <p>Uses the materialized {@code latest_sensor_value} table maintained by
+     * database triggers rather than a window function over all sensor_data.</p>
      */
     @Query(value = """
             SELECT

@@ -22,9 +22,6 @@ class StatusServiceIntegrationTest {
     private StatusService statusService;
 
     @Autowired
-    private SensorDataRepository sensorDataRepository;
-
-    @Autowired
     private ActuatorStatusRepository actuatorStatusRepository;
 
     @Autowired
@@ -32,9 +29,6 @@ class StatusServiceIntegrationTest {
 
     @Autowired
     private DeviceRepository deviceRepository;
-
-    @Autowired
-    private SensorRecordRepository sensorRecordRepository;
 
     @Autowired
     private LatestSensorValueRepository latestSensorValueRepository;
@@ -54,18 +48,6 @@ class StatusServiceIntegrationTest {
         device = deviceRepository.save(device);
 
         Instant now = Instant.now();
-
-        SensorRecord record = new SensorRecord();
-        record.setDevice(device);
-        record.setTimestamp(now);
-        record = sensorRecordRepository.save(record);
-
-        SensorData data = new SensorData();
-        data.setRecord(record);
-        data.setSensorType("light");
-        data.setValue(5.0);
-        data.setUnit("lux");
-        sensorDataRepository.save(data);
 
         LatestSensorValue latest = LatestSensorValue.builder()
                 .device(device)

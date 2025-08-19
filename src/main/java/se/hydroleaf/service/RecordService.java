@@ -10,13 +10,11 @@ import se.hydroleaf.dto.history.TimestampValue;
 import se.hydroleaf.model.ActuatorStatus;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.LatestSensorValue;
-import se.hydroleaf.model.SensorReading;
-import se.hydroleaf.model.SensorHealthItem;
-import se.hydroleaf.model.SensorRecord;
+import se.hydroleaf.model.SensorValueHistory;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.LatestSensorValueRepository;
-import se.hydroleaf.repository.SensorRecordRepository;
+import se.hydroleaf.repository.SensorValueHistoryRepository;
 import se.hydroleaf.util.InstantUtil;
 
 import java.time.Instant;
@@ -42,7 +40,7 @@ public class RecordService {
 
     private final ObjectMapper objectMapper;
     private final DeviceRepository deviceRepository;
-    private final SensorRecordRepository recordRepository;
+    private final SensorValueHistoryRepository sensorValueHistoryRepository;
     private final ActuatorStatusRepository actuatorStatusRepository;
     private final SensorAggregationReader aggregationReader; // thin facade over custom repo/projection
     private final LatestSensorValueRepository latestSensorValueRepository;
@@ -50,14 +48,14 @@ public class RecordService {
     public RecordService(
             ObjectMapper objectMapper,
             DeviceRepository deviceRepository,
-            SensorRecordRepository recordRepository,
+            SensorValueHistoryRepository sensorValueHistoryRepository,
             ActuatorStatusRepository actuatorStatusRepository,
             SensorAggregationReader aggregationReader,
             LatestSensorValueRepository latestSensorValueRepository
     ) {
         this.objectMapper = objectMapper;
         this.deviceRepository = deviceRepository;
-        this.recordRepository = recordRepository;
+        this.sensorValueHistoryRepository = sensorValueHistoryRepository;
         this.actuatorStatusRepository = actuatorStatusRepository;
         this.aggregationReader = aggregationReader;
         this.latestSensorValueRepository = latestSensorValueRepository;
@@ -94,87 +92,50 @@ public class RecordService {
 
         final Instant ts = parseTimestamp(json.path("timestamp")).orElseGet(Instant::now);
 
-        SensorRecord record = new SensorRecord();
-        record.setDevice(device);
-        record.setTimestamp(ts);
-
-        // Parse sensor readings from sensors array
+        // Parse sensor readings from sensors array and persist directly to history
         JsonNode sensors = json.path("sensors");
-        Map<String, String> sensorNameToType = new HashMap<>();
-        Set<String> seenTypes = new HashSet<>();
         if (sensors.isArray()) {
+            Set<String> seenTypes = new HashSet<>();
             for (JsonNode s : sensors) {
                 String sensorType = s.path("sensorType").asText(null);
                 if (sensorType == null || sensorType.isBlank() || !seenTypes.add(sensorType)) {
-                    // skip null, empty or duplicate sensor types
                     continue;
                 }
-                String sensorName = s.path("sensorName").asText(null);
-                if (sensorName != null) {
-                    sensorNameToType.put(sensorName, sensorType);
-                }
 
-                // support value as either a primitive or an object with {value,unit}
                 JsonNode valueNode = s.path("value");
                 Double num;
-                String unit = null;
                 if (valueNode.isObject()) {
                     num = readDouble(valueNode.path("value")).orElse(null);
-                    if (valueNode.hasNonNull("unit")) unit = valueNode.get("unit").asText();
                 } else {
                     num = readDouble(valueNode).orElse(null);
-                    if (s.hasNonNull("unit")) unit = s.get("unit").asText();
                 }
-                if (num == null) continue; // skip invalid
+                if (num == null) continue;
 
-                SensorReading r = new SensorReading();
-                r.setRecord(record);
-                r.setSensorType(sensorType); // logical type
-                r.setValue(num);
-                if (unit != null) r.setUnit(unit);
+                SensorValueHistory history = SensorValueHistory.builder()
+                        .compositeId(compositeId)
+                        .sensorType(sensorType)
+                        .sensorValue(num)
+                        .valueTime(ts)
+                        .build();
+                sensorValueHistoryRepository.save(history);
 
-                record.getReadings().add(r);
+                LatestSensorValue lsv = latestSensorValueRepository
+                        .findByDevice_CompositeIdAndSensorType(compositeId, sensorType)
+                        .orElseGet(() -> {
+                            LatestSensorValue n = new LatestSensorValue();
+                            n.setDevice(device);
+                            n.setSensorType(sensorType);
+                            return n;
+                        });
+                lsv.setValue(num);
+                if (valueNode.isObject() && valueNode.hasNonNull("unit")) {
+                    lsv.setUnit(valueNode.get("unit").asText());
+                } else if (s.hasNonNull("unit")) {
+                    lsv.setUnit(s.get("unit").asText());
+                }
+                lsv.setValueTime(ts);
+                latestSensorValueRepository.save(lsv);
             }
-        }
-
-        // Parse health booleans keyed by sensorName
-        JsonNode health = json.path("health");
-        if (health.isObject()) {
-            Iterator<Map.Entry<String, JsonNode>> it = health.fields();
-            while (it.hasNext()) {
-                Map.Entry<String, JsonNode> e = it.next();
-                String sensorName = e.getKey();
-                JsonNode v = e.getValue();
-                if (!v.isBoolean()) continue;
-                String sensorType = sensorNameToType.get(sensorName);
-                if (sensorType == null) continue;
-
-                SensorHealthItem h = new SensorHealthItem();
-                h.setRecord(record);
-                h.setSensorType(sensorType);
-                h.setStatus(v.asBoolean());
-
-                record.getHealthItems().add(h);
-            }
-        }
-
-        // Persist the record (cascades readings + health)
-        recordRepository.save(record);
-
-        // Maintain latest_sensor_value materialized table
-        for (SensorReading r : record.getReadings()) {
-            LatestSensorValue lsv = latestSensorValueRepository
-                    .findByDevice_CompositeIdAndSensorType(compositeId, r.getSensorType())
-                    .orElseGet(() -> {
-                        LatestSensorValue n = new LatestSensorValue();
-                        n.setDevice(device);
-                        n.setSensorType(r.getSensorType());
-                        return n;
-                    });
-            lsv.setValue(r.getValue());
-            lsv.setUnit(r.getUnit());
-            lsv.setValueTime(ts);
-            latestSensorValueRepository.save(lsv);
         }
 
         // Optional controllers array for actuator statuses

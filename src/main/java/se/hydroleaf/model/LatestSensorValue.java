@@ -18,7 +18,12 @@ import java.time.Instant;
  * table when running with an in-memory database.
  */
 @Entity
-@Table(name = "latest_sensor_value")
+@Table(
+        name = "latest_sensor_value",
+        indexes = {
+                @Index(name = "idx_lsv_device_sensor", columnList = "composite_id, sensor_type")
+        }
+)
 @Getter
 @Setter
 @EqualsAndHashCode(exclude = "device")

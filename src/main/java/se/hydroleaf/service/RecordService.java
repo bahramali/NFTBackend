@@ -9,15 +9,15 @@ import se.hydroleaf.dto.history.AggregatedSensorData;
 import se.hydroleaf.dto.history.TimestampValue;
 import se.hydroleaf.model.ActuatorStatus;
 import se.hydroleaf.model.Device;
+import se.hydroleaf.model.LatestSensorValue;
 import se.hydroleaf.model.SensorData;
 import se.hydroleaf.model.SensorHealthItem;
 import se.hydroleaf.model.SensorRecord;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.DeviceRepository;
+import se.hydroleaf.repository.LatestSensorValueRepository;
 import se.hydroleaf.repository.SensorRecordRepository;
 import se.hydroleaf.util.InstantUtil;
-
-import jakarta.persistence.EntityManager;
 
 import java.time.Instant;
 import java.util.*;
@@ -45,7 +45,7 @@ public class RecordService {
     private final SensorRecordRepository recordRepository;
     private final ActuatorStatusRepository actuatorStatusRepository;
     private final SensorAggregationReader aggregationReader; // thin facade over custom repo/projection
-    private final EntityManager entityManager;
+    private final LatestSensorValueRepository latestSensorValueRepository;
 
     public RecordService(
             ObjectMapper objectMapper,
@@ -53,14 +53,14 @@ public class RecordService {
             SensorRecordRepository recordRepository,
             ActuatorStatusRepository actuatorStatusRepository,
             SensorAggregationReader aggregationReader,
-            EntityManager entityManager
+            LatestSensorValueRepository latestSensorValueRepository
     ) {
         this.objectMapper = objectMapper;
         this.deviceRepository = deviceRepository;
         this.recordRepository = recordRepository;
         this.actuatorStatusRepository = actuatorStatusRepository;
         this.aggregationReader = aggregationReader;
-        this.entityManager = entityManager;
+        this.latestSensorValueRepository = latestSensorValueRepository;
     }
 
     /**
@@ -163,17 +163,18 @@ public class RecordService {
 
         // Maintain latest_sensor_value materialized table
         for (SensorData d : record.getValues()) {
-            entityManager.createNativeQuery(
-                    "INSERT INTO latest_sensor_value (composite_id, sensor_type, sensor_value, unit, value_time) " +
-                            "VALUES (?1, ?2, ?3, ?4, ?5) " +
-                            "ON CONFLICT (composite_id, sensor_type) DO UPDATE " +
-                            "SET sensor_value = EXCLUDED.sensor_value, unit = EXCLUDED.unit, value_time = EXCLUDED.value_time")
-                    .setParameter(1, compositeId)
-                    .setParameter(2, d.getSensorType())
-                    .setParameter(3, d.getValue())
-                    .setParameter(4, d.getUnit())
-                    .setParameter(5, ts)
-                    .executeUpdate();
+            LatestSensorValue lsv = latestSensorValueRepository
+                    .findByDevice_CompositeIdAndSensorType(compositeId, d.getSensorType())
+                    .orElseGet(() -> {
+                        LatestSensorValue n = new LatestSensorValue();
+                        n.setDevice(device);
+                        n.setSensorType(d.getSensorType());
+                        return n;
+                    });
+            lsv.setValue(d.getValue());
+            lsv.setUnit(d.getUnit());
+            lsv.setValueTime(ts);
+            latestSensorValueRepository.save(lsv);
         }
 
         // Optional controllers array for actuator statuses

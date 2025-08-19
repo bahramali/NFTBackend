@@ -30,7 +30,9 @@ import java.util.stream.Stream;
  *
  * <p>The previous implementation queried one system/layer at a time. The new
  * approach performs two bulk queries – one for sensors and one for actuators –
- * and then assembles the snapshot in-memory.</p>
+ * and then assembles the snapshot in-memory. Sensor readings are sourced from
+ * the materialized {@code latest_sensor_value} table populated by database
+ * triggers.</p>
  */
 @Slf4j
 @Service

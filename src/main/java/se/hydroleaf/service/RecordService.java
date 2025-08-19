@@ -17,6 +17,8 @@ import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorRecordRepository;
 import se.hydroleaf.util.InstantUtil;
 
+import jakarta.persistence.EntityManager;
+
 import java.time.Instant;
 import java.util.*;
 
@@ -43,19 +45,22 @@ public class RecordService {
     private final SensorRecordRepository recordRepository;
     private final ActuatorStatusRepository actuatorStatusRepository;
     private final SensorAggregationReader aggregationReader; // thin facade over custom repo/projection
+    private final EntityManager entityManager;
 
     public RecordService(
             ObjectMapper objectMapper,
             DeviceRepository deviceRepository,
             SensorRecordRepository recordRepository,
             ActuatorStatusRepository actuatorStatusRepository,
-            SensorAggregationReader aggregationReader
+            SensorAggregationReader aggregationReader,
+            EntityManager entityManager
     ) {
         this.objectMapper = objectMapper;
         this.deviceRepository = deviceRepository;
         this.recordRepository = recordRepository;
         this.actuatorStatusRepository = actuatorStatusRepository;
         this.aggregationReader = aggregationReader;
+        this.entityManager = entityManager;
     }
 
     /**
@@ -155,6 +160,21 @@ public class RecordService {
 
         // Persist the record (cascades values + health)
         recordRepository.save(record);
+
+        // Maintain latest_sensor_value materialized table
+        for (SensorData d : record.getValues()) {
+            entityManager.createNativeQuery(
+                    "INSERT INTO latest_sensor_value (composite_id, sensor_type, sensor_value, unit, value_time) " +
+                            "VALUES (?1, ?2, ?3, ?4, ?5) " +
+                            "ON CONFLICT (composite_id, sensor_type) DO UPDATE " +
+                            "SET sensor_value = EXCLUDED.sensor_value, unit = EXCLUDED.unit, value_time = EXCLUDED.value_time")
+                    .setParameter(1, compositeId)
+                    .setParameter(2, d.getSensorType())
+                    .setParameter(3, d.getValue())
+                    .setParameter(4, d.getUnit())
+                    .setParameter(5, ts)
+                    .executeUpdate();
+        }
 
         // Optional controllers array for actuator statuses
         JsonNode controllers = json.path("controllers");

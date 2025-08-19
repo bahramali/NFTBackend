@@ -248,4 +248,39 @@ class RecordServiceDeviceTests {
         assertEquals(1, data.size());
         assertEquals("ph", data.get(0).getSensorType());
     }
+
+    @Test
+    void saveRecord_upserts_latest_sensor_value() throws Exception {
+        final String compositeId = "S08-L01-LSV";
+        ensureDevice(compositeId);
+
+        String first = """
+                {
+                  "timestamp":"2025-05-05T05:05:05Z",
+                  "sensors":[{"sensorName":"t1","sensorType":"temperature","value":21.5,"unit":"°C"}]
+                }
+                """;
+        recordService.saveRecord(compositeId, objectMapper.readTree(first));
+
+        LatestSensorValue v1 = latestSensorValueRepository
+                .findByDevice_CompositeIdAndSensorType(compositeId, "temperature")
+                .orElseThrow();
+        assertEquals(21.5, v1.getValue());
+        assertEquals("°C", v1.getUnit());
+        assertEquals(Instant.parse("2025-05-05T05:05:05Z"), v1.getValueTime());
+
+        String second = """
+                {
+                  "timestamp":"2025-05-06T06:06:06Z",
+                  "sensors":[{"sensorName":"t1","sensorType":"temperature","value":22.0,"unit":"°C"}]
+                }
+                """;
+        recordService.saveRecord(compositeId, objectMapper.readTree(second));
+
+        LatestSensorValue v2 = latestSensorValueRepository
+                .findByDevice_CompositeIdAndSensorType(compositeId, "temperature")
+                .orElseThrow();
+        assertEquals(22.0, v2.getValue());
+        assertEquals(Instant.parse("2025-05-06T06:06:06Z"), v2.getValueTime());
+    }
 }

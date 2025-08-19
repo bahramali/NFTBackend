@@ -9,11 +9,13 @@ import se.hydroleaf.dto.history.AggregatedSensorData;
 import se.hydroleaf.dto.history.TimestampValue;
 import se.hydroleaf.model.ActuatorStatus;
 import se.hydroleaf.model.Device;
+import se.hydroleaf.model.LatestSensorValue;
 import se.hydroleaf.model.SensorData;
 import se.hydroleaf.model.SensorHealthItem;
 import se.hydroleaf.model.SensorRecord;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.DeviceRepository;
+import se.hydroleaf.repository.LatestSensorValueRepository;
 import se.hydroleaf.repository.SensorRecordRepository;
 import se.hydroleaf.util.InstantUtil;
 
@@ -43,19 +45,22 @@ public class RecordService {
     private final SensorRecordRepository recordRepository;
     private final ActuatorStatusRepository actuatorStatusRepository;
     private final SensorAggregationReader aggregationReader; // thin facade over custom repo/projection
+    private final LatestSensorValueRepository latestSensorValueRepository;
 
     public RecordService(
             ObjectMapper objectMapper,
             DeviceRepository deviceRepository,
             SensorRecordRepository recordRepository,
             ActuatorStatusRepository actuatorStatusRepository,
-            SensorAggregationReader aggregationReader
+            SensorAggregationReader aggregationReader,
+            LatestSensorValueRepository latestSensorValueRepository
     ) {
         this.objectMapper = objectMapper;
         this.deviceRepository = deviceRepository;
         this.recordRepository = recordRepository;
         this.actuatorStatusRepository = actuatorStatusRepository;
         this.aggregationReader = aggregationReader;
+        this.latestSensorValueRepository = latestSensorValueRepository;
     }
 
     /**
@@ -155,6 +160,22 @@ public class RecordService {
 
         // Persist the record (cascades values + health)
         recordRepository.save(record);
+
+        // Maintain latest_sensor_value materialized table
+        for (SensorData d : record.getValues()) {
+            LatestSensorValue lsv = latestSensorValueRepository
+                    .findByDevice_CompositeIdAndSensorType(compositeId, d.getSensorType())
+                    .orElseGet(() -> {
+                        LatestSensorValue n = new LatestSensorValue();
+                        n.setDevice(device);
+                        n.setSensorType(d.getSensorType());
+                        return n;
+                    });
+            lsv.setValue(d.getValue());
+            lsv.setUnit(d.getUnit());
+            lsv.setValueTime(ts);
+            latestSensorValueRepository.save(lsv);
+        }
 
         // Optional controllers array for actuator statuses
         JsonNode controllers = json.path("controllers");

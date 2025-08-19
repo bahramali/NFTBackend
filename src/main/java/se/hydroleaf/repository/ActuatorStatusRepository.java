@@ -22,19 +22,22 @@ public interface ActuatorStatusRepository extends JpaRepository<ActuatorStatus, 
      */
     @Query(value = """
             WITH latest AS (
-              SELECT composite_id,
-                     actuator_type,
-                     CASE WHEN state THEN 1.0 ELSE 0.0 END AS numeric_state,
-                     'status' AS unit,
-                     status_time
+              SELECT
+                composite_id,
+                actuator_type,
+                CASE WHEN state THEN 1.0 ELSE 0.0 END AS numeric_state,
+                'status' AS unit,
+                status_time
               FROM (
-                SELECT composite_id,
-                       actuator_type,
-                       CASE WHEN state THEN 1.0 ELSE 0.0 END AS numeric_state,
-                       'status' AS unit,
-                       status_time,
-                       ROW_NUMBER() OVER (PARTITION BY composite_id, actuator_type
-                                          ORDER BY status_time DESC) AS rn
+                SELECT
+                  composite_id,
+                  actuator_type,
+                  state,
+                  status_time,
+                  ROW_NUMBER() OVER (
+                    PARTITION BY composite_id, actuator_type
+                    ORDER BY status_time DESC
+                  ) AS rn
                 FROM actuator_status
                 WHERE actuator_type IN (:types)
               ) ranked
@@ -44,7 +47,7 @@ public interface ActuatorStatusRepository extends JpaRepository<ActuatorStatus, 
               d.system AS system,
               d.layer AS layer,
               l.actuator_type AS sensor_type,
-              MAX(l.unit) AS unit,
+              'status' AS unit,
               AVG(l.numeric_state)::double precision AS avg_value,
               COUNT(*)::bigint AS device_count,
               MAX(l.status_time) AS record_time

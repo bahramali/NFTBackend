@@ -21,6 +21,28 @@ public interface ActuatorStatusRepository extends JpaRepository<ActuatorStatus, 
      * Batch query returning the latest actuator averages per system/layer.
      */
     @Query(value = """
+            WITH latest AS (
+              SELECT
+                composite_id,
+                actuator_type,
+                CASE WHEN state THEN 1.0 ELSE 0.0 END AS numeric_state,
+                'status' AS unit,
+                status_time
+              FROM (
+                SELECT
+                  composite_id,
+                  actuator_type,
+                  state,
+                  status_time,
+                  ROW_NUMBER() OVER (
+                    PARTITION BY composite_id, actuator_type
+                    ORDER BY status_time DESC
+                  ) AS rn
+                FROM actuator_status
+                WHERE actuator_type IN (:types)
+              ) ranked
+              WHERE rn = 1
+            )
             SELECT
               d.system AS system,
               d.layer AS layer,
@@ -29,17 +51,7 @@ public interface ActuatorStatusRepository extends JpaRepository<ActuatorStatus, 
               AVG(l.numeric_state)::double precision AS avg_value,
               COUNT(*)::bigint AS device_count,
               MAX(l.status_time) AS record_time
-            FROM (
-              SELECT DISTINCT ON (a.composite_id, a.actuator_type)
-                a.composite_id,
-                a.actuator_type,
-                CASE WHEN a.state THEN 1.0 ELSE 0.0 END AS numeric_state,
-                'status' AS unit,
-                a.status_time
-              FROM actuator_status a
-              WHERE a.actuator_type IN (:types)
-              ORDER BY a.composite_id, a.actuator_type, a.status_time DESC
-            ) l
+            FROM latest l
             JOIN device d ON d.composite_id = l.composite_id
             GROUP BY d.system, d.layer, l.actuator_type
             """, nativeQuery = true)

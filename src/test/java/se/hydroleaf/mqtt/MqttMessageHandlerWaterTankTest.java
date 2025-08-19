@@ -6,10 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import se.hydroleaf.service.DeviceProvisionService;
 import se.hydroleaf.service.RecordService;
-
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -22,16 +19,13 @@ class MqttMessageHandlerWaterTankTest {
     RecordService recordService;
     @Mock
     TopicPublisher topicPublisher;
-    @Mock
-    DeviceProvisionService deviceProvisionService;
-
     ObjectMapper objectMapper;
     MqttMessageHandler handler;
 
     @BeforeEach
     void setup() {
         objectMapper = new ObjectMapper();
-        handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher, deviceProvisionService);
+        handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher);
     }
 
     @Test
@@ -41,7 +35,6 @@ class MqttMessageHandlerWaterTankTest {
 
         handler.handle(topic, payload);
 
-        verify(deviceProvisionService).ensureDevice(eq("S01-L01-probe1"), eq(topic));
         verify(recordService).saveRecord(eq("S01-L01-probe1"), any());
         verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
     }
@@ -53,7 +46,7 @@ class MqttMessageHandlerWaterTankTest {
 
         handler.handle(topic, payload);
 
-        verifyNoInteractions(deviceProvisionService, recordService, topicPublisher);
+        verifyNoInteractions(recordService, topicPublisher);
     }
 
     @Test
@@ -63,6 +56,6 @@ class MqttMessageHandlerWaterTankTest {
 
         handler.handle(topic, payload);
 
-        verifyNoInteractions(deviceProvisionService, recordService, topicPublisher);
+        verifyNoInteractions(recordService, topicPublisher);
     }
 }

@@ -4,16 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import se.hydroleaf.service.DeviceProvisionService;
 import se.hydroleaf.service.RecordService;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Handles incoming MQTT messages: forwards payload to STOMP,
- * extracts compositeId, auto-provisions devices/groups and persists data.
- */
 @Slf4j
 @Component
 public class MqttMessageHandler {
@@ -21,16 +16,13 @@ public class MqttMessageHandler {
     private final ObjectMapper objectMapper;
     private final RecordService recordService;
     private final TopicPublisher topicPublisher;
-    private final DeviceProvisionService deviceProvisionService;
 
     public MqttMessageHandler(ObjectMapper objectMapper,
                               RecordService recordService,
-                              TopicPublisher topicPublisher,
-                              DeviceProvisionService deviceProvisionService) {
+                              TopicPublisher topicPublisher) {
         this.objectMapper = objectMapper;
         this.recordService = recordService;
         this.topicPublisher = topicPublisher;
-        this.deviceProvisionService = deviceProvisionService;
     }
 
     public void handle(String topic, String payload) {
@@ -52,7 +44,6 @@ public class MqttMessageHandler {
 
             topicPublisher.publish("/topic/" + topic, payload);
 
-            deviceProvisionService.ensureDevice(compositeId, topic);
             recordService.saveRecord(compositeId, node);
         } catch (Exception ex) {
             log.error("MQTT handle error for topic {}: {}", topic, ex.getMessage(), ex);

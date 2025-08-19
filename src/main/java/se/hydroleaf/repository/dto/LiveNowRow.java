@@ -6,7 +6,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 
-@Builder
 public record LiveNowRow(
         String system,
         String layer,

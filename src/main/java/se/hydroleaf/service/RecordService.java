@@ -10,7 +10,7 @@ import se.hydroleaf.dto.history.TimestampValue;
 import se.hydroleaf.model.ActuatorStatus;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.LatestSensorValue;
-import se.hydroleaf.model.SensorData;
+import se.hydroleaf.model.SensorReading;
 import se.hydroleaf.model.SensorHealthItem;
 import se.hydroleaf.model.SensorRecord;
 import se.hydroleaf.repository.ActuatorStatusRepository;
@@ -26,7 +26,7 @@ import java.util.*;
  * RecordService aligned with the "Option 1" data model:
  * - Device PK = composite_id (String)
  * - SensorRecord has FK to Device.composite_id
- * - SensorRecord cascades SensorData and SensorHealthItem
+ * - SensorRecord cascades SensorReading and SensorHealthItem
  *
  * Responsibilities:
  *  1) Persist a sensor record for a given device from a JSON payload.
@@ -34,7 +34,7 @@ import java.util.*;
  *
  * Assumptions:
  *  - Repositories exist: DeviceRepository, SensorRecordRepository, ActuatorStatusRepository.
- *  - SensorRecord entity uses CascadeType.ALL for values (SensorData) and health items (SensorHealthItem).
+ *  - SensorRecord entity uses CascadeType.ALL for readings (SensorReading) and health items (SensorHealthItem).
  *  - There is a repository/adapter implementing SensorAggregationReader (native/JPQL).
  */
 @Service
@@ -127,13 +127,13 @@ public class RecordService {
                 }
                 if (num == null) continue; // skip invalid
 
-                SensorData d = new SensorData();
-                d.setRecord(record);
-                d.setSensorType(sensorType); // logical type
-                d.setValue(num);
-                if (unit != null) d.setUnit(unit);
+                SensorReading r = new SensorReading();
+                r.setRecord(record);
+                r.setSensorType(sensorType); // logical type
+                r.setValue(num);
+                if (unit != null) r.setUnit(unit);
 
-                record.getValues().add(d);
+                record.getReadings().add(r);
             }
         }
 
@@ -158,21 +158,21 @@ public class RecordService {
             }
         }
 
-        // Persist the record (cascades values + health)
+        // Persist the record (cascades readings + health)
         recordRepository.save(record);
 
         // Maintain latest_sensor_value materialized table
-        for (SensorData d : record.getValues()) {
+        for (SensorReading r : record.getReadings()) {
             LatestSensorValue lsv = latestSensorValueRepository
-                    .findByDevice_CompositeIdAndSensorType(compositeId, d.getSensorType())
+                    .findByDevice_CompositeIdAndSensorType(compositeId, r.getSensorType())
                     .orElseGet(() -> {
                         LatestSensorValue n = new LatestSensorValue();
                         n.setDevice(device);
-                        n.setSensorType(d.getSensorType());
+                        n.setSensorType(r.getSensorType());
                         return n;
                     });
-            lsv.setValue(d.getValue());
-            lsv.setUnit(d.getUnit());
+            lsv.setValue(r.getValue());
+            lsv.setUnit(r.getUnit());
             lsv.setValueTime(ts);
             latestSensorValueRepository.save(lsv);
         }

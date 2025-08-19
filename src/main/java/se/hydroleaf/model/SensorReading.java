@@ -11,7 +11,7 @@ import lombok.ToString;
 
 @Entity
 @Table(
-        name = "sensor_data",
+        name = "sensor_reading",
         uniqueConstraints = {
                 // Prevent duplicate (record, sensor_type) rows.
                 @UniqueConstraint(name = "ux_data_record_type", columnNames = {"record_id", "sensor_type"})
@@ -27,7 +27,7 @@ import lombok.ToString;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SensorData {
+public class SensorReading {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

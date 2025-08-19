@@ -1,6 +1,6 @@
 -- Index supporting sensorType filtering and non-null values
-CREATE INDEX IF NOT EXISTS ix_sensor_data_type_record_notnull
-    ON sensor_data (sensor_type, record_id)
+CREATE INDEX IF NOT EXISTS ix_sensor_reading_type_record_notnull
+    ON sensor_reading (sensor_type, record_id)
     WHERE sensor_value IS NOT NULL;
 
 -- Expression index for common 1 minute bucket to speed up aggregation

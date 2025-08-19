@@ -10,7 +10,7 @@ import se.hydroleaf.dto.snapshot.SystemSnapshot;
 import se.hydroleaf.dto.summary.StatusAllAverageResponse;
 import se.hydroleaf.dto.summary.StatusAverageResponse;
 import se.hydroleaf.repository.ActuatorStatusRepository;
-import se.hydroleaf.repository.SensorDataRepository;
+import se.hydroleaf.repository.SensorReadingRepository;
 import se.hydroleaf.repository.dto.LiveNowRow;
 import se.hydroleaf.model.DeviceType;
 
@@ -27,7 +27,7 @@ import static org.mockito.ArgumentMatchers.*;
 class StatusServiceTest {
 
     @Mock
-    private SensorDataRepository sensorDataRepository;
+    private SensorReadingRepository sensorReadingRepository;
 
     @Mock
     private ActuatorStatusRepository actuatorStatusRepository;
@@ -36,14 +36,14 @@ class StatusServiceTest {
 
     @BeforeEach
     void setUp() {
-        statusService = new StatusService(sensorDataRepository, actuatorStatusRepository);
+        statusService = new StatusService(sensorReadingRepository, actuatorStatusRepository);
     }
 
     @Test
-    void getAverageUsesSensorDataRepository() {
+    void getAverageUsesSensorReadingRepository() {
         Instant now = Instant.now();
         List<LiveNowRow> rows = List.of(new LiveNowRow("Sys", "Layer", "light", "lux", 10.0, 1L, now));
-        when(sensorDataRepository.fetchLatestSensorAverages(eq(List.of("light"))))
+        when(sensorReadingRepository.fetchLatestSensorAverages(eq(List.of("light"))))
                 .thenReturn(rows);
 
         StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "light");
@@ -51,15 +51,15 @@ class StatusServiceTest {
         assertEquals(10.0, response.average());
         assertEquals("lux", response.unit());
         assertEquals(1L, response.deviceCount());
-        verify(sensorDataRepository).fetchLatestSensorAverages(eq(List.of("light")));
+        verify(sensorReadingRepository).fetchLatestSensorAverages(eq(List.of("light")));
         verifyNoInteractions(actuatorStatusRepository);
     }
 
     @Test
-    void getAverageUsesSensorDataRepositoryForWaterTankSensor() {
+    void getAverageUsesSensorReadingRepositoryForWaterTankSensor() {
         Instant now = Instant.now();
         List<LiveNowRow> rows = List.of(new LiveNowRow("Sys", "Layer", "dissolvedOxygen", "mg/L", 9.9, 1L, now));
-        when(sensorDataRepository.fetchLatestSensorAverages(eq(List.of("dissolvedOxygen"))))
+        when(sensorReadingRepository.fetchLatestSensorAverages(eq(List.of("dissolvedOxygen"))))
                 .thenReturn(rows);
 
         StatusAverageResponse response = statusService.getAverage("Sys", "Layer", "dissolvedOxygen");
@@ -67,7 +67,7 @@ class StatusServiceTest {
         assertEquals(9.9, response.average());
         assertEquals("mg/L", response.unit());
         assertEquals(1L, response.deviceCount());
-        verify(sensorDataRepository).fetchLatestSensorAverages(eq(List.of("dissolvedOxygen")));
+        verify(sensorReadingRepository).fetchLatestSensorAverages(eq(List.of("dissolvedOxygen")));
         verifyNoInteractions(actuatorStatusRepository);
     }
 
@@ -84,7 +84,7 @@ class StatusServiceTest {
         assertEquals("status", response.unit());
         assertEquals(1L, response.deviceCount());
         verify(actuatorStatusRepository).fetchLatestActuatorAverages(eq(List.of("airPump")));
-        verifyNoInteractions(sensorDataRepository);
+        verifyNoInteractions(sensorReadingRepository);
     }
 
     @Test
@@ -100,7 +100,7 @@ class StatusServiceTest {
                 new LiveNowRow("sys", "layer", "dissolvedEC", "mS/cm", 7.0, 1L, now),
                 new LiveNowRow("sys", "layer", "dissolvedTDS", "ppm", 8.0, 1L, now)
         );
-        when(sensorDataRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
+        when(sensorReadingRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
         List<LiveNowRow> actuatorRows = List.of(
                 new LiveNowRow("sys", "layer", "airPump", "status", 1.0, 1L, now)
         );
@@ -118,7 +118,7 @@ class StatusServiceTest {
         assertEquals(8.0, response.waterTank().get("dissolvedTDS").average());
         assertEquals(1.0, response.airpump().average());
 
-        verify(sensorDataRepository).fetchLatestSensorAverages(anyList());
+        verify(sensorReadingRepository).fetchLatestSensorAverages(anyList());
         verify(actuatorStatusRepository).fetchLatestActuatorAverages(anyList());
     }
 
@@ -140,7 +140,7 @@ class StatusServiceTest {
                 new LiveNowRow("S01", "L01", "airPump", "status", 1.0, 1L, now)
         );
 
-        when(sensorDataRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
+        when(sensorReadingRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
         when(actuatorStatusRepository.fetchLatestActuatorAverages(anyList())).thenReturn(actuatorRows);
 
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
@@ -156,7 +156,7 @@ class StatusServiceTest {
         assertEquals(new StatusAverageResponse(2.0, "lux",2L), s01System.environment().light());
         assertEquals(new StatusAverageResponse(6.0, "mg/L",6L), result.systems().get("S02").water().dissolvedOxygen());
 
-        verify(sensorDataRepository).fetchLatestSensorAverages(anyList());
+        verify(sensorReadingRepository).fetchLatestSensorAverages(anyList());
         verify(actuatorStatusRepository).fetchLatestActuatorAverages(anyList());
     }
 
@@ -174,7 +174,7 @@ class StatusServiceTest {
                 new LiveNowRow("S01", "L02", "airPump", "status", 3.0, 1L, t2)
         );
 
-        when(sensorDataRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
+        when(sensorReadingRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
         when(actuatorStatusRepository.fetchLatestActuatorAverages(anyList())).thenReturn(actuatorRows);
 
         LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
@@ -207,7 +207,7 @@ class StatusServiceTest {
                 new LiveNowRow("S01", "L01", "airPump", "status", 1.0, 1L, now)
         );
 
-        when(sensorDataRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
+        when(sensorReadingRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
         when(actuatorStatusRepository.fetchLatestActuatorAverages(anyList())).thenReturn(actuatorRows);
 
         LiveNowSnapshot result = statusService.getLiveNowSnapshot();
@@ -219,7 +219,7 @@ class StatusServiceTest {
         SystemSnapshot.LayerSnapshot layerSnapshot = layers.get(0);
         assertEquals(new StatusAverageResponse(1.0, "status",1L), layerSnapshot.actuators().airPump());
         assertEquals(new StatusAverageResponse(1.0, "status",1L), system.actuators().airPump());
-        verify(sensorDataRepository).fetchLatestSensorAverages(anyList());
+        verify(sensorReadingRepository).fetchLatestSensorAverages(anyList());
         verify(actuatorStatusRepository).fetchLatestActuatorAverages(anyList());
     }
 
@@ -231,7 +231,7 @@ class StatusServiceTest {
                 new LiveNowRow("S01", "L01", "humidity", "%", 2.0, null, now),
                 new LiveNowRow("S01", "L01", "temperature", "°C", 3.0, 3L, now)
         );
-        when(sensorDataRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
+        when(sensorReadingRepository.fetchLatestSensorAverages(anyList())).thenReturn(sensorRows);
         when(actuatorStatusRepository.fetchLatestActuatorAverages(anyList())).thenReturn(List.of());
 
         LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();

@@ -7,7 +7,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.DeviceGroup;
-import se.hydroleaf.model.SensorData;
+import se.hydroleaf.model.SensorReading;
 import se.hydroleaf.model.SensorRecord;
 
 import java.time.Instant;
@@ -16,10 +16,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DataJpaTest
 @ActiveProfiles("test")
-class SensorDataRepositoryTest {
+class SensorReadingRepositoryTest {
 
     @Autowired
-    private SensorDataRepository sensorDataRepository;
+    private SensorReadingRepository sensorReadingRepository;
 
     @Autowired
     private SensorRecordRepository sensorRecordRepository;
@@ -49,19 +49,19 @@ class SensorDataRepositoryTest {
         record.setTimestamp(Instant.now());
         record = sensorRecordRepository.save(record);
 
-        SensorData first = new SensorData();
+        SensorReading first = new SensorReading();
         first.setRecord(record);
         first.setSensorType("light");
         first.setValue(1.0);
-        sensorDataRepository.saveAndFlush(first);
+        sensorReadingRepository.saveAndFlush(first);
 
-        SensorData second = new SensorData();
+        SensorReading second = new SensorReading();
         second.setRecord(record);
         second.setSensorType("light");
         second.setValue(2.0);
 
         assertThrows(DataIntegrityViolationException.class, () -> {
-            sensorDataRepository.saveAndFlush(second);
+            sensorReadingRepository.saveAndFlush(second);
         });
     }
 }

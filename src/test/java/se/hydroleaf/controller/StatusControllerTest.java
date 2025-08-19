@@ -57,7 +57,7 @@ class StatusControllerTest {
     }
 
     @Test
-    void getAverageEndpointReturnsWaterTankSensorData() throws Exception {
+    void getAverageEndpointReturnsWaterTankSensorReadingData() throws Exception {
         when(statusService.getAverage("sys", "layer", "dissolvedOxygen"))
                 .thenReturn(new StatusAverageResponse(5.5, "mg/L", 4L));
 

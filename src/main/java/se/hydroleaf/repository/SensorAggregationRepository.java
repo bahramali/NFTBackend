@@ -19,7 +19,7 @@ public interface SensorAggregationRepository extends JpaRepository<SensorRecord,
               time_bucket(:bucketSec * INTERVAL '1 second', sr.record_time) AS bucket_time,
               AVG(sd.sensor_value) AS avg_value
             FROM sensor_record sr
-            JOIN sensor_data sd ON sd.record_id = sr.id
+            JOIN sensor_reading sd ON sd.record_id = sr.id
             WHERE sr.device_composite_id = :compositeId
               AND sr.record_time >= :fromTs
               AND sr.record_time <  :toTs
@@ -43,7 +43,7 @@ public interface SensorAggregationRepository extends JpaRepository<SensorRecord,
               date_trunc('second', to_timestamp(floor(EXTRACT(EPOCH FROM sr.record_time) / :bucketSec) * :bucketSec)) AS bucket_time,
               AVG(sd.sensor_value) AS avg_value
             FROM sensor_record sr
-            JOIN sensor_data sd ON sd.record_id = sr.id
+            JOIN sensor_reading sd ON sd.record_id = sr.id
             WHERE sr.device_composite_id = :compositeId
               AND sr.record_time >= :fromTs
               AND sr.record_time <  :toTs

@@ -3,28 +3,28 @@ WITH dup AS (
     SELECT ctid FROM (
         SELECT ctid,
                row_number() OVER (PARTITION BY record_id, sensor_type ORDER BY ctid) AS rn
-        FROM sensor_data
+        FROM sensor_reading
     ) s WHERE s.rn > 1
 )
-DELETE FROM sensor_data WHERE ctid IN (SELECT ctid FROM dup);
+DELETE FROM sensor_reading WHERE ctid IN (SELECT ctid FROM dup);
 
 -- Remove rows with empty sensor_type before enforcing constraint
-DELETE FROM sensor_data WHERE sensor_type = '';
+DELETE FROM sensor_reading WHERE sensor_type = '';
 
--- Ensure unique (record_id, sensor_type) pairs in sensor_data
+-- Ensure unique (record_id, sensor_type) pairs in sensor_reading
 DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'ux_data_record_type'
     ) THEN
-        ALTER TABLE sensor_data
+        ALTER TABLE sensor_reading
             ADD CONSTRAINT ux_data_record_type UNIQUE (record_id, sensor_type);
     END IF;
 
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'ck_sensor_type_not_empty'
     ) THEN
-        ALTER TABLE sensor_data
+        ALTER TABLE sensor_reading
             ADD CONSTRAINT ck_sensor_type_not_empty CHECK (sensor_type <> '');
     END IF;
 END$$;

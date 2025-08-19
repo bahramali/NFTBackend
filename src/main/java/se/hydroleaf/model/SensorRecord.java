@@ -22,8 +22,8 @@ import java.util.List;
 )
 @Getter
 @Setter
-@EqualsAndHashCode(exclude = {"device", "values", "healthItems"})
-@ToString(exclude = {"device", "values", "healthItems"})
+@EqualsAndHashCode(exclude = {"device", "readings", "healthItems"})
+@ToString(exclude = {"device", "readings", "healthItems"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -47,10 +47,10 @@ public class SensorRecord {
     private Instant timestamp;
 
     /**
-     * Record contains many values (measurements).
+     * Record contains many readings (measurements).
      */
     @OneToMany(mappedBy = "record", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SensorData> values = new ArrayList<>();
+    private List<SensorReading> readings = new ArrayList<>();
 
     /**
      * Record can also contain health items.

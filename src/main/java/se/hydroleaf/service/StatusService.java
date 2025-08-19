@@ -11,7 +11,7 @@ import se.hydroleaf.dto.summary.StatusAllAverageResponse;
 import se.hydroleaf.dto.summary.StatusAverageResponse;
 import se.hydroleaf.dto.summary.WaterTankSummary;
 import se.hydroleaf.repository.ActuatorStatusRepository;
-import se.hydroleaf.repository.SensorDataRepository;
+import se.hydroleaf.repository.SensorReadingRepository;
 import se.hydroleaf.repository.dto.LiveNowRow;
 import se.hydroleaf.model.DeviceType;
 
@@ -52,12 +52,12 @@ public class StatusService {
 
     private static final List<DeviceType> ACTUATOR_TYPES = List.of(DeviceType.AIR_PUMP);
 
-    private final SensorDataRepository sensorDataRepository;
+    private final SensorReadingRepository sensorReadingRepository;
     private final ActuatorStatusRepository actuatorStatusRepository;
 
-    public StatusService(SensorDataRepository sensorDataRepository,
+    public StatusService(SensorReadingRepository sensorReadingRepository,
                          ActuatorStatusRepository actuatorStatusRepository) {
-        this.sensorDataRepository = sensorDataRepository;
+        this.sensorReadingRepository = sensorReadingRepository;
         this.actuatorStatusRepository = actuatorStatusRepository;
     }
 
@@ -80,7 +80,7 @@ public class StatusService {
             String resultUnit = row != null && row.getUnit() != null ? row.getUnit() : unit;
             return new StatusAverageResponse(avg, resultUnit, count);
         } else {
-            List<LiveNowRow> rows = sensorDataRepository.fetchLatestSensorAverages(List.of(type.getName()));
+            List<LiveNowRow> rows = sensorReadingRepository.fetchLatestSensorAverages(List.of(type.getName()));
             LiveNowRow row = rows.stream()
                     .filter(r -> r.getSystem() != null && r.getLayer() != null
                             && system.equalsIgnoreCase(r.getSystem())
@@ -96,7 +96,7 @@ public class StatusService {
     }
 
     public StatusAllAverageResponse getAllAverages(String system, String layer) {
-        List<LiveNowRow> sensorRows = sensorDataRepository.fetchLatestSensorAverages(
+        List<LiveNowRow> sensorRows = sensorReadingRepository.fetchLatestSensorAverages(
                 SENSOR_TYPES.stream().map(DeviceType::getName).toList());
         List<LiveNowRow> actuatorRows = actuatorStatusRepository.fetchLatestActuatorAverages(
                 ACTUATOR_TYPES.stream().map(DeviceType::getName).toList());
@@ -154,7 +154,7 @@ public class StatusService {
      * Collects the latest readings for all systems and layers and assembles a snapshot.
      */
     public LiveNowSnapshot getLiveNowSnapshot() {
-        List<LiveNowRow> sensorRows = sensorDataRepository.fetchLatestSensorAverages(
+        List<LiveNowRow> sensorRows = sensorReadingRepository.fetchLatestSensorAverages(
                 SENSOR_TYPES.stream().map(DeviceType::getName).toList());
         List<LiveNowRow> actuatorRows = actuatorStatusRepository.fetchLatestActuatorAverages(
                 ACTUATOR_TYPES.stream().map(DeviceType::getName).toList());

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import se.hydroleaf.service.RecordService;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -30,12 +31,33 @@ class MqttMessageHandlerWaterTankTest {
 
     @Test
     void waterTankTopicWithoutCompositeId_isProcessed() {
-        String topic = "waterTank/S01/L01/probe1";
-        String payload = "{}";
+        String topic = "waterTank";
+        String payload = """
+                {
+                   "system": "S01",
+                    "deviceId": "G02",
+                    "location": "L01",
+                    "compositeId": "S01-L01-G02",
+                    "timestamp": "2025-08-09T11:41:18Z",
+                      "sensors": [
+                        {
+                          "sensorName": "HailegeTDS",
+                          "valueType": "tds",
+                          "value": 1003.116,
+                          "unit": "ppm"
+                        }
+                      ],
+                      "health": {
+                        "HailegeTDS": true,
+                        "DS18B20": true,
+                        "DFROBOT": true
+                      }
+                }
+                """;
 
         handler.handle(topic, payload);
 
-        verify(recordService).saveRecord(eq("S01-L01-probe1"), any());
+        verify(recordService).saveRecord(eq("S01-L01-G02"), any());
         verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
     }
 

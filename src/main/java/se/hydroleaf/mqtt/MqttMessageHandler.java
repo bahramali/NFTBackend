@@ -28,11 +28,8 @@ public class MqttMessageHandler {
     public void handle(String topic, String payload) {
         try {
             JsonNode node = objectMapper.readTree(payload);
-
             String compositeId = readCompositeId(node);
-            if (compositeId == null) {
-                compositeId = deriveCompositeIdFromTopic(topic);
-            }
+
             if (compositeId == null || compositeId.isBlank()) {
                 if (topic == null || !topic.contains("/")) {
                     log.debug("Ignoring MQTT message on topic {} without composite_id", topic);
@@ -67,25 +64,5 @@ public class MqttMessageHandler {
             this.pattern = Pattern.compile("^" + prefix + "/(S\\d+)/(L\\d+)/([^/]+)$");
         }
     }
-
-    private static String deriveCompositeId(Matcher matcher) {
-        return matcher.group(1) + "-" + matcher.group(2) + "-" + matcher.group(3);
-    }
-
-    private static String deriveCompositeIdFromSupportedPrefixes(String topic) {
-        if (topic == null) return null;
-        for (TopicPrefix prefix : TopicPrefix.values()) {
-            Matcher matcher = prefix.pattern.matcher(topic);
-            if (matcher.find()) {
-                return deriveCompositeId(matcher);
-            }
-        }
-        return null;
-    }
-
-    private String deriveCompositeIdFromTopic(String topic) {
-        return deriveCompositeIdFromSupportedPrefixes(topic);
-    }
-
 }
 

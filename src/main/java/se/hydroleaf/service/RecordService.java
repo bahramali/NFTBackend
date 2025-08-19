@@ -32,7 +32,6 @@ import java.util.*;
 @Service
 public class RecordService {
 
-    private final ObjectMapper objectMapper;
     private final DeviceRepository deviceRepository;
     private final SensorValueHistoryRepository sensorValueHistoryRepository;
     private final ActuatorStatusRepository actuatorStatusRepository;
@@ -40,14 +39,12 @@ public class RecordService {
     private final LatestSensorValueRepository latestSensorValueRepository;
 
     public RecordService(
-            ObjectMapper objectMapper,
             DeviceRepository deviceRepository,
             SensorValueHistoryRepository sensorValueHistoryRepository,
             ActuatorStatusRepository actuatorStatusRepository,
             SensorAggregationReader aggregationReader,
             LatestSensorValueRepository latestSensorValueRepository
     ) {
-        this.objectMapper = objectMapper;
         this.deviceRepository = deviceRepository;
         this.sensorValueHistoryRepository = sensorValueHistoryRepository;
         this.actuatorStatusRepository = actuatorStatusRepository;
@@ -55,24 +52,6 @@ public class RecordService {
         this.latestSensorValueRepository = latestSensorValueRepository;
     }
 
-    /**
-     * Persist a single record for a device.
-     * JSON structure is intentionally flexible. Example:
-     *  {
-     *    "timestamp": "2025-08-14T10:20:00Z",  // optional, default now()
-     *    "values": {
-     *       "light":       {"value": 550.2, "unit": "lx"},
-     *       "temperature": {"value": 23.8,  "unit": "°C"},
-     *       "humidity":    {"value": 42.1,  "unit": "%"},
-     *       "ph":          {"value": 6.1},
-     *       "ec":          {"value": 1.58,  "unit": "mS/cm"},
-     *       "do":          {"value": 4.4,   "unit": "mg/L"}
-     *    },
-     *    "air_pump": true
-     *  }
-     *
-     * Unknown keys are ignored. Missing sections are skipped.
-     */
     @Transactional
     public void saveRecord(String compositeId, JsonNode json) {
         Objects.requireNonNull(compositeId, "compositeId is required");
@@ -150,11 +129,6 @@ public class RecordService {
         }
     }
 
-    /**
-     * Read aggregated history for a device within [from, to], bucketed by granularity.
-     * Optionally filters to a single sensor type to minimize scanned rows.
-     * Delegates the heavy lifting to SensorAggregationReader (custom repo/projection).
-     */
     @Transactional(readOnly = true)
     public AggregatedHistoryResponse aggregatedHistory(
             String compositeId,
@@ -207,17 +181,10 @@ public class RecordService {
         return Optional.empty();
     }
 
-    /**
-     * Abstraction so this service does not depend on a specific repository implementation.
-     * Implement this with your Spring Data repository (native query / JPQL) that returns projections.
-     */
     public interface SensorAggregationReader {
         List<SensorAggregateResult> aggregate(String compositeId, Instant from, Instant to, String bucket, String sensorType);
     }
 
-    /**
-     * Minimal projection interface the repository should return for aggregation.
-     */
     public interface SensorAggregateResult {
         String getSensorType();
         String getUnit();

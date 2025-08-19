@@ -8,7 +8,8 @@ import java.time.Instant;
 @Entity
 @Table(name = "sensor_value_history",
        indexes = {
-           @Index(name = "idx_svh_device_sensor_time", columnList = "composite_id, sensor_type, value_time DESC")
+           @Index(name = "idx_svh_device_sensor_time", columnList = "composite_id, sensor_type, value_time DESC"),
+           @Index(name = "idx_svh_device_time", columnList = "composite_id, value_time")
        })
 @IdClass(SensorValueHistoryId.class)
 @Getter

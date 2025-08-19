@@ -9,12 +9,12 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false
     open-in-view: false
   flyway:
     enabled: false
-    baseline-on-migrate: true
+    baseline-on-migrate: false
     locations: classpath:db/migration
     placeholders:
       enable_timescale: false

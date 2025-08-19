@@ -48,7 +48,7 @@ public class LiveFeedScheduler {
 
             DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm:ss")
                     .withZone(ZoneId.systemDefault());
-            log.debug("live_now -> S01L01: last update{}, airPump: {}",
+            log.debug("live_now -> S01L01: last update: {}, airPump: {}",
                     timeFmt.format(snapshot.systems().get("S01").lastUpdate()),
                     snapshot.systems().get("S01").layers().get(0).actuators().airPump());
 

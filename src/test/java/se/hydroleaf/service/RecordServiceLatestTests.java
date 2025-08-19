@@ -11,9 +11,9 @@ import se.hydroleaf.model.DeviceGroup;
 import se.hydroleaf.repository.DeviceGroupRepository;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.ActuatorStatusRepository;
-import se.hydroleaf.repository.SensorDataRepository;
+import se.hydroleaf.repository.SensorReadingRepository;
 import se.hydroleaf.model.ActuatorStatus;
-import se.hydroleaf.model.SensorData;
+import se.hydroleaf.model.SensorReading;
 
 import java.time.Instant;
 
@@ -29,7 +29,7 @@ class RecordServiceLatestTests {
     @Autowired RecordService recordService;
     @Autowired DeviceRepository deviceRepository;
     @Autowired DeviceGroupRepository deviceGroupRepository;
-    @Autowired SensorDataRepository sensorDataRepository;
+    @Autowired SensorReadingRepository sensorReadingRepository;
     @Autowired ActuatorStatusRepository actuatorStatusRepository;
 
     private DeviceGroup ensureGroup() {
@@ -69,7 +69,7 @@ class RecordServiceLatestTests {
                 """;
         recordService.saveRecord(compositeId, objectMapper.readTree(first));
 
-        SensorData lsv = sensorDataRepository
+        SensorReading lsv = sensorReadingRepository
                 .findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc(compositeId, "light")
                 .orElseThrow();
         assertEquals(10.0, lsv.getValue());
@@ -91,7 +91,7 @@ class RecordServiceLatestTests {
                 """;
         recordService.saveRecord(compositeId, objectMapper.readTree(second));
 
-        SensorData lsv2 = sensorDataRepository
+        SensorReading lsv2 = sensorReadingRepository
                 .findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc(compositeId, "light")
                 .orElseThrow();
         assertEquals(15.5, lsv2.getValue());

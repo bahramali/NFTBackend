@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS latest_sensor_health (
     composite_id VARCHAR(128) NOT NULL,
     sensor_name VARCHAR(64) NOT NULL,
-    value DOUBLE PRECISION,
+    sensor_value DOUBLE PRECISION,
     unit VARCHAR(32),
     health_ok BOOLEAN,
     ts TIMESTAMPTZ NOT NULL,

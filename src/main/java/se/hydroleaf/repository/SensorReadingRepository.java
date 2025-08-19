@@ -3,26 +3,26 @@ package se.hydroleaf.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import se.hydroleaf.model.SensorData;
+import se.hydroleaf.model.SensorReading;
 import se.hydroleaf.repository.dto.LiveNowRow;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
+public interface SensorReadingRepository extends JpaRepository<SensorReading, Long> {
 
     /**
      * Latest sensor reading for a device and sensor type.
      */
-    Optional<SensorData> findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc(String compositeId,
-                                                                                                   String sensorType);
+    Optional<SensorReading> findTopByRecord_DeviceCompositeIdAndSensorTypeOrderByRecord_TimestampDesc(String compositeId,
+                                                                                                      String sensorType);
 
     /**
      * Batch query returning the latest average per system/layer and sensor type.
      *
      * <p>Uses the materialized {@code latest_sensor_value} table maintained by
-     * database triggers rather than a window function over all sensor_data.</p>
+     * database triggers rather than a window function over all sensor_reading.</p>
      */
     @Query(value = """
             SELECT

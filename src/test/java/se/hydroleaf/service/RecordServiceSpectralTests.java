@@ -9,7 +9,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.DeviceGroup;
-import se.hydroleaf.model.SensorData;
+import se.hydroleaf.model.SensorReading;
 import se.hydroleaf.model.SensorRecord;
 import se.hydroleaf.repository.DeviceGroupRepository;
 import se.hydroleaf.repository.DeviceRepository;
@@ -61,7 +61,7 @@ class RecordServiceSpectralTests {
     }
 
     @Test
-    void saves_record_with_empty_values_and_no_sensor_data() throws Exception {
+    void saves_record_with_empty_values_and_no_sensor_readings() throws Exception {
         String compositeId = "S01-L01-G01";
         ensureDevice(compositeId);
 
@@ -76,11 +76,11 @@ class RecordServiceSpectralTests {
 
         List<SensorRecord> records = recordRepository.findAll();
         assertEquals(1, records.size(), "one record should be stored");
-        assertTrue(records.get(0).getValues().isEmpty(), "no SensorData expected");
+        assertTrue(records.get(0).getReadings().isEmpty(), "no SensorReading expected");
     }
 
     @Test
-    void saves_named_spectral_channels_as_separate_sensor_data() throws Exception {
+    void saves_named_spectral_channels_as_separate_sensor_readings() throws Exception {
         String compositeId = "S01-L01-esp32-01";
         ensureDevice(compositeId);
 
@@ -99,7 +99,7 @@ class RecordServiceSpectralTests {
 
         List<SensorRecord> records = recordRepository.findAll();
         assertEquals(1, records.size(), "one record should be stored");
-        List<SensorData> values = records.get(0).getValues();
+        List<SensorReading> values = records.get(0).getReadings();
         assertEquals(3, values.size(), "three spectral channels expected");
 
         // quick sanity on names and values
@@ -128,7 +128,7 @@ class RecordServiceSpectralTests {
 
         List<SensorRecord> records = recordRepository.findAll();
         assertEquals(1, records.size());
-        List<SensorData> values = records.get(0).getValues();
+        List<SensorReading> values = records.get(0).getReadings();
         assertEquals(4, values.size());
         assertTrue(values.stream().anyMatch(v -> "light".equals(v.getSensorType())));
         assertTrue(values.stream().anyMatch(v -> "temperature".equals(v.getSensorType())));

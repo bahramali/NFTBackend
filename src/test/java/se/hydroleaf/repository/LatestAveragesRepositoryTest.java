@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 class LatestAveragesRepositoryTest {
     @Autowired
-    private SensorDataRepository sensorDataRepository;
+    private SensorReadingRepository sensorReadingRepository;
 
     @Autowired
     private ActuatorStatusRepository actuatorStatusRepository;
@@ -76,7 +76,7 @@ class LatestAveragesRepositoryTest {
 
         latestSensorValueRepository.flush();
 
-        List<LiveNowRow> rows = sensorDataRepository.fetchLatestSensorAverages(List.of("temperature"));
+        List<LiveNowRow> rows = sensorReadingRepository.fetchLatestSensorAverages(List.of("temperature"));
         assertEquals(1, rows.size());
         LiveNowRow row = rows.get(0);
 

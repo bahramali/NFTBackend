@@ -14,7 +14,7 @@ import se.hydroleaf.model.LatestSensorValue;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.DeviceGroupRepository;
 import se.hydroleaf.repository.DeviceRepository;
-import se.hydroleaf.repository.SensorDataRepository;
+import se.hydroleaf.repository.SensorReadingRepository;
 import se.hydroleaf.repository.SensorHealthItemRepository;
 import se.hydroleaf.repository.LatestSensorValueRepository;
 import se.hydroleaf.model.DeviceType;
@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Integration test for RecordService with Option-1 model:
  * - Device PK = composite_id
- * - RecordService.saveRecord persists SensorRecord + SensorData (+ optional actuator status)
+ * - RecordService.saveRecord persists SensorRecord + SensorReading (+ optional actuator status)
  * Notes:
  * - All comments are in English only per your preference.
  */
@@ -46,7 +46,7 @@ class RecordServiceDeviceTests {
     @Autowired
     DeviceGroupRepository deviceGroupRepository;
     @Autowired
-    SensorDataRepository sensorDataRepository;
+    SensorReadingRepository sensorReadingRepository;
     @Autowired
     ActuatorStatusRepository actuatorStatusRepository;
     @Autowired
@@ -127,7 +127,7 @@ class RecordServiceDeviceTests {
                         .unit("lx")
                         .valueTime(Instant.parse("2025-01-01T00:00:00Z"))
                         .build());
-        List<LiveNowRow> rows = sensorDataRepository.fetchLatestSensorAverages(List.of(DeviceType.LIGHT.getName()));
+        List<LiveNowRow> rows = sensorReadingRepository.fetchLatestSensorAverages(List.of(DeviceType.LIGHT.getName()));
         LiveNowRow lightAvg = rows.stream()
                 .filter(r -> "S02".equals(r.getSystem()) && "L02".equals(r.getLayer()))
                 .findFirst().orElse(null);
@@ -136,7 +136,7 @@ class RecordServiceDeviceTests {
         assertTrue(lightAvg.getDeviceCount() >= 1);
 
         // sensorType persistence check (ph sensor without sensorName)
-        assertTrue(sensorDataRepository.findAll().stream()
+        assertTrue(sensorReadingRepository.findAll().stream()
                 .anyMatch(d -> "ph".equals(d.getSensorType())));
 
         // Pump status row should be inserted (airPump=false)
@@ -216,7 +216,7 @@ class RecordServiceDeviceTests {
 
         recordService.saveRecord(compositeId, objectMapper.readTree(json));
 
-        var data = sensorDataRepository.findAll().stream()
+        var data = sensorReadingRepository.findAll().stream()
                 .filter(d -> compositeId.equals(d.getRecord().getDevice().getCompositeId()))
                 .toList();
         assertEquals(1, data.size());
@@ -242,7 +242,7 @@ class RecordServiceDeviceTests {
 
         recordService.saveRecord(compositeId, objectMapper.readTree(json));
 
-        var data = sensorDataRepository.findAll().stream()
+        var data = sensorReadingRepository.findAll().stream()
                 .filter(d -> compositeId.equals(d.getRecord().getDevice().getCompositeId()))
                 .toList();
         assertEquals(1, data.size());

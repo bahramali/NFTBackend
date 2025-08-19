@@ -8,7 +8,9 @@ import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.dto.history.AggregatedHistoryResponse;
 import se.hydroleaf.service.RecordService;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.util.regex.Pattern;
 
 /**
  * REST controller exposing record ingestion and history endpoints.
@@ -21,6 +23,9 @@ import java.time.Instant;
 @RestController
 @RequestMapping("/api/records")
 public class RecordController {
+
+    private static final long MAX_RANGE_DAYS = 31;
+    private static final Pattern SENSOR_TYPE_PATTERN = Pattern.compile("[A-Za-z0-9_\\-]{1,32}");
 
     private final RecordService recordService;
 
@@ -50,7 +55,11 @@ public class RecordController {
             @RequestParam("from") String from,
             @RequestParam("to") String to,
             @RequestParam(name = "bucket", defaultValue = "5m") String bucket,
-            @RequestParam(name = "sensorType", required = false) String sensorType
+            @RequestParam(name = "sensorType", required = false) String sensorType,
+            @RequestParam(name = "bucketLimit", required = false) Integer bucketLimit,
+            @RequestParam(name = "bucketOffset", required = false) Integer bucketOffset,
+            @RequestParam(name = "sensorLimit", required = false) Integer sensorLimit,
+            @RequestParam(name = "sensorOffset", required = false) Integer sensorOffset
     ) {
         Instant fromInst = parseInstant(from);
         Instant toInst = parseInstant(to);
@@ -60,8 +69,16 @@ public class RecordController {
         if (!toInst.isAfter(fromInst)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "'to' must be after 'from'");
         }
+        if (Duration.between(fromInst, toInst).toDays() > MAX_RANGE_DAYS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Range exceeds " + MAX_RANGE_DAYS + " days");
+        }
+        if (sensorType != null && !SENSOR_TYPE_PATTERN.matcher(sensorType).matches()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sensorType");
+        }
         try {
-            return recordService.aggregatedHistory(compositeId, fromInst, toInst, bucket, sensorType);
+            return recordService.aggregatedHistory(
+                    compositeId, fromInst, toInst, bucket, sensorType,
+                    bucketLimit, bucketOffset, sensorLimit, sensorOffset);
         } catch (IllegalArgumentException iae) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, iae.getMessage(), iae);
         }

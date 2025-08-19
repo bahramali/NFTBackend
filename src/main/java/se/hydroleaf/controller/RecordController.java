@@ -11,7 +11,7 @@ import se.hydroleaf.service.RecordService;
 import java.time.Instant;
 
 /**
- * SensorRecordController aligned with the new RecordService API.
+ * REST controller exposing record ingestion and history endpoints.
  * - POST /api/records/{compositeId} : persist a record (JSON body)
  * - GET  /api/records/history/aggregated?compositeId=...&from=...&to=...&bucket=5m
  *   returns AggregatedHistoryResponse
@@ -20,11 +20,11 @@ import java.time.Instant;
  */
 @RestController
 @RequestMapping("/api/records")
-public class SensorRecordController {
+public class RecordController {
 
     private final RecordService recordService;
 
-    public SensorRecordController(RecordService recordService) {
+    public RecordController(RecordService recordService) {
         this.recordService = recordService;
     }
 

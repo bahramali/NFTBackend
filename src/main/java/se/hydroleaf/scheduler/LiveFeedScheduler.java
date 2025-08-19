@@ -9,6 +9,9 @@ import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
 import se.hydroleaf.mqtt.TopicPublisher;
 import se.hydroleaf.service.StatusService;
 
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -32,8 +35,6 @@ public class LiveFeedScheduler {
 
     private final AtomicBoolean sending = new AtomicBoolean(false);
 
-    // Using fixedDelay ensures that if executions are delayed for any reason,
-    // multiple invocations do not queue up and publish in rapid succession.
     @Scheduled(fixedDelayString = "${livefeed.rate:2000}", scheduler = "scheduler")
     public void sendLiveNow() {
         if (!sending.compareAndSet(false, true)) {
@@ -42,9 +43,15 @@ public class LiveFeedScheduler {
         }
         try {
             LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
+            LocalTime.ofInstant( snapshot.systems().get(1).lastUpdate(), ZoneId.of(""));
             String payload = objectMapper.writeValueAsString(snapshot);
             topicPublisher.publish("/topic/live_now", payload);
-            log.debug("live_now message is: {}", payload);
+            DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm:ss")
+                    .withZone(ZoneId.systemDefault());
+            log.debug("live_now -> S01L01: last update{}, acturatores: {}, temp: {}",
+                    timeFmt.format(snapshot.systems().get(1).lastUpdate()),
+                    snapshot.systems().get(1).layers().get(1).actuators(),
+                    snapshot.systems().get(1).environment().temperature());
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize LiveNowSnapshot", e);
         } catch (Exception e) {

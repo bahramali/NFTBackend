@@ -110,7 +110,7 @@ class RecordServiceDeviceTests {
 
         List<LiveNowRow> rows = latestAggregationRepository.fetchLatestSensorAverages(List.of(DeviceType.LIGHT.getName()));
         LiveNowRow lightAvg = rows.stream()
-                .filter(r -> "S02".equals(r.getSystem()) && "L02".equals(r.getLayer()))
+                .filter(r -> "S02".equals(r.system()) && "L02".equals(r.layer()))
                 .findFirst().orElse(null);
         assertNotNull(lightAvg);
         assertNotNull(lightAvg.getAvgValue());

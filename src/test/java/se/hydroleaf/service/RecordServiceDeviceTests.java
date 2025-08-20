@@ -2,6 +2,7 @@ package se.hydroleaf.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,11 +46,19 @@ class RecordServiceDeviceTests {
 
     @BeforeEach
     void initGroup() {
+        sensorValueBuffer.flush();
+        sensorValueHistoryRepository.deleteAll();
         defaultGroup = deviceGroupRepository.findByMqttTopic("test-group").orElseGet(() -> {
             DeviceGroup g = new DeviceGroup();
             g.setMqttTopic("test-group");
             return deviceGroupRepository.save(g);
         });
+    }
+
+    @AfterEach
+    void clearBuffer() {
+        sensorValueBuffer.flush();
+        sensorValueHistoryRepository.deleteAll();
     }
 
     private Device ensureDevice(String compositeId) {

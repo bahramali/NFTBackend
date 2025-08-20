@@ -1,6 +1,13 @@
 package se.hydroleaf.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -34,16 +41,16 @@ public class Device {
 
     @Id
     @Column(name = "composite_id", length = 128, nullable = false)
-    private String compositeId;                 // e.g. S01-L02-esp32-01
+    private String compositeId;
 
     @Column(name = "system", length = 16, nullable = false)
-    private String system;                      // e.g. S01
+    private String system;
 
     @Column(name = "layer", length = 16, nullable = false)
-    private String layer;                       // e.g. L02
+    private String layer;
 
     @Column(name = "device_id", length = 64, nullable = false)
-    private String deviceId;                    // e.g. esp32-01 (may contain hyphens)
+    private String deviceId;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "group_id", nullable = false)

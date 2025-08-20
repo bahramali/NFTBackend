@@ -1,6 +1,14 @@
 package se.hydroleaf.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -31,27 +39,15 @@ public class ActuatorStatus {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Time when this status was recorded.
-     */
     @Column(name = "status_time", nullable = false)
     private Instant timestamp;
 
-    /**
-     * Type of actuator, e.g. airPump, light etc.
-     */
     @Column(name = "actuator_type", nullable = false)
     private String actuatorType;
 
-    /**
-     * Actuator state (on/off).
-     */
     @Column(name = "state", nullable = false)
     private Boolean state;
 
-    /**
-     * Owning device via composite_id.
-     */
     @ManyToOne(optional = false)
     @JoinColumn(name = "composite_id", referencedColumnName = "composite_id", nullable = false)
     private Device device;

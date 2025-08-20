@@ -1,6 +1,12 @@
 package se.hydroleaf.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -29,9 +35,6 @@ public class DeviceGroup {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Optional: a unique topic or logical name for the group.
-     */
     @Column(name = "mqtt_topic", unique = true)
     private String mqttTopic;
 

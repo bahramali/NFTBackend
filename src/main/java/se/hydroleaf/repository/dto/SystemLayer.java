@@ -1,4 +1,4 @@
-package se.hydroleaf.repository;
+package se.hydroleaf.repository.dto;
 
 /**
  * Projection representing a distinct system and layer combination for devices.

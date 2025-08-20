@@ -5,12 +5,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-/**
- * Detects whether the TimescaleDB extension is available. Detection can be
- * forced by setting the configuration property {@code app.timescaledb.enabled}.
- * If the property is not provided, a query against {@code pg_extension} is
- * executed on startup.
- */
 @Component
 public class TimescaleDbSupport implements InitializingBean {
 

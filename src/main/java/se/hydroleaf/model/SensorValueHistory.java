@@ -13,6 +13,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -43,6 +45,7 @@ public class SensorValueHistory {
 
     @Id
     @Column(name = "value_time", nullable = false)
+    @JdbcTypeCode(SqlTypes.TIMESTAMP_WITH_TIMEZONE)
     private Instant valueTime;
 
     @Column(name = "sensor_value")

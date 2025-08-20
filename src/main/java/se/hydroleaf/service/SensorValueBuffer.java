@@ -13,13 +13,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * Thread-safe buffer accumulating sensor readings for periodic aggregation.
- * Entries are keyed by device composite id and sensor type and track the
- * running sum, count and first timestamp of received values. A scheduled task
- * flushes the buffer every minute, writing averaged values to
- * {@code sensor_value_history}.
- */
 @Service
 public class SensorValueBuffer {
 
@@ -46,9 +39,6 @@ public class SensorValueBuffer {
         this.sensorValueHistoryRepository = sensorValueHistoryRepository;
     }
 
-    /**
-     * Add a sensor reading to the buffer.
-     */
     public void add(String compositeId, String sensorType, double value, Instant timestamp) {
         Key key = new Key(compositeId, sensorType);
         buffer.compute(key, (k, acc) -> {
@@ -60,11 +50,6 @@ public class SensorValueBuffer {
         });
     }
 
-    /**
-     * Flush the current buffer contents to persistent history. The method is
-     * scheduled to run every minute but can be invoked manually (e.g. from
-     * tests).
-     */
     @Scheduled(fixedRate = 60000, scheduler = "scheduler")
     public void flush() {
         Map<Key, Accumulator> snapshot = drain();

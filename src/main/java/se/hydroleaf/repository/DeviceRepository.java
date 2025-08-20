@@ -3,6 +3,7 @@ package se.hydroleaf.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import se.hydroleaf.model.Device;
+import se.hydroleaf.repository.dto.SystemLayer;
 
 import java.util.List;
 
@@ -10,6 +11,6 @@ public interface DeviceRepository extends JpaRepository<Device, String> {
 
     List<Device> findBySystemAndLayer(String system, String layer);
 
-    @Query("SELECT DISTINCT new se.hydroleaf.repository.SystemLayer(d.system, d.layer) FROM Device d")
+    @Query("SELECT DISTINCT new se.hydroleaf.repository.dto.SystemLayer(d.system, d.layer) FROM Device d")
     List<SystemLayer> findDistinctSystemAndLayer();
 }

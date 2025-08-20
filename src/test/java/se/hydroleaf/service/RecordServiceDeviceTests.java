@@ -2,6 +2,7 @@ package se.hydroleaf.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorValueHistoryRepository;
 import se.hydroleaf.repository.LatestSensorValueAggregationRepository;
 import se.hydroleaf.repository.LatestSensorValueRepository;
+import se.hydroleaf.service.SensorValueBuffer;
 import se.hydroleaf.model.DeviceType;
 import se.hydroleaf.repository.dto.LiveNowRow;
 
@@ -38,16 +40,25 @@ class RecordServiceDeviceTests {
     @Autowired ActuatorStatusRepository actuatorStatusRepository;
     @Autowired LatestSensorValueRepository latestSensorValueRepository;
     @Autowired LatestSensorValueAggregationRepository latestAggregationRepository;
+    @Autowired SensorValueBuffer sensorValueBuffer;
 
     private DeviceGroup defaultGroup;
 
     @BeforeEach
     void initGroup() {
+        sensorValueBuffer.flush();
+        sensorValueHistoryRepository.deleteAll();
         defaultGroup = deviceGroupRepository.findByMqttTopic("test-group").orElseGet(() -> {
             DeviceGroup g = new DeviceGroup();
             g.setMqttTopic("test-group");
             return deviceGroupRepository.save(g);
         });
+    }
+
+    @AfterEach
+    void clearBuffer() {
+        sensorValueBuffer.flush();
+        sensorValueHistoryRepository.deleteAll();
     }
 
     private Device ensureDevice(String compositeId) {
@@ -89,6 +100,9 @@ class RecordServiceDeviceTests {
         long pumpBefore = actuatorStatusRepository.count();
         recordService.saveRecord(compositeId, node);
 
+        // buffer should delay persistence until flush
+        assertEquals(0, sensorValueHistoryRepository.count());
+
         Device saved = deviceRepository.findById(compositeId).orElseThrow();
         assertEquals("S02", saved.getSystem());
         assertEquals("L02", saved.getLayer());
@@ -102,6 +116,7 @@ class RecordServiceDeviceTests {
         assertNotNull(lightAvg.getAvgValue());
         assertTrue(lightAvg.getDeviceCount() >= 1);
 
+        sensorValueBuffer.flush();
         assertTrue(sensorValueHistoryRepository.findAll().stream()
                 .anyMatch(d -> "ph".equals(d.getSensorType())));
 
@@ -112,6 +127,31 @@ class RecordServiceDeviceTests {
                 .orElseThrow();
         assertFalse(pumpRow.getState());
         assertEquals(Instant.parse("2025-01-01T00:00:00Z"), pumpRow.getTimestamp());
+    }
+
+    @Test
+    void buffered_readings_are_averaged_on_flush() throws Exception {
+        final String compositeId = "S10-L10-AVG";
+        ensureDevice(compositeId);
+
+        String first = """
+                {"timestamp":"2025-01-01T00:00:00Z","sensors":[{"sensorType":"ph","value":6.0}]}
+                """;
+        String second = """
+                {"timestamp":"2025-01-01T00:00:30Z","sensors":[{"sensorType":"ph","value":8.0}]}
+                """;
+        recordService.saveRecord(compositeId, objectMapper.readTree(first));
+        recordService.saveRecord(compositeId, objectMapper.readTree(second));
+
+        // nothing persisted until flush
+        assertEquals(0, sensorValueHistoryRepository.count());
+
+        sensorValueBuffer.flush();
+
+        var all = sensorValueHistoryRepository.findAll();
+        assertEquals(1, all.size());
+        assertEquals(7.0, all.get(0).getSensorValue());
+        assertEquals(Instant.parse("2025-01-01T00:00:00Z"), all.get(0).getValueTime());
     }
 
     @Test

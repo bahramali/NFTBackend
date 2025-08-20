@@ -1,7 +1,6 @@
 package se.hydroleaf.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.dto.history.AggregatedHistoryResponse;
@@ -10,11 +9,10 @@ import se.hydroleaf.dto.history.TimestampValue;
 import se.hydroleaf.model.ActuatorStatus;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.LatestSensorValue;
-import se.hydroleaf.model.SensorValueHistory;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.LatestSensorValueRepository;
-import se.hydroleaf.repository.SensorValueHistoryRepository;
+import se.hydroleaf.service.SensorValueBuffer;
 import se.hydroleaf.util.InstantUtil;
 
 import java.time.Instant;
@@ -24,32 +22,33 @@ import java.util.*;
  * Service responsible for processing incoming sensor records and storing them in
  * the new simplified schema.
  *
- * <p>Sensor readings are written directly to {@code sensor_value_history} and
- * the latest value per device and type is mirrored in the
- * {@code latest_sensor_value} table. Aggregated history queries are delegated to
- * {@link SensorAggregationReader} implementations.</p>
+ * <p>Sensor readings are buffered for periodic aggregation into
+ * {@code sensor_value_history} while the latest value per device and type is
+ * mirrored in the {@code latest_sensor_value} table immediately. Aggregated
+ * history queries are delegated to {@link SensorAggregationReader}
+ * implementations.</p>
  */
 @Service
 public class RecordService {
 
     private final DeviceRepository deviceRepository;
-    private final SensorValueHistoryRepository sensorValueHistoryRepository;
     private final ActuatorStatusRepository actuatorStatusRepository;
     private final SensorAggregationReader aggregationReader; // thin facade over custom repo/projection
     private final LatestSensorValueRepository latestSensorValueRepository;
+    private final SensorValueBuffer sensorValueBuffer;
 
     public RecordService(
             DeviceRepository deviceRepository,
-            SensorValueHistoryRepository sensorValueHistoryRepository,
             ActuatorStatusRepository actuatorStatusRepository,
             SensorAggregationReader aggregationReader,
-            LatestSensorValueRepository latestSensorValueRepository
+            LatestSensorValueRepository latestSensorValueRepository,
+            SensorValueBuffer sensorValueBuffer
     ) {
         this.deviceRepository = deviceRepository;
-        this.sensorValueHistoryRepository = sensorValueHistoryRepository;
         this.actuatorStatusRepository = actuatorStatusRepository;
         this.aggregationReader = aggregationReader;
         this.latestSensorValueRepository = latestSensorValueRepository;
+        this.sensorValueBuffer = sensorValueBuffer;
     }
 
     @Transactional
@@ -61,7 +60,7 @@ public class RecordService {
 
         final Instant ts = parseTimestamp(json.path("timestamp")).orElseGet(Instant::now);
 
-        // Parse sensor readings from sensors array and persist directly to history
+        // Parse sensor readings from sensors array and buffer them for aggregation
         JsonNode sensors = json.path("sensors");
         if (sensors.isArray()) {
             Set<String> seenTypes = new HashSet<>();
@@ -80,13 +79,7 @@ public class RecordService {
                 }
                 if (num == null) continue;
 
-                SensorValueHistory history = SensorValueHistory.builder()
-                        .compositeId(compositeId)
-                        .sensorType(sensorType)
-                        .sensorValue(num)
-                        .valueTime(ts)
-                        .build();
-                sensorValueHistoryRepository.save(history);
+                sensorValueBuffer.add(compositeId, sensorType, num, ts);
 
                 LatestSensorValue lsv = latestSensorValueRepository
                         .findByDevice_CompositeIdAndSensorType(compositeId, sensorType)

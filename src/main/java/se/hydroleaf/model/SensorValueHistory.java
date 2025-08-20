@@ -25,6 +25,12 @@ public class SensorValueHistory {
     @Column(name = "composite_id", nullable = false, length = 128)
     private String compositeId;
 
+    @Column(name = "system_part", insertable = false, updatable = false, length = 64)
+    private String systemPart;
+
+    @Column(name = "layer_part", insertable = false, updatable = false, length = 64)
+    private String layerPart;
+
     @Id
     @Column(name = "sensor_type", nullable = false, length = 64)
     private String sensorType;

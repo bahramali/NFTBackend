@@ -9,7 +9,8 @@ import java.time.Instant;
 @Table(name = "sensor_value_history",
        indexes = {
            @Index(name = "idx_svh_device_sensor_time", columnList = "composite_id, sensor_type, value_time DESC"),
-           @Index(name = "idx_svh_device_time", columnList = "composite_id, value_time")
+           @Index(name = "idx_svh_device_time", columnList = "composite_id, value_time"),
+           @Index(name = "idx_svh_system_layer", columnList = "system_part, layer_part")
        })
 @IdClass(SensorValueHistoryId.class)
 @Getter
@@ -41,4 +42,10 @@ public class SensorValueHistory {
 
     @Column(name = "sensor_value")
     private Double sensorValue;
+
+    @Column(name = "system_part", length = 64, insertable = false, updatable = false)
+    private String systemPart;
+
+    @Column(name = "layer_part", length = 64, insertable = false, updatable = false)
+    private String layerPart;
 }

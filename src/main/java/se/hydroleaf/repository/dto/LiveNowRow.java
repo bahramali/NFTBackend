@@ -1,7 +1,5 @@
 package se.hydroleaf.repository.dto;
 
-import lombok.Builder;
-
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -15,11 +13,6 @@ public record LiveNowRow(
         Number deviceCount,
         Object recordTime
 ) {
-    public String getSystem() { return system; }
-    public String getLayer() { return layer; }
-    public String getSensorType() { return sensorType; }
-    public String getUnit() { return unit; }
-
     public Double getAvgValue() { return avgValue != null ? avgValue.doubleValue() : null; }
 
     public Long getDeviceCount() { return deviceCount != null ? deviceCount.longValue() : null; }

@@ -71,26 +71,26 @@ public class StatusService {
         if (type.isActuator()) {
             List<LiveNowRow> rows = actuatorStatusRepository.fetchLatestActuatorAverages(List.of(type.getName()));
             LiveNowRow row = rows.stream()
-                    .filter(r -> r.getSystem() != null && r.getLayer() != null
-                            && system.equalsIgnoreCase(r.getSystem())
-                            && layer.equalsIgnoreCase(r.getLayer()))
+                    .filter(r -> r.system() != null && r.layer() != null
+                            && system.equalsIgnoreCase(r.system())
+                            && layer.equalsIgnoreCase(r.layer()))
                     .findFirst().orElse(null);
             long count = row != null && row.getDeviceCount() != null ? row.getDeviceCount() : 0L;
             Double avg = row != null && row.getAvgValue() != null && count > 0 ? row.getAvgValue() : null;
-            String resultUnit = row != null && row.getUnit() != null ? row.getUnit() : unit;
+            String resultUnit = row != null && row.unit() != null ? row.unit() : unit;
             return new StatusAverageResponse(avg, resultUnit, count);
         } else {
             List<LiveNowRow> rows = sensorReadingRepository.fetchLatestSensorAverages(List.of(type.getName()));
             LiveNowRow row = rows.stream()
-                    .filter(r -> r.getSystem() != null && r.getLayer() != null
-                            && system.equalsIgnoreCase(r.getSystem())
-                            && layer.equalsIgnoreCase(r.getLayer()))
+                    .filter(r -> r.system() != null && r.layer() != null
+                            && system.equalsIgnoreCase(r.system())
+                            && layer.equalsIgnoreCase(r.layer()))
                     .findFirst().orElse(null);
             long count = row != null && row.getDeviceCount() != null ? row.getDeviceCount() : 0L;
             Double avg = row != null && row.getAvgValue() != null && count > 0
                     ? Math.round(row.getAvgValue() * 10.0) / 10.0
                     : null;
-            String resultUnit = row != null && row.getUnit() != null ? row.getUnit() : unit;
+            String resultUnit = row != null && row.unit() != null ? row.unit() : unit;
             return new StatusAverageResponse(avg, resultUnit, count);
         }
     }
@@ -102,15 +102,15 @@ public class StatusService {
                 ACTUATOR_TYPES.stream().map(DeviceType::getName).toList());
 
         Map<String, LiveNowRow> sensorMap = sensorRows.stream()
-                .filter(r -> r.getSystem() != null && r.getLayer() != null
-                        && system.equalsIgnoreCase(r.getSystem())
-                        && layer.equalsIgnoreCase(r.getLayer()))
-                .collect(Collectors.toMap(LiveNowRow::getSensorType, r -> r));
+                .filter(r -> r.system() != null && r.layer() != null
+                        && system.equalsIgnoreCase(r.system())
+                        && layer.equalsIgnoreCase(r.layer()))
+                .collect(Collectors.toMap(LiveNowRow::sensorType, r -> r));
         Map<String, LiveNowRow> actuatorMap = actuatorRows.stream()
-                .filter(r -> r.getSystem() != null && r.getLayer() != null
-                        && system.equalsIgnoreCase(r.getSystem())
-                        && layer.equalsIgnoreCase(r.getLayer()))
-                .collect(Collectors.toMap(LiveNowRow::getSensorType, r -> r));
+                .filter(r -> r.system() != null && r.layer() != null
+                        && system.equalsIgnoreCase(r.system())
+                        && layer.equalsIgnoreCase(r.layer()))
+                .collect(Collectors.toMap(LiveNowRow::sensorType, r -> r));
 
         Map<DeviceType, StatusAverageResponse> responses = new EnumMap<>(DeviceType.class);
         for (DeviceType type : SENSOR_TYPES) {
@@ -119,14 +119,14 @@ public class StatusService {
             Double avg = row != null && row.getAvgValue() != null && count > 0
                     ? Math.round(row.getAvgValue() * 10.0) / 10.0
                     : null;
-            String unit = row != null && row.getUnit() != null ? row.getUnit() : type.getUnit();
+            String unit = row != null && row.unit() != null ? row.unit() : type.getUnit();
             responses.put(type, new StatusAverageResponse(avg, unit, count));
         }
         for (DeviceType type : ACTUATOR_TYPES) {
             LiveNowRow row = actuatorMap.get(type.getName());
             long count = row != null && row.getDeviceCount() != null ? row.getDeviceCount() : 0L;
             Double avg = row != null && row.getAvgValue() != null && count > 0 ? row.getAvgValue() : null;
-            String unit = row != null && row.getUnit() != null ? row.getUnit() : type.getUnit();
+            String unit = row != null && row.unit() != null ? row.unit() : type.getUnit();
             responses.put(type, new StatusAverageResponse(avg, unit, count));
         }
 
@@ -162,10 +162,10 @@ public class StatusService {
         Map<String, SystemData> systems = Stream
                 // Sequential streams are sufficient here; reintroduce parallelism only with proper benchmarks
                 .concat(sensorRows.stream(), actuatorRows.stream())
-                .filter(r -> r.getSystem() != null && !r.getSystem().isBlank()
-                        && r.getLayer() != null && !r.getLayer().isBlank())
+                .filter(r -> r.system() != null && !r.system().isBlank()
+                        && r.layer() != null && !r.layer().isBlank())
                 .collect(Collectors.groupingBy(
-                        LiveNowRow::getSystem,
+                        LiveNowRow::system,
                         Collector.of(SystemData::new, SystemData::accumulate, (a, b) -> {
                             a.merge(b);
                             return a;
@@ -189,12 +189,12 @@ public class StatusService {
                 lastUpdate = latest(lastUpdate, time);
             }
 
-            LayerData layer = layers.computeIfAbsent(row.getLayer(), l -> new LayerData());
+            LayerData layer = layers.computeIfAbsent(row.layer(), l -> new LayerData());
             if (time != null) {
                 layer.lastUpdate = latest(layer.lastUpdate, time);
             }
 
-            DeviceType type = DeviceType.fromName(row.getSensorType());
+            DeviceType type = DeviceType.fromName(row.sensorType());
             if (type == null) {
                 return;
             }
@@ -202,7 +202,7 @@ public class StatusService {
             Double avg = row.getAvgValue();
             Long deviceCount = row.getDeviceCount();
             if (avg == null || deviceCount == null) {
-                log.warn("Skipping accumulation for system {} layer {} type {} due to null avg or device count", row.getSystem(), row.getLayer(), row.getSensorType());
+                log.warn("Skipping accumulation for system {} layer {} type {} due to null avg or device count", row.system(), row.layer(), row.sensorType());
                 return;
             }
 
@@ -211,7 +211,7 @@ public class StatusService {
                 avg = Math.round(avg * 10.0) / 10.0;
             }
             long count = deviceCount;
-            String unit = row.getUnit() != null ? row.getUnit() : type.getUnit();
+            String unit = row.unit() != null ? row.unit() : type.getUnit();
 
             StatusAverageResponse resp = new StatusAverageResponse(avg, unit, count);
             layer.values.put(type, resp);

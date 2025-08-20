@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import se.hydroleaf.service.RecordService;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j

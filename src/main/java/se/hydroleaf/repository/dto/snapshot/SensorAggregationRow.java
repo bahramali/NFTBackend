@@ -1,4 +1,4 @@
-package se.hydroleaf.repository.dto;
+package se.hydroleaf.repository.dto.snapshot;
 
 import java.time.Instant;
 

@@ -4,9 +4,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import se.hydroleaf.dto.summary.StatusAllAverageResponse;
-import se.hydroleaf.dto.summary.StatusAverageResponse;
-import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
+import se.hydroleaf.repository.dto.summary.StatusAllAverageResponse;
+import se.hydroleaf.repository.dto.summary.StatusAverageResponse;
+import se.hydroleaf.repository.dto.snapshot.LiveNowSnapshot;
 import se.hydroleaf.service.StatusService;
 
 @RestController

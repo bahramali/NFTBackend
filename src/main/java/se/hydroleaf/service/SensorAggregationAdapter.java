@@ -4,7 +4,7 @@ package se.hydroleaf.service;
 import org.springframework.stereotype.Component;
 import se.hydroleaf.repository.SensorAggregationRepository;
 import se.hydroleaf.repository.TimescaleDbSupport;
-import se.hydroleaf.repository.dto.SensorAggregationRow;
+import se.hydroleaf.repository.dto.snapshot.SensorAggregationRow;
 import se.hydroleaf.util.InstantUtil;
 
 import java.time.Instant;

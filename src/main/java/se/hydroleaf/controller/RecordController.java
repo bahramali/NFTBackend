@@ -1,25 +1,20 @@
 package se.hydroleaf.controller;
 
 
-import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import se.hydroleaf.dto.history.AggregatedHistoryResponse;
+import se.hydroleaf.repository.dto.history.AggregatedHistoryResponse;
 import se.hydroleaf.service.RecordService;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.regex.Pattern;
 
-/**
- * REST controller exposing record ingestion and history endpoints.
- * - POST /api/records/{compositeId} : persist a record (JSON body)
- * - GET  /api/records/history/aggregated?compositeId=...&from=...&to=...&bucket=5m
- *   returns AggregatedHistoryResponse
- *
- * Comments are in English only.
- */
 @RestController
 @RequestMapping("/api/records")
 public class RecordController {
@@ -29,26 +24,11 @@ public class RecordController {
 
     private final RecordService recordService;
 
+    @Autowired
     public RecordController(RecordService recordService) {
         this.recordService = recordService;
     }
 
-    /** Persist a record for the given compositeId. */
-    @PostMapping(path = "/{compositeId}", consumes = "application/json")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public void saveRecord(@PathVariable String compositeId, @RequestBody JsonNode body) {
-        try {
-            recordService.saveRecord(compositeId, body);
-        } catch (IllegalArgumentException iae) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, iae.getMessage(), iae);
-        } catch (RuntimeException re) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to persist record", re);
-        }
-    }
-
-    /** Aggregated history by time bucket. Accepts ISO-8601 or epoch millis for 'from'/'to'.
-     *  Optionally filters by sensorType.
-     */
     @GetMapping("/history/aggregated")
     public AggregatedHistoryResponse getHistoryAggregated(
             @RequestParam("compositeId") String compositeId,
@@ -84,16 +64,12 @@ public class RecordController {
         }
     }
 
-    // -------- helpers --------
-
     private static Instant parseInstant(String s) {
         if (s == null || s.isBlank()) return null;
-        // epoch millis
         try {
             long epoch = Long.parseLong(s.trim());
             return Instant.ofEpochMilli(epoch);
         } catch (NumberFormatException ignore) {}
-        // ISO-8601
         try {
             return Instant.parse(s.trim());
         } catch (Exception ignore) {}

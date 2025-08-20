@@ -5,13 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import se.hydroleaf.dto.snapshot.LiveNowSnapshot;
+import se.hydroleaf.repository.dto.snapshot.LiveNowSnapshot;
 import se.hydroleaf.mqtt.TopicPublisher;
 import se.hydroleaf.service.StatusService;
 
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**

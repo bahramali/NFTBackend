@@ -18,9 +18,8 @@ import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorValueHistoryRepository;
 import se.hydroleaf.repository.LatestSensorValueAggregationRepository;
 import se.hydroleaf.repository.LatestSensorValueRepository;
-import se.hydroleaf.service.SensorValueBuffer;
 import se.hydroleaf.model.DeviceType;
-import se.hydroleaf.repository.dto.LiveNowRow;
+import se.hydroleaf.repository.dto.snapshot.LiveNowRow;
 
 import java.time.Instant;
 import java.util.List;

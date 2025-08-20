@@ -4,7 +4,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 import se.hydroleaf.model.LatestSensorValue;
-import se.hydroleaf.repository.dto.LiveNowRow;
+import se.hydroleaf.repository.dto.snapshot.LiveNowRow;
 
 import java.util.Collection;
 import java.util.List;

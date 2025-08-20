@@ -1,4 +1,4 @@
-package se.hydroleaf.dto.history;
+package se.hydroleaf.repository.dto.history;
 
 import java.time.Instant;
 import java.util.List;

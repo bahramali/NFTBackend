@@ -1,4 +1,4 @@
-package se.hydroleaf.dto.summary;
+package se.hydroleaf.repository.dto.summary;
 
 public record WaterTankSummary(
         StatusAverageResponse dissolvedTemp,

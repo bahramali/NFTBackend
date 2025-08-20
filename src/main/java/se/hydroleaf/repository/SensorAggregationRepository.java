@@ -5,7 +5,7 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 import se.hydroleaf.model.SensorValueHistory;
 import se.hydroleaf.model.SensorValueHistoryId;
-import se.hydroleaf.repository.dto.SensorAggregationRow;
+import se.hydroleaf.repository.dto.snapshot.SensorAggregationRow;
 
 import java.time.Instant;
 import java.util.List;

@@ -1,4 +1,4 @@
-package se.hydroleaf.dto.snapshot;
+package se.hydroleaf.repository.dto.snapshot;
 
 import java.util.Map;
 

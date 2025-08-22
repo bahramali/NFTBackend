@@ -13,6 +13,7 @@ import se.hydroleaf.service.RecordService;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.regex.Pattern;
 
 @RestController
@@ -35,7 +36,7 @@ public class RecordController {
             @RequestParam("from") String from,
             @RequestParam("to") String to,
             @RequestParam(name = "bucket", defaultValue = "5m") String bucket,
-            @RequestParam(name = "sensorType", required = false) String sensorType,
+            @RequestParam(name = "sensorType", required = false) List<String> sensorTypes,
             @RequestParam(name = "bucketLimit", required = false) Integer bucketLimit,
             @RequestParam(name = "bucketOffset", required = false) Integer bucketOffset,
             @RequestParam(name = "sensorLimit", required = false) Integer sensorLimit,
@@ -52,12 +53,16 @@ public class RecordController {
         if (Duration.between(fromInst, toInst).toDays() > MAX_RANGE_DAYS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Range exceeds " + MAX_RANGE_DAYS + " days");
         }
-        if (sensorType != null && !SENSOR_TYPE_PATTERN.matcher(sensorType).matches()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sensorType");
+        if (sensorTypes != null) {
+            for (String st : sensorTypes) {
+                if (!SENSOR_TYPE_PATTERN.matcher(st).matches()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sensorType");
+                }
+            }
         }
         try {
             return recordService.aggregatedHistory(
-                    compositeId, fromInst, toInst, bucket, sensorType,
+                    compositeId, fromInst, toInst, bucket, sensorTypes,
                     bucketLimit, bucketOffset, sensorLimit, sensorOffset);
         } catch (IllegalArgumentException iae) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, iae.getMessage(), iae);

@@ -56,4 +56,36 @@ class RecordControllerTest {
                 .andExpect(jsonPath("$.sensors[0].sensorType").value("temperature"))
                 .andExpect(jsonPath("$.sensors[0].data[0].value").value(25.0));
     }
+
+    @Test
+    void aggregatedHistoryReturnsMultipleSensors() throws Exception {
+        AggregatedSensorData tempData = new AggregatedSensorData(
+                "temperature",
+                "°C",
+                List.of(new TimestampValue(Instant.parse("2023-01-01T00:00:00Z"), 25.0))
+        );
+        AggregatedSensorData humidityData = new AggregatedSensorData(
+                "humidity",
+                "%",
+                List.of(new TimestampValue(Instant.parse("2023-01-01T00:00:00Z"), 60.0))
+        );
+        AggregatedHistoryResponse response = new AggregatedHistoryResponse(
+                Instant.parse("2023-01-01T00:00:00Z"),
+                Instant.parse("2023-01-02T00:00:00Z"),
+                List.of(tempData, humidityData)
+        );
+        when(recordService.aggregatedHistory(eq("dev1"), any(), any(), eq("5m"),
+                eq(List.of("temperature", "humidity")), isNull(), isNull(), isNull(), isNull()))
+                .thenReturn(response);
+
+        mockMvc.perform(get("/api/records/history/aggregated")
+                        .param("compositeId", "dev1")
+                        .param("from", "2023-01-01T00:00:00Z")
+                        .param("to", "2023-01-02T00:00:00Z")
+                        .param("bucket", "5m")
+                        .param("sensorType", "temperature")
+                        .param("sensorType", "humidity"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sensors.length()" ).value(2));
+    }
 }

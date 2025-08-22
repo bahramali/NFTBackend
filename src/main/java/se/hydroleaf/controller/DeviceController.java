@@ -27,6 +27,11 @@ public class DeviceController {
         return deviceService.getAllDevices();
     }
 
+    @GetMapping("/getAllDevices")
+    public DeviceSensorsResponse getAllDevicesWithSensors() {
+        return deviceService.getAllDevicesWithSensors();
+    }
+
     @GetMapping("/sensors")
     public DeviceSensorsResponse getSensorsForDevices(@RequestParam List<String> compositeIds) {
         try {

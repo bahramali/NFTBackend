@@ -66,4 +66,11 @@ public class DeviceService {
 
         return new DeviceSensorsResponse(version, systemInfos, deviceInfos);
     }
+
+    public DeviceSensorsResponse getAllDevicesWithSensors() {
+        List<String> allIds = deviceRepository.findAll().stream()
+                .map(Device::getCompositeId)
+                .toList();
+        return getSensorsForDevices(allIds);
+    }
 }

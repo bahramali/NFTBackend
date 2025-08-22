@@ -51,4 +51,18 @@ class DeviceControllerTest {
         mockMvc.perform(get("/api/devices/sensors").param("compositeIds", "unknown"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void getAllDevicesWithSensorsReturnsAggregate() throws Exception {
+        DeviceSensorsResponse response = new DeviceSensorsResponse(
+                "2025-08-22T09:05Z",
+                List.of(new DeviceSensorsResponse.SystemInfo("S01", List.of("L01"))),
+                List.of(new DeviceSensorsResponse.DeviceInfo("S01", "L01", "G01", List.of("ph")))
+        );
+        when(deviceService.getAllDevicesWithSensors()).thenReturn(response);
+
+        mockMvc.perform(get("/api/devices/getAllDevices"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.devices[0].deviceId").value("G01"));
+    }
 }

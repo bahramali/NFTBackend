@@ -61,7 +61,7 @@ class DeviceControllerTest {
         );
         when(deviceService.getAllDevicesWithSensors()).thenReturn(response);
 
-        mockMvc.perform(get("/api/devices/getAllDevices"))
+        mockMvc.perform(get("/api/devices/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.devices[0].deviceId").value("G01"));
     }

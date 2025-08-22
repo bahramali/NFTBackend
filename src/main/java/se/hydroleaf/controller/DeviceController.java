@@ -27,7 +27,7 @@ public class DeviceController {
         return deviceService.getAllDevices();
     }
 
-    @GetMapping("/getAllDevices")
+    @GetMapping("/all")
     public DeviceSensorsResponse getAllDevicesWithSensors() {
         return deviceService.getAllDevicesWithSensors();
     }

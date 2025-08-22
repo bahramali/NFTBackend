@@ -27,6 +27,13 @@ public class DeviceController {
         return deviceService.getAllDevices();
     }
 
+    @GetMapping("/composite-ids")
+    public List<String> getCompositeIds(@RequestParam String system,
+                                        @RequestParam String layer,
+                                        @RequestParam(required = false) String deviceId) {
+        return deviceService.getCompositeIds(system, layer, deviceId);
+    }
+
     @GetMapping("/all")
     public DeviceSensorsResponse getAllDevicesWithSensors() {
         return deviceService.getAllDevicesWithSensors();

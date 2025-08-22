@@ -127,9 +127,9 @@ public class RecordService {
             Instant from,
             Instant to,
             String bucket, // e.g., "5m","1h","1d"
-            String sensorType // optional filter
+            List<String> sensorTypes // optional filter
     ) {
-        return aggregatedHistory(compositeId, from, to, bucket, sensorType, null, null, null, null);
+        return aggregatedHistory(compositeId, from, to, bucket, sensorTypes, null, null, null, null);
     }
 
     @Transactional(readOnly = true)
@@ -138,7 +138,7 @@ public class RecordService {
             Instant from,
             Instant to,
             String bucket,
-            String sensorType,
+            List<String> sensorTypes,
             Integer bucketLimit,
             Integer bucketOffset,
             Integer sensorLimit,
@@ -152,8 +152,14 @@ public class RecordService {
         Instant bucketFrom = InstantUtil.truncateToBucket(from, bucket);
         Instant bucketTo   = InstantUtil.truncateToBucket(to, bucket);
 
-        List<SensorAggregateResult> results =
-                aggregationReader.aggregate(compositeId, bucketFrom, bucketTo, bucket, sensorType);
+        List<SensorAggregateResult> results = new ArrayList<>();
+        if (sensorTypes == null || sensorTypes.isEmpty()) {
+            results.addAll(aggregationReader.aggregate(compositeId, bucketFrom, bucketTo, bucket, null));
+        } else {
+            for (String st : sensorTypes) {
+                results.addAll(aggregationReader.aggregate(compositeId, bucketFrom, bucketTo, bucket, st));
+            }
+        }
 
         // Collate by (sensorType|unit)
         Map<String, AggregatedSensorData> map = new LinkedHashMap<>();

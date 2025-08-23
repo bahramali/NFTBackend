@@ -65,4 +65,17 @@ class DeviceControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.devices[0].deviceId").value("G01"));
     }
+
+    @Test
+    void getCompositeIdsReturnsIds() throws Exception {
+        when(deviceService.getCompositeIds("S01", "L01", "D01"))
+                .thenReturn(List.of("S01-L01-D01"));
+
+        mockMvc.perform(get("/api/devices/composite-ids")
+                        .param("system", "S01")
+                        .param("layer", "L01")
+                        .param("deviceId", "D01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0]").value("S01-L01-D01"));
+    }
 }

@@ -32,6 +32,18 @@ public class DeviceService {
                 .toList();
     }
 
+    public List<String> getCompositeIds(String system, String layer, String deviceId) {
+        List<Device> devices = deviceRepository.findBySystemAndLayer(system, layer);
+        if (deviceId != null && !deviceId.isBlank()) {
+            devices = devices.stream()
+                    .filter(d -> d.getDeviceId().equals(deviceId))
+                    .toList();
+        }
+        return devices.stream()
+                .map(Device::getCompositeId)
+                .toList();
+    }
+
     public DeviceSensorsResponse getSensorsForDevices(List<String> compositeIds) {
         List<Device> devices = deviceRepository.findAllById(compositeIds);
         Set<String> found = devices.stream().map(Device::getCompositeId).collect(Collectors.toSet());

@@ -68,10 +68,17 @@ public class DeviceService {
                 .toList();
 
         List<DeviceSensorsResponse.SystemInfo> systemInfos = devices.stream()
-                .collect(Collectors.groupingBy(Device::getSystem,
-                        Collectors.mapping(Device::getLayer, Collectors.toSet())))
+                .collect(Collectors.groupingBy(Device::getSystem))
                 .entrySet().stream()
-                .map(e -> new DeviceSensorsResponse.SystemInfo(e.getKey(), e.getValue().stream().toList()))
+                .map(e -> new DeviceSensorsResponse.SystemInfo(
+                        e.getKey(),
+                        e.getValue().stream()
+                                .map(Device::getLayer)
+                                .distinct()
+                                .toList(),
+                        e.getValue().stream()
+                                .map(Device::getCompositeId)
+                                .toList()))
                 .toList();
 
         String version = Instant.now().toString();

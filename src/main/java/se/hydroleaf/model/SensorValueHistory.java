@@ -31,20 +31,9 @@ import java.time.Instant;
 public class SensorValueHistory {
 
     @Id
-    @Column(name = "composite_id", nullable = false, length = 128)
-    private String compositeId;
-
-    @Id
-    @Column(name = "sensor_type", nullable = false, length = 64)
-    private String sensorType;
-
-    @Id
     @Column(name = "value_time", nullable = false)
     @JdbcTypeCode(SqlTypes.TIMESTAMP_WITH_TIMEZONE)
     private Instant valueTime;
-
-    @Column(name = "sensor_value")
-    private Double sensorValue;
 
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
@@ -55,6 +44,17 @@ public class SensorValueHistory {
     @ToString.Exclude
     @Column(name = "layer_part", length = 64)
     private String layerPart;
+
+    @Id
+    @Column(name = "composite_id", nullable = false, length = 128)
+    private String compositeId;
+
+    @Id
+    @Column(name = "sensor_type", nullable = false, length = 64)
+    private String sensorType;
+
+    @Column(name = "sensor_value")
+    private Double sensorValue;
 
     @PrePersist
     @PreUpdate

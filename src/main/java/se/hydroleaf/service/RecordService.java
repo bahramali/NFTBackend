@@ -1,6 +1,8 @@
 package se.hydroleaf.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.repository.dto.history.AggregatedHistoryResponse;
@@ -8,8 +10,10 @@ import se.hydroleaf.repository.dto.history.AggregatedSensorData;
 import se.hydroleaf.repository.dto.history.TimestampValue;
 import se.hydroleaf.model.ActuatorStatus;
 import se.hydroleaf.model.Device;
+import se.hydroleaf.model.DeviceGroup;
 import se.hydroleaf.model.LatestSensorValue;
 import se.hydroleaf.repository.ActuatorStatusRepository;
+import se.hydroleaf.repository.DeviceGroupRepository;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.LatestSensorValueRepository;
 import se.hydroleaf.util.InstantUtil;
@@ -30,7 +34,10 @@ import java.util.*;
 @Service
 public class RecordService {
 
+    private static final Logger log = LoggerFactory.getLogger(RecordService.class);
+
     private final DeviceRepository deviceRepository;
+    private final DeviceGroupRepository deviceGroupRepository;
     private final ActuatorStatusRepository actuatorStatusRepository;
     private final SensorAggregationReader aggregationReader; // thin facade over custom repo/projection
     private final LatestSensorValueRepository latestSensorValueRepository;
@@ -38,12 +45,14 @@ public class RecordService {
 
     public RecordService(
             DeviceRepository deviceRepository,
+            DeviceGroupRepository deviceGroupRepository,
             ActuatorStatusRepository actuatorStatusRepository,
             SensorAggregationReader aggregationReader,
             LatestSensorValueRepository latestSensorValueRepository,
             SensorValueBuffer sensorValueBuffer
     ) {
         this.deviceRepository = deviceRepository;
+        this.deviceGroupRepository = deviceGroupRepository;
         this.actuatorStatusRepository = actuatorStatusRepository;
         this.aggregationReader = aggregationReader;
         this.latestSensorValueRepository = latestSensorValueRepository;
@@ -55,7 +64,7 @@ public class RecordService {
         Objects.requireNonNull(compositeId, "compositeId is required");
 
         final Device device = deviceRepository.findById(compositeId)
-                .orElseThrow(() -> new IllegalArgumentException("Unknown device composite_id: " + compositeId));
+                .orElseGet(() -> autoRegisterDevice(compositeId));
 
         final Instant ts = parseTimestamp(json.path("timestamp")).orElseGet(Instant::now);
 
@@ -119,6 +128,26 @@ public class RecordService {
                 actuatorStatusRepository.saveAll(statuses);
             }
         }
+    }
+
+    private Device autoRegisterDevice(String compositeId) {
+        String[] parts = compositeId.split("-", 3);
+        if (parts.length < 3) {
+            throw new IllegalArgumentException("Invalid compositeId: " + compositeId);
+        }
+        DeviceGroup group = deviceGroupRepository.findAll().stream()
+                .findFirst()
+                .orElseGet(() -> deviceGroupRepository.save(DeviceGroup.builder().mqttTopic("default").build()));
+
+        Device device = new Device();
+        device.setCompositeId(compositeId);
+        device.setSystem(parts[0]);
+        device.setLayer(parts[1]);
+        device.setDeviceId(parts[2]);
+        device.setGroup(group);
+        deviceRepository.save(device);
+        log.info("Auto-registered unknown device {}", compositeId);
+        return device;
     }
 
     @Transactional(readOnly = true)

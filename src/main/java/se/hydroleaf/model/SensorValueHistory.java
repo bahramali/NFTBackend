@@ -50,4 +50,16 @@ public class SensorValueHistory {
 
     @Column(name = "sensor_value")
     private Double sensorValue;
+
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @Column(name = "system_part", insertable = false, updatable = false,
+            columnDefinition = "VARCHAR(64) GENERATED ALWAYS AS (split_part(composite_id, '-', 1)) STORED")
+    private String systemPart;
+
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @Column(name = "layer_part", insertable = false, updatable = false,
+            columnDefinition = "VARCHAR(64) GENERATED ALWAYS AS (split_part(composite_id, '-', 2)) STORED")
+    private String layerPart;
 }

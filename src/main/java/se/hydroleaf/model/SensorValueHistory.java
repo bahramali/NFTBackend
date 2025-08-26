@@ -1,11 +1,6 @@
 package se.hydroleaf.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -50,4 +45,27 @@ public class SensorValueHistory {
 
     @Column(name = "sensor_value")
     private Double sensorValue;
+
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @Column(name = "system_part", length = 64)
+    private String systemPart;
+
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @Column(name = "layer_part", length = 64)
+    private String layerPart;
+
+    @PrePersist
+    @PreUpdate
+    private void fillParts() {
+        if (compositeId != null) {
+            String[] parts = compositeId.split("-", 3);
+            systemPart = parts.length > 0 ? parts[0] : null;
+            layerPart = parts.length > 1 ? parts[1] : null;
+        } else {
+            systemPart = null;
+            layerPart = null;
+        }
+    }
 }

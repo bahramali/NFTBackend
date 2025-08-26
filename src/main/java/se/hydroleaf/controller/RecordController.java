@@ -4,6 +4,7 @@ package se.hydroleaf.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -67,6 +68,30 @@ public class RecordController {
         } catch (IllegalArgumentException iae) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, iae.getMessage(), iae);
         }
+    }
+
+    @PostMapping("/history/aggregated")
+    public AggregatedHistoryResponse postHistoryAggregated(
+            @RequestParam("compositeId") String compositeId,
+            @RequestParam("from") String from,
+            @RequestParam("to") String to,
+            @RequestParam(name = "bucket", defaultValue = "5m") String bucket,
+            @RequestParam(name = "sensorType", required = false) List<String> sensorTypes,
+            @RequestParam(name = "bucketLimit", required = false) Integer bucketLimit,
+            @RequestParam(name = "bucketOffset", required = false) Integer bucketOffset,
+            @RequestParam(name = "sensorLimit", required = false) Integer sensorLimit,
+            @RequestParam(name = "sensorOffset", required = false) Integer sensorOffset
+    ) {
+        return getHistoryAggregated(
+                compositeId,
+                from,
+                to,
+                bucket,
+                sensorTypes,
+                bucketLimit,
+                bucketOffset,
+                sensorLimit,
+                sensorOffset);
     }
 
     private static Instant parseInstant(String s) {

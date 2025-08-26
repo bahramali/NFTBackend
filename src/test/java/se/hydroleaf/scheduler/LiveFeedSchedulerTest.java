@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import se.hydroleaf.mqtt.TopicPublisher;
+import se.hydroleaf.websocket.WebSocketSessionTracker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -85,7 +86,8 @@ class LiveFeedSchedulerTest {
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         TopicPublisher topicPublisher = new TopicPublisher(true, messagingTemplate);
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, mapper);
+        WebSocketSessionTracker tracker = new WebSocketSessionTracker();
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, mapper, tracker);
         scheduler.sendLiveNow();
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
@@ -113,7 +115,8 @@ class LiveFeedSchedulerTest {
                 .thenReturn("{}");
 
         TopicPublisher topicPublisher = new TopicPublisher(true, messagingTemplate);
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, mapper);
+        WebSocketSessionTracker tracker = new WebSocketSessionTracker();
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, mapper, tracker);
 
         assertDoesNotThrow(scheduler::sendLiveNow);
         scheduler.sendLiveNow();
@@ -131,7 +134,8 @@ class LiveFeedSchedulerTest {
 
         ObjectMapper mapper = new ObjectMapper();
         TopicPublisher topicPublisher = new TopicPublisher(true, messagingTemplate);
-        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, mapper);
+        WebSocketSessionTracker tracker = new WebSocketSessionTracker();
+        LiveFeedScheduler scheduler = new LiveFeedScheduler(statusService, topicPublisher, mapper, tracker);
 
         ExecutorService exec = Executors.newFixedThreadPool(10);
         for (int i = 0; i < 10; i++) {

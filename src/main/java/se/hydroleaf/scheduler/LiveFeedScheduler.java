@@ -3,11 +3,13 @@ package se.hydroleaf.scheduler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import se.hydroleaf.repository.dto.snapshot.LiveNowSnapshot;
 import se.hydroleaf.mqtt.TopicPublisher;
+import se.hydroleaf.repository.dto.snapshot.LiveNowSnapshot;
 import se.hydroleaf.service.StatusService;
+import se.hydroleaf.websocket.WebSocketSessionTracker;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -21,13 +23,16 @@ public class LiveFeedScheduler {
     private final StatusService statusService;
     private final TopicPublisher topicPublisher;
     private final ObjectMapper objectMapper;
+    private final WebSocketSessionTracker sessionTracker;
 
     public LiveFeedScheduler(StatusService statusService,
                              TopicPublisher topicPublisher,
-                             ObjectMapper objectMapper) {
+                             ObjectMapper objectMapper,
+                             WebSocketSessionTracker sessionTracker) {
         this.statusService = statusService;
         this.topicPublisher = topicPublisher;
         this.objectMapper = objectMapper;
+        this.sessionTracker = sessionTracker;
     }
 
     private final AtomicBoolean sending = new AtomicBoolean(false);
@@ -42,6 +47,9 @@ public class LiveFeedScheduler {
             LiveNowSnapshot snapshot = statusService.getLiveNowSnapshot();
             String payload = objectMapper.writeValueAsString(snapshot);
             topicPublisher.publish("/topic/live_now", payload);
+        } catch (DataAccessException dae) {
+            log.warn("Database access failed during live feed (sessions: {})", sessionTracker.getSessionCount(), dae);
+            topicPublisher.publish("/topic/live_now", "{\"error\":\"data unavailable\"}");
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize LiveNowSnapshot", e);
         } catch (Exception e) {

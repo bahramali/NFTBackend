@@ -187,4 +187,20 @@ class RecordServiceDeviceTests {
         assertEquals(22.0, v2.getValue());
         assertEquals(Instant.parse("2025-05-06T06:06:06Z"), v2.getValueTime());
     }
+
+    @Test
+    void unknown_device_is_auto_registered() throws Exception {
+        final String compositeId = "S20-L20-NEW";
+        assertTrue(deviceRepository.findById(compositeId).isEmpty());
+
+        JsonNode json = objectMapper.readTree("{}\n");
+        recordService.saveRecord(compositeId, json);
+
+        Device saved = deviceRepository.findById(compositeId).orElse(null);
+        assertNotNull(saved);
+        assertEquals("S20", saved.getSystem());
+        assertEquals("L20", saved.getLayer());
+        assertEquals("NEW", saved.getDeviceId());
+        assertEquals(defaultGroup.getId(), saved.getGroup().getId());
+    }
 }

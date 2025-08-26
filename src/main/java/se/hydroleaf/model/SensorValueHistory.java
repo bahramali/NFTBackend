@@ -50,10 +50,4 @@ public class SensorValueHistory {
 
     @Column(name = "sensor_value")
     private Double sensorValue;
-
-    @Column(name = "system_part", length = 64, insertable = false, updatable = false)
-    private String systemPart;
-
-    @Column(name = "layer_part", length = 64, insertable = false, updatable = false)
-    private String layerPart;
 }

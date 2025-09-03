@@ -11,6 +11,7 @@ import se.hydroleaf.model.Note;
 import se.hydroleaf.repository.NoteRepository;
 
 import java.time.LocalDateTime;
+import org.junit.jupiter.api.BeforeEach;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -29,6 +30,11 @@ class NoteControllerTest {
 
     @Autowired
     private NoteRepository noteRepository;
+
+    @BeforeEach
+    void clearRepository() {
+        noteRepository.deleteAll();
+    }
 
     @Test
     void getNotesReturnsStoredNotes() throws Exception {

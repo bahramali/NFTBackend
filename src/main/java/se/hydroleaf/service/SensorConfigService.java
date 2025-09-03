@@ -5,6 +5,7 @@ import se.hydroleaf.model.SensorConfig;
 import se.hydroleaf.repository.SensorConfigRepository;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class SensorConfigService {
@@ -25,6 +26,9 @@ public class SensorConfigService {
     }
 
     public SensorConfig create(SensorConfig config) {
+        if (config.getMinValue() == null || config.getMaxValue() == null) {
+            throw new IllegalArgumentException("Min and max values must be provided");
+        }
         if (repository.existsBySensorType(config.getSensorType())) {
             throw new IllegalArgumentException("Sensor type already exists: " + config.getSensorType());
         }
@@ -33,8 +37,8 @@ public class SensorConfigService {
 
     public SensorConfig update(String sensorType, SensorConfig config) {
         SensorConfig existing = get(sensorType);
-        existing.setMinValue(config.getMinValue());
-        existing.setMaxValue(config.getMaxValue());
+        existing.setMinValue(Objects.requireNonNull(config.getMinValue(), "Min value must be provided"));
+        existing.setMaxValue(Objects.requireNonNull(config.getMaxValue(), "Max value must be provided"));
         existing.setDescription(config.getDescription());
         return repository.save(existing);
     }

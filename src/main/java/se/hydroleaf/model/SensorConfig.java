@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.NotNull;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,9 +46,11 @@ public class SensorConfig {
     @Column(name = "sensor_type", length = 64, nullable = false)
     private String sensorType;
 
+    @NotNull
     @Column(name = "min_value", nullable = false)
     private Double minValue;
 
+    @NotNull
     @Column(name = "max_value", nullable = false)
     private Double maxValue;
 

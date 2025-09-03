@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import jakarta.validation.Valid;
 import se.hydroleaf.model.SensorConfig;
 import se.hydroleaf.service.SensorConfigService;
 
@@ -40,7 +41,7 @@ public class SensorConfigController {
     }
 
     @PostMapping
-    public SensorConfig create(@RequestBody SensorConfig config) {
+    public SensorConfig create(@Valid @RequestBody SensorConfig config) {
         try {
             return service.create(config);
         } catch (IllegalArgumentException iae) {
@@ -49,7 +50,7 @@ public class SensorConfigController {
     }
 
     @PutMapping("/{sensorType}")
-    public SensorConfig update(@PathVariable String sensorType, @RequestBody SensorConfig config) {
+    public SensorConfig update(@PathVariable String sensorType, @Valid @RequestBody SensorConfig config) {
         try {
             return service.update(sensorType, config);
         } catch (IllegalArgumentException iae) {

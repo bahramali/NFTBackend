@@ -1,17 +1,12 @@
 package se.hydroleaf.mqtt;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalTime;
-
 /**
  * Publishes messages to STOMP topics when publishing is enabled.
- * If disabled, it logs the intended destination and payload instead.
  */
-@Slf4j
 @Service
 public class TopicPublisher {
 
@@ -27,10 +22,6 @@ public class TopicPublisher {
     public void publish(String destination, String payload) {
         if (publishEnabled) {
             messagingTemplate.convertAndSend(destination, payload);
-        } else {
-            if ("/topic/live_now".equalsIgnoreCase(destination)) {
-                log.debug("Publishing disabled. Should publish to {} with payload: {}", destination, payload);
-            }
         }
     }
 }

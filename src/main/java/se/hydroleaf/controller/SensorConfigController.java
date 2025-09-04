@@ -42,6 +42,7 @@ public class SensorConfigController {
 
     @PostMapping
     public SensorConfig create(@Valid @RequestBody SensorConfig config) {
+        config.setSensorType(config.getSensorType());
         try {
             return service.create(config);
         } catch (IllegalArgumentException iae) {

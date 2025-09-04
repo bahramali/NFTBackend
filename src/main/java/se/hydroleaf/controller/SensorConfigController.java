@@ -49,6 +49,16 @@ public class SensorConfigController {
         }
     }
 
+    @PostMapping("/{sensorType}")
+    public SensorConfig create(@PathVariable String sensorType, @Valid @RequestBody SensorConfig config) {
+        config.setSensorType(sensorType);
+        try {
+            return service.create(config);
+        } catch (IllegalArgumentException iae) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, iae.getMessage(), iae);
+        }
+    }
+
     @PutMapping("/{sensorType}")
     public SensorConfig update(@PathVariable String sensorType, @Valid @RequestBody SensorConfig config) {
         try {

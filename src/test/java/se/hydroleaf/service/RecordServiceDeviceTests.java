@@ -10,10 +10,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.model.Device;
-import se.hydroleaf.model.DeviceGroup;
 import se.hydroleaf.model.LatestSensorValue;
+import se.hydroleaf.model.TopicName;
 import se.hydroleaf.repository.ActuatorStatusRepository;
-import se.hydroleaf.repository.DeviceGroupRepository;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorValueHistoryRepository;
 import se.hydroleaf.repository.LatestSensorValueAggregationRepository;
@@ -34,24 +33,16 @@ class RecordServiceDeviceTests {
     @Autowired ObjectMapper objectMapper;
     @Autowired RecordService recordService;
     @Autowired DeviceRepository deviceRepository;
-    @Autowired DeviceGroupRepository deviceGroupRepository;
     @Autowired SensorValueHistoryRepository sensorValueHistoryRepository;
     @Autowired ActuatorStatusRepository actuatorStatusRepository;
     @Autowired LatestSensorValueRepository latestSensorValueRepository;
     @Autowired LatestSensorValueAggregationRepository latestAggregationRepository;
     @Autowired SensorValueBuffer sensorValueBuffer;
 
-    private DeviceGroup defaultGroup;
-
     @BeforeEach
-    void initGroup() {
+    void initData() {
         sensorValueBuffer.flush();
         sensorValueHistoryRepository.deleteAll();
-        defaultGroup = deviceGroupRepository.findByMqttTopic("test-group").orElseGet(() -> {
-            DeviceGroup g = new DeviceGroup();
-            g.setMqttTopic("test-group");
-            return deviceGroupRepository.save(g);
-        });
     }
 
     @AfterEach
@@ -70,7 +61,7 @@ class RecordServiceDeviceTests {
                 d.setLayer(parts[1]);
                 d.setDeviceId(parts[2]);
             }
-            d.setGroup(defaultGroup);
+            d.setTopic(TopicName.growSensors);
             return deviceRepository.save(d);
         });
     }
@@ -97,7 +88,7 @@ class RecordServiceDeviceTests {
         JsonNode node = objectMapper.readTree(json);
 
         long pumpBefore = actuatorStatusRepository.count();
-        recordService.saveRecord(compositeId, node);
+        recordService.saveRecord(compositeId, node, TopicName.growSensors);
 
         // buffer should delay persistence until flush
         assertEquals(0, sensorValueHistoryRepository.count());
@@ -139,8 +130,8 @@ class RecordServiceDeviceTests {
         String second = """
                 {"timestamp":"2025-01-01T00:00:30Z","sensors":[{"sensorType":"ph","value":8.0}]}
                 """;
-        recordService.saveRecord(compositeId, objectMapper.readTree(first));
-        recordService.saveRecord(compositeId, objectMapper.readTree(second));
+        recordService.saveRecord(compositeId, objectMapper.readTree(first), TopicName.growSensors);
+        recordService.saveRecord(compositeId, objectMapper.readTree(second), TopicName.growSensors);
 
         // nothing persisted until flush
         assertEquals(0, sensorValueHistoryRepository.count());
@@ -164,7 +155,7 @@ class RecordServiceDeviceTests {
                   "sensors":[{"sensorName":"t1","sensorType":"temperature","value":21.5,"unit":"°C"}]
                 }
                 """;
-        recordService.saveRecord(compositeId, objectMapper.readTree(first));
+        recordService.saveRecord(compositeId, objectMapper.readTree(first), TopicName.growSensors);
 
         LatestSensorValue v1 = latestSensorValueRepository
                 .findByDevice_CompositeIdAndSensorType(compositeId, "temperature")
@@ -179,7 +170,7 @@ class RecordServiceDeviceTests {
                   "sensors":[{"sensorName":"t1","sensorType":"temperature","value":22.0,"unit":"°C"}]
                 }
                 """;
-        recordService.saveRecord(compositeId, objectMapper.readTree(second));
+        recordService.saveRecord(compositeId, objectMapper.readTree(second), TopicName.growSensors);
 
         LatestSensorValue v2 = latestSensorValueRepository
                 .findByDevice_CompositeIdAndSensorType(compositeId, "temperature")
@@ -194,13 +185,13 @@ class RecordServiceDeviceTests {
         assertTrue(deviceRepository.findById(compositeId).isEmpty());
 
         JsonNode json = objectMapper.readTree("{}\n");
-        recordService.saveRecord(compositeId, json);
+        recordService.saveRecord(compositeId, json, TopicName.waterTank);
 
         Device saved = deviceRepository.findById(compositeId).orElse(null);
         assertNotNull(saved);
         assertEquals("S20", saved.getSystem());
         assertEquals("L20", saved.getLayer());
         assertEquals("NEW", saved.getDeviceId());
-        assertEquals(defaultGroup.getId(), saved.getGroup().getId());
+        assertEquals(TopicName.waterTank, saved.getTopic());
     }
 }

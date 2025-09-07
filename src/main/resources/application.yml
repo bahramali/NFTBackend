@@ -55,4 +55,4 @@ management:
         include: health,info,metrics,prometheus
 metrics:
   connection-pool:
-    enabled: true
+    enabled: false

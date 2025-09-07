@@ -56,11 +56,11 @@ public class RecordService {
     }
 
     @Transactional
-    public void saveRecord(String compositeId, JsonNode json) {
+    public void saveRecord(String compositeId, JsonNode json, TopicName topic) {
         Objects.requireNonNull(compositeId, "compositeId is required");
 
         final Device device = deviceRepository.findById(compositeId)
-                .orElseGet(() -> autoRegisterDevice(compositeId));
+                .orElseGet(() -> autoRegisterDevice(compositeId, topic));
 
         final Instant ts = parseTimestamp(json.path("timestamp")).orElseGet(Instant::now);
 
@@ -126,7 +126,7 @@ public class RecordService {
         }
     }
 
-    private Device autoRegisterDevice(String compositeId) {
+    private Device autoRegisterDevice(String compositeId, TopicName topic) {
         String[] parts = compositeId.split("-", 3);
         if (parts.length < 3) {
             throw new IllegalArgumentException("Invalid compositeId: " + compositeId);
@@ -136,7 +136,7 @@ public class RecordService {
         device.setSystem(parts[0]);
         device.setLayer(parts[1]);
         device.setDeviceId(parts[2]);
-        device.setTopic(TopicName.growSensors);
+        device.setTopic(topic != null ? topic : TopicName.growSensors);
         deviceRepository.save(device);
         log.info("Auto-registered unknown device {}", compositeId);
         return device;

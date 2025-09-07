@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import se.hydroleaf.service.RecordService;
+import se.hydroleaf.model.TopicName;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -57,7 +58,7 @@ class MqttMessageHandlerWaterTankTest {
 
         handler.handle(topic, payload);
 
-        verify(recordService).saveRecord(eq("S01-L01-G02"), any());
+        verify(recordService).saveRecord(eq("S01-L01-G02"), any(), eq(TopicName.waterTank));
         verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
     }
 

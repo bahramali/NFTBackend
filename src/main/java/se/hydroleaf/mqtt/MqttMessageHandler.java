@@ -5,8 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import se.hydroleaf.service.RecordService;
-
-import java.util.regex.Pattern;
+import se.hydroleaf.model.TopicName;
 
 @Slf4j
 @Component
@@ -40,7 +39,16 @@ public class MqttMessageHandler {
 
             topicPublisher.publish("/topic/" + topic, payload);
 
-            recordService.saveRecord(compositeId, node);
+            TopicName topicName = null;
+            if (topic != null) {
+                String prefix = topic.contains("/") ? topic.substring(0, topic.indexOf('/')) : topic;
+                try {
+                    topicName = TopicName.valueOf(prefix);
+                } catch (IllegalArgumentException ignore) {
+                }
+            }
+
+            recordService.saveRecord(compositeId, node, topicName);
         } catch (Exception ex) {
             log.error("MQTT handle error for topic {}: {}", topic, ex.getMessage(), ex);
         }
@@ -53,15 +61,5 @@ public class MqttMessageHandler {
         return null;
     }
 
-    private enum TopicPrefix {
-        GROW("growSensors"),
-        WATER("waterTank");
-
-        private final Pattern pattern;
-
-        TopicPrefix(String prefix) {
-            this.pattern = Pattern.compile("^" + prefix + "/(S\\d+)/(L\\d+)/([^/]+)$");
-        }
-    }
 }
 

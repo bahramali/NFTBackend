@@ -10,10 +10,9 @@ import se.hydroleaf.repository.dto.history.AggregatedSensorData;
 import se.hydroleaf.repository.dto.history.TimestampValue;
 import se.hydroleaf.model.ActuatorStatus;
 import se.hydroleaf.model.Device;
-import se.hydroleaf.model.DeviceGroup;
 import se.hydroleaf.model.LatestSensorValue;
+import se.hydroleaf.model.TopicName;
 import se.hydroleaf.repository.ActuatorStatusRepository;
-import se.hydroleaf.repository.DeviceGroupRepository;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.LatestSensorValueRepository;
 import se.hydroleaf.util.InstantUtil;
@@ -37,7 +36,6 @@ public class RecordService {
     private static final Logger log = LoggerFactory.getLogger(RecordService.class);
 
     private final DeviceRepository deviceRepository;
-    private final DeviceGroupRepository deviceGroupRepository;
     private final ActuatorStatusRepository actuatorStatusRepository;
     private final SensorAggregationReader aggregationReader; // thin facade over custom repo/projection
     private final LatestSensorValueRepository latestSensorValueRepository;
@@ -45,14 +43,12 @@ public class RecordService {
 
     public RecordService(
             DeviceRepository deviceRepository,
-            DeviceGroupRepository deviceGroupRepository,
             ActuatorStatusRepository actuatorStatusRepository,
             SensorAggregationReader aggregationReader,
             LatestSensorValueRepository latestSensorValueRepository,
             SensorValueBuffer sensorValueBuffer
     ) {
         this.deviceRepository = deviceRepository;
-        this.deviceGroupRepository = deviceGroupRepository;
         this.actuatorStatusRepository = actuatorStatusRepository;
         this.aggregationReader = aggregationReader;
         this.latestSensorValueRepository = latestSensorValueRepository;
@@ -135,16 +131,12 @@ public class RecordService {
         if (parts.length < 3) {
             throw new IllegalArgumentException("Invalid compositeId: " + compositeId);
         }
-        DeviceGroup group = deviceGroupRepository.findAll().stream()
-                .findFirst()
-                .orElseGet(() -> deviceGroupRepository.save(DeviceGroup.builder().mqttTopic("default").build()));
-
         Device device = new Device();
         device.setCompositeId(compositeId);
         device.setSystem(parts[0]);
         device.setLayer(parts[1]);
         device.setDeviceId(parts[2]);
-        device.setGroup(group);
+        device.setTopic(TopicName.growSensors);
         deviceRepository.save(device);
         log.info("Auto-registered unknown device {}", compositeId);
         return device;

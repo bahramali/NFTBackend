@@ -4,8 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -19,8 +19,8 @@ import lombok.ToString;
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(exclude = "group")
-@ToString(exclude = "group")
+@EqualsAndHashCode
+@ToString
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -52,7 +52,7 @@ public class Device {
     @Column(name = "device_id", length = 64, nullable = false)
     private String deviceId;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "group_id", nullable = false)
-    private DeviceGroup group;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "topic", length = 64, nullable = false)
+    private TopicName topic;
 }

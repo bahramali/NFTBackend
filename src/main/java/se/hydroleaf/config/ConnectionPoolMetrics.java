@@ -3,6 +3,7 @@ package se.hydroleaf.config;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -18,17 +19,21 @@ import javax.sql.DataSource;
 public class ConnectionPoolMetrics {
 
     private final HikariDataSource dataSource;
+    private final boolean enabled;
 
-    public ConnectionPoolMetrics(DataSource dataSource) {
+    public ConnectionPoolMetrics(
+            DataSource dataSource,
+            @Value("${metrics.connection-pool.enabled:true}") boolean enabled) {
         this.dataSource = dataSource instanceof HikariDataSource
                 ? (HikariDataSource) dataSource
                 : null;
+        this.enabled = enabled;
     }
 
     @Scheduled(fixedDelayString = "${metrics.connection-pool.log-interval:60000}")
     public void logMetrics() {
-        if (dataSource == null) {
-            return; // DataSource not HikariCP; nothing to log
+        if (!enabled || dataSource == null) {
+            return; // Logging disabled or DataSource not HikariCP; nothing to log
         }
         HikariPoolMXBean mxBean = dataSource.getHikariPoolMXBean();
         int active = mxBean.getActiveConnections();

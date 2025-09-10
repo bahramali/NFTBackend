@@ -54,7 +54,7 @@ class NoteControllerTest {
 
     @Test
     void postCreatesNote() throws Exception {
-        String payload = "{\"title\":\"new note\",\"date\":\"2023-02-02T15:30:00\",\"content\":\"new content\"}";
+                String payload = "{\"title\":\"after\",\"content\":\"updated\"}";
 
         mockMvc.perform(post("/api/notes")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -98,7 +98,7 @@ class NoteControllerTest {
                 .content("initial")
                 .build());
 
-        String payload = "{\\"title\\":\\"after\\",\\"content\\":\\"updated\\"}";
+        String payload = "{\"title\":\"after\",\"content\":\"updated\"}";
 
         mockMvc.perform(put("/api/notes/" + saved.getId())
                         .contentType(MediaType.APPLICATION_JSON)

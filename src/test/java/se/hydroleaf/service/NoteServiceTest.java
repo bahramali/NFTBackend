@@ -41,6 +41,35 @@ class NoteServiceTest {
     }
 
     @Test
+    void saveSetsDateWhenNull() {
+        Note saved = noteService.save(Note.builder()
+                .title("With date")
+                .content("No date provided")
+                .build());
+
+        assertNotNull(saved.getDate());
+    }
+
+    @Test
+    void updateIgnoresNullDate() {
+        LocalDateTime originalDate = LocalDateTime.now();
+        Note saved = noteService.save(Note.builder()
+                .title("Old")
+                .date(originalDate)
+                .content("Initial")
+                .build());
+
+        Note updated = Note.builder()
+                .title("New")
+                .content("Updated")
+                .build();
+
+        Note result = noteService.update(saved.getId(), updated);
+        assertEquals(originalDate, result.getDate());
+        assertEquals("New", result.getTitle());
+    }
+
+    @Test
     void updateNonExistingNoteThrowsException() {
         Note updated = Note.builder()
                 .title("New")

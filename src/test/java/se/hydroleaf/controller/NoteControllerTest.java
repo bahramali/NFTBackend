@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,7 +54,7 @@ class NoteControllerTest {
 
     @Test
     void postCreatesNote() throws Exception {
-        String payload = "{\"title\":\"new note\",\"date\":\"2023-02-02T15:30:00\",\"content\":\"new content\"}";
+                String payload = "{\"title\":\"new note\",\"date\":\"2023-02-02T15:30:00\",\"content\":\"new content\"}";
 
         mockMvc.perform(post("/api/notes")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -87,5 +88,24 @@ class NoteControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].content").value("some apple text"))
                 .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(1)));
+    }
+
+    @Test
+    void putUpdatesNoteWithoutDate() throws Exception {
+        Note saved = noteRepository.save(Note.builder()
+                .title("before")
+                .date(LocalDateTime.parse("2023-01-01T10:15:30"))
+                .content("initial")
+                .build());
+
+        String payload = "{\"title\":\"after\",\"content\":\"updated\"}";
+
+        mockMvc.perform(put("/api/notes/" + saved.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("after"))
+                .andExpect(jsonPath("$.date").value("2023-01-01T10:15:30"))
+                .andExpect(jsonPath("$.content").value("updated"));
     }
 }

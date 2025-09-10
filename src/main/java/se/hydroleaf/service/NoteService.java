@@ -24,4 +24,8 @@ public class NoteService {
     public List<Note> searchByContent(String query) {
         return noteRepository.findByContentContainingIgnoreCase(query);
     }
+
+    public void deleteById(Long id) {
+        noteRepository.deleteById(id);
+    }
 }

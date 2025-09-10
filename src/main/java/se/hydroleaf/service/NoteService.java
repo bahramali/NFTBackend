@@ -18,6 +18,9 @@ public class NoteService {
     }
 
     public Note save(Note note) {
+        if (note.getDate() == null) {
+            note.setDate(java.time.LocalDateTime.now());
+        }
         return noteRepository.save(note);
     }
 
@@ -33,7 +36,9 @@ public class NoteService {
         return noteRepository.findById(id)
                 .map(existing -> {
                     existing.setTitle(updated.getTitle());
-                    existing.setDate(updated.getDate());
+                    if (updated.getDate() != null) {
+                        existing.setDate(updated.getDate());
+                    }
                     existing.setContent(updated.getContent());
                     return noteRepository.save(existing);
                 })

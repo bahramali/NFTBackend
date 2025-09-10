@@ -54,7 +54,7 @@ class NoteControllerTest {
 
     @Test
     void postCreatesNote() throws Exception {
-                String payload = "{\"title\":\"after\",\"content\":\"updated\"}";
+                String payload = "{\"title\":\"new note\",\"date\":\"2023-02-02T15:30:00\",\"content\":\"new content\"}";
 
         mockMvc.perform(post("/api/notes")
                         .contentType(MediaType.APPLICATION_JSON)

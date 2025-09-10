@@ -28,4 +28,15 @@ public class NoteService {
     public void deleteById(Long id) {
         noteRepository.deleteById(id);
     }
+
+    public Note update(Long id, Note updated) {
+        return noteRepository.findById(id)
+                .map(existing -> {
+                    existing.setTitle(updated.getTitle());
+                    existing.setDate(updated.getDate());
+                    existing.setContent(updated.getContent());
+                    return noteRepository.save(existing);
+                })
+                .orElseThrow(() -> new IllegalArgumentException("Note not found"));
+    }
 }

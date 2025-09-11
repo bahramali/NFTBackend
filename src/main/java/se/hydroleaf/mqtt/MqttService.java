@@ -20,7 +20,7 @@ import java.util.Arrays;
 @Slf4j
 @Service
 @ConditionalOnProperty(prefix = "mqtt", name = "enabled", havingValue = "true", matchIfMissing = false)
-public class MqttService implements MqttCallback {
+public class MqttService implements MqttCallbackExtended {
 
     @Value("${mqtt.brokerUri}")
     private String brokerUri;
@@ -35,6 +35,7 @@ public class MqttService implements MqttCallback {
     private String[] topics;
 
     private MqttClient client;
+    private MqttConnectOptions connectOptions;
 
     private final MqttMessageHandler messageHandler;
 
@@ -48,21 +49,13 @@ public class MqttService implements MqttCallback {
         client = new MqttClient(brokerUri, clientId, persistence);
         client.setCallback(this);
 
-        MqttConnectOptions opts = new MqttConnectOptions();
-        opts.setAutomaticReconnect(true);
-        opts.setCleanSession(true);
-        opts.setConnectionTimeout(10);
+        connectOptions = new MqttConnectOptions();
+        connectOptions.setAutomaticReconnect(true);
+        connectOptions.setCleanSession(true);
+        connectOptions.setConnectionTimeout(10);
 
         log.info("MQTT connecting to {} with clientId={} topics={}", brokerUri, clientId, Arrays.toString(topics));
-        client.connect(opts);
-
-        for (String t : topics) {
-            String topic = t.trim();
-            if (!topic.isEmpty()) {
-                client.subscribe(topic, qos);
-                log.info("MQTT subscribed: {} (qos={})", topic, qos);
-            }
-        }
+        client.connect(connectOptions);
     }
 
     @PreDestroy
@@ -78,6 +71,22 @@ public class MqttService implements MqttCallback {
     @Override
     public void connectionLost(Throwable cause) {
         log.warn("MQTT connection lost: {}", cause.toString());
+    }
+
+    @Override
+    public void connectComplete(boolean reconnect, String serverURI) {
+        log.info("MQTT connection complete (reconnect={})", reconnect);
+        for (String t : topics) {
+            String topic = t.trim();
+            if (!topic.isEmpty()) {
+                try {
+                    client.subscribe(topic, qos);
+                    log.info("MQTT subscribed: {} (qos={})", topic, qos);
+                } catch (MqttException e) {
+                    log.warn("MQTT subscribe failed for {}", topic, e);
+                }
+            }
+        }
     }
 
     @Override

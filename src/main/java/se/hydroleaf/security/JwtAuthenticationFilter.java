@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,11 +24,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public static final String ATTRIBUTE_JWT_ERROR = "jwtError";
 
     private final JwtProvider jwtProvider;
-    private final UserService userService;
+    private final ObjectProvider<UserService> userServiceProvider;
 
-    public JwtAuthenticationFilter(JwtProvider jwtProvider, UserService userService) {
+    public JwtAuthenticationFilter(JwtProvider jwtProvider, ObjectProvider<UserService> userServiceProvider) {
         this.jwtProvider = jwtProvider;
-        this.userService = userService;
+        this.userServiceProvider = userServiceProvider;
     }
 
     @Override
@@ -37,15 +38,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String token = resolveToken(request);
             if (token != null && jwtProvider.validateAccessToken(token)) {
-                String email = jwtProvider.getEmailFromAccessToken(token);
-                UserDetails userDetails = userService.loadUserByUsername(email);
-                if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                UserService userService = userServiceProvider.getIfAvailable();
+                if (userService != null) {
+                    String email = jwtProvider.getEmailFromAccessToken(token);
+                    UserDetails userDetails = userService.loadUserByUsername(email);
+                    if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities());
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
                 }
             }
         } catch (JwtException ex) {

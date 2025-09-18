@@ -3,6 +3,8 @@ package se.hydroleaf.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -32,11 +34,12 @@ import java.util.Map;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ObjectProvider<JwtAuthenticationFilter> jwtAuthenticationFilterProvider;
     private final ObjectMapper objectMapper;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, ObjectMapper objectMapper) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    public SecurityConfig(ObjectProvider<JwtAuthenticationFilter> jwtAuthenticationFilterProvider,
+                         ObjectMapper objectMapper) {
+        this.jwtAuthenticationFilterProvider = jwtAuthenticationFilterProvider;
         this.objectMapper = objectMapper;
     }
 
@@ -55,7 +58,10 @@ public class SecurityConfig {
                         .authenticationEntryPoint(this::handleAuthenticationError)
                         .accessDeniedHandler(this::handleAccessDenied));
 
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        JwtAuthenticationFilter jwtAuthenticationFilter = jwtAuthenticationFilterProvider.getIfAvailable();
+        if (jwtAuthenticationFilter != null) {
+            http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        }
 
         return http.build();
     }
@@ -66,6 +72,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @ConditionalOnBean(org.springframework.security.core.userdetails.UserDetailsService.class)
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }

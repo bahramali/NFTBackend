@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest(properties = "spring.flyway.enabled=false")
+@DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 @ActiveProfiles("test")
 @Import(NoteService.class)

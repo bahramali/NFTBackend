@@ -12,9 +12,6 @@ spring:
       ddl-auto: update
     show-sql: false
     open-in-view: false
-  flyway:
-    locations: classpath:migrations
-    baseline-on-migrate: true
 mqtt:
   brokerUri: ${MQTT_BROKER:tcp://192.168.8.3:1883}
   clientId: hydroleaf-backend-local

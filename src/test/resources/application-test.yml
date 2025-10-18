@@ -9,8 +9,6 @@ spring:
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
-  flyway:
-    enabled: false
 mqtt:
   broker: test-broker
   enabled: false

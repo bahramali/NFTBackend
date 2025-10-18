@@ -21,9 +21,6 @@ spring:
       ddl-auto: update
     show-sql: false
     open-in-view: false
-  flyway:
-    locations: classpath:migrations
-    baseline-on-migrate: true
 
 mqtt:
   brokerUri: ${MQTT_BROKER:tcp://100.113.16.30:1883}

@@ -1,2 +1,0 @@
-ALTER TABLE note
-    ALTER COLUMN content TYPE TEXT;

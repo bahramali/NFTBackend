@@ -15,7 +15,7 @@ spring:
 mqtt:
   brokerUri: ${MQTT_BROKER:tcp://192.168.8.3:1883}
   clientId: hydroleaf-backend-local
-  topics: growSensors/#, waterTank/#, actuator/oxygenPump/#
+  topics: growSensors/#, waterTank/#, germinationTopic/#, actuator/oxygenPump/#
   qos: 1
   topicPrefix: ""
   enabled: true

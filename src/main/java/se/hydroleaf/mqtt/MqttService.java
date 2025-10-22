@@ -8,6 +8,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import se.hydroleaf.model.TopicName;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -92,6 +93,9 @@ public class MqttService implements MqttCallbackExtended {
     @Override
     public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
+        if(TopicName.germinationTopic.name().equals(topic)){
+            log.info("topic: {}, message: {}", topic, payload);
+        }
         messageHandler.handle(topic, payload);
     }
 

@@ -93,9 +93,6 @@ public class MqttService implements MqttCallbackExtended {
     @Override
     public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
-        if(TopicName.germinationTopic.name().equals(topic)){
-            log.info("topic: {}, message: {}", topic, payload);
-        }
         messageHandler.handle(topic, payload);
     }
 

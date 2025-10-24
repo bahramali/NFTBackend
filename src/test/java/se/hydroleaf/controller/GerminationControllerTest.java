@@ -15,6 +15,7 @@ import se.hydroleaf.model.GerminationCycle;
 import se.hydroleaf.model.TopicName;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.GerminationCycleRepository;
+import se.hydroleaf.service.GerminationService;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -43,6 +44,9 @@ class GerminationControllerTest {
 
     @MockBean
     private Clock clock;
+
+    @Autowired
+    private GerminationService germinationService;
 
     private Device device;
 
@@ -84,7 +88,7 @@ class GerminationControllerTest {
 
     @Test
     void updateStartManuallySetsTimestamp() throws Exception {
-        germinationCycleRepository.save(new GerminationCycle(getManagedDevice(), Instant.parse("2023-01-01T00:00:00Z")));
+        germinationService.updateStart(device.getCompositeId(), Instant.parse("2023-01-01T00:00:00Z"));
 
         Instant newStart = Instant.parse("2024-05-10T12:30:00Z");
         Mockito.when(clock.instant()).thenReturn(newStart.plusSeconds(120));
@@ -108,7 +112,7 @@ class GerminationControllerTest {
     @Test
     void getStatusReturnsElapsedTime() throws Exception {
         Instant start = Instant.parse("2024-02-01T06:00:00Z");
-        germinationCycleRepository.save(new GerminationCycle(getManagedDevice(), start));
+        germinationService.updateStart(device.getCompositeId(), start);
 
         Mockito.when(clock.instant()).thenReturn(start.plusSeconds(3600));
 
@@ -122,10 +126,6 @@ class GerminationControllerTest {
     void getStatusReturns404WhenMissing() throws Exception {
         mockMvc.perform(get("/api/germination/{system}/{layer}/{deviceId}", "S01", "L02", "G03"))
                 .andExpect(status().isNotFound());
-    }
-
-    private Device getManagedDevice() {
-        return device;
     }
 }
 

@@ -48,8 +48,8 @@ class GerminationControllerTest {
 
     @BeforeEach
     void setup() {
-        germinationCycleRepository.deleteAll();
-        deviceRepository.deleteAll();
+        germinationCycleRepository.deleteAllInBatch();
+        deviceRepository.deleteAllInBatch();
 
         device = Device.builder()
                 .compositeId("S01-L02-G03")
@@ -58,7 +58,7 @@ class GerminationControllerTest {
                 .deviceId("G03")
                 .topic(TopicName.germinationTopic)
                 .build();
-        deviceRepository.save(device);
+        device = deviceRepository.saveAndFlush(device);
 
         Mockito.when(clock.getZone()).thenReturn(ZoneOffset.UTC);
     }

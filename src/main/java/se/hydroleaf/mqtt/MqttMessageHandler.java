@@ -36,9 +36,7 @@ public class MqttMessageHandler {
                 }
                 return;
             }
-            if(TopicName.germinationTopic.name().equals(topic)){
-                log.info("topic: {}, message: {}", topic, payload);
-            }
+
             topicPublisher.publish("/topic/" + topic, payload);
 
             TopicName topicName = null;

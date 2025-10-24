@@ -78,7 +78,7 @@ class GerminationControllerTest {
         Instant later = start.plusSeconds(60);
         Mockito.when(clock.instant()).thenReturn(start, later);
 
-        mockMvc.perform(post("/api/germination/{system}/{layer}/{deviceId}/start", "S01", "L02", "G03"))
+        mockMvc.perform(post("/api/germination/start"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.compositeId").value("S01-L02-G03"))
                 .andExpect(jsonPath("$.startTime").value(start.toString()))
@@ -100,7 +100,7 @@ class GerminationControllerTest {
 
         String payload = "{\"startTime\":\"" + newStart + "\"}";
 
-        mockMvc.perform(put("/api/germination/{system}/{layer}/{deviceId}", "S01", "L02", "G03")
+        mockMvc.perform(put("/api/germination")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isOk())
@@ -121,7 +121,7 @@ class GerminationControllerTest {
 
         Mockito.when(clock.instant()).thenReturn(start.plusSeconds(3600));
 
-        mockMvc.perform(get("/api/germination/{system}/{layer}/{deviceId}", "S01", "L02", "G03"))
+        mockMvc.perform(get("/api/germination"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.startTime").value(start.toString()))
                 .andExpect(jsonPath("$.elapsedSeconds").value(3600));
@@ -129,7 +129,7 @@ class GerminationControllerTest {
 
     @Test
     void getStatusReturns404WhenMissing() throws Exception {
-        mockMvc.perform(get("/api/germination/{system}/{layer}/{deviceId}", "S01", "L02", "G03"))
+        mockMvc.perform(get("/api/germination"))
                 .andExpect(status().isNotFound());
     }
 }

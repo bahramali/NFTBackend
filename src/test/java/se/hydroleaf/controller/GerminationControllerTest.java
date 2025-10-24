@@ -84,7 +84,7 @@ class GerminationControllerTest {
 
     @Test
     void updateStartManuallySetsTimestamp() throws Exception {
-        germinationCycleRepository.save(new GerminationCycle(device, Instant.parse("2023-01-01T00:00:00Z")));
+        germinationCycleRepository.save(new GerminationCycle(getManagedDevice(), Instant.parse("2023-01-01T00:00:00Z")));
 
         Instant newStart = Instant.parse("2024-05-10T12:30:00Z");
         Mockito.when(clock.instant()).thenReturn(newStart.plusSeconds(120));
@@ -108,7 +108,7 @@ class GerminationControllerTest {
     @Test
     void getStatusReturnsElapsedTime() throws Exception {
         Instant start = Instant.parse("2024-02-01T06:00:00Z");
-        germinationCycleRepository.save(new GerminationCycle(device, start));
+        germinationCycleRepository.save(new GerminationCycle(getManagedDevice(), start));
 
         Mockito.when(clock.instant()).thenReturn(start.plusSeconds(3600));
 
@@ -122,6 +122,10 @@ class GerminationControllerTest {
     void getStatusReturns404WhenMissing() throws Exception {
         mockMvc.perform(get("/api/germination/{system}/{layer}/{deviceId}", "S01", "L02", "G03"))
                 .andExpect(status().isNotFound());
+    }
+
+    private Device getManagedDevice() {
+        return deviceRepository.getReferenceById(device.getCompositeId());
     }
 }
 

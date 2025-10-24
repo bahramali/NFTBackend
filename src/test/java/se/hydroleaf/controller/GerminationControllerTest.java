@@ -125,7 +125,7 @@ class GerminationControllerTest {
     }
 
     private Device getManagedDevice() {
-        return deviceRepository.getReferenceById(device.getCompositeId());
+        return device;
     }
 }
 

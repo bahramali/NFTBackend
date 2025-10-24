@@ -67,7 +67,9 @@ class GerminationControllerTest {
                 .build();
         device = deviceRepository.saveAndFlush(device);
 
+        Mockito.reset(clock);
         Mockito.when(clock.getZone()).thenReturn(ZoneOffset.UTC);
+        Mockito.when(clock.instant()).thenReturn(Instant.EPOCH);
     }
 
     @Test

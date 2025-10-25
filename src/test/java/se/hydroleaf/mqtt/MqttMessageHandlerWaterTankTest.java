@@ -69,7 +69,8 @@ class MqttMessageHandlerWaterTankTest {
 
         handler.handle(topic, payload);
 
-        verifyNoInteractions(recordService, topicPublisher);
+        verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
+        verifyNoInteractions(recordService);
     }
 
     @Test

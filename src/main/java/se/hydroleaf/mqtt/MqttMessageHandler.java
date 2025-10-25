@@ -28,6 +28,10 @@ public class MqttMessageHandler {
             JsonNode node = objectMapper.readTree(payload);
             String compositeId = readCompositeId(node);
 
+            if (topic != null && !topic.isBlank()) {
+                topicPublisher.publish("/topic/" + topic, payload);
+            }
+
             if (compositeId == null || compositeId.isBlank()) {
                 if (topic == null || !topic.contains("/")) {
                     log.warn("Ignoring MQTT message on topic {} without composite_id", topic);
@@ -37,16 +41,7 @@ public class MqttMessageHandler {
                 return;
             }
 
-            topicPublisher.publish("/topic/" + topic, payload);
-
-            TopicName topicName = null;
-            if (topic != null) {
-                String prefix = topic.contains("/") ? topic.substring(0, topic.indexOf('/')) : topic;
-                try {
-                    topicName = TopicName.valueOf(prefix);
-                } catch (IllegalArgumentException ignore) {
-                }
-            }
+            TopicName topicName = TopicName.fromMqttTopic(topic);
 
             recordService.saveRecord(compositeId, node, topicName);
         } catch (Exception ex) {

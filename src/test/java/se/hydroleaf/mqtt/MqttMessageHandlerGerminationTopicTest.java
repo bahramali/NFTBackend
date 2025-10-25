@@ -50,4 +50,21 @@ class MqttMessageHandlerGerminationTopicTest {
         verify(recordService).saveRecord(eq("S01-L02-G03"), any(), eq(TopicName.germinationTopic));
         verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
     }
+
+    @Test
+    void topicPrefixIsResolvedCaseInsensitively() {
+        String topic = "GeRmInAtIoNToPiC/device";
+        String payload = """
+                {
+                  "compositeId": "S01-L02-G03",
+                  "timestamp": "2025-01-01T00:00:00Z",
+                  "sensors": []
+                }
+                """;
+
+        handler.handle(topic, payload);
+
+        verify(recordService).saveRecord(eq("S01-L02-G03"), any(), eq(TopicName.germinationTopic));
+        verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
+    }
 }

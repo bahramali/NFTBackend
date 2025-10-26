@@ -13,9 +13,13 @@ spring:
     show-sql: false
     open-in-view: false
 mqtt:
-  brokerUri: ${MQTT_BROKER:tcp://192.168.8.3:1883}
+  brokerUri: ${MQTT_BROKER:tcp://127.0.0.1:1883}
   clientId: hydroleaf-backend-local
-  topics: growSensors/#, waterTank/#, germinationTopic/#, actuator/oxygenPump/#
+  topics:
+    - growSensors/#
+    - waterTank/#
+    - germinationTopic/#
+    - actuator/oxygenPump/#
   qos: 1
   topicPrefix: ""
   enabled: true

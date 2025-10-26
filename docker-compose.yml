@@ -9,13 +9,17 @@ services:
       TS_TELEMETRY: "off"
     ports:
       - "5432:5432"
-  mqtt:
+  mosquitto:
     image: eclipse-mosquitto:2
-    volumes:
-      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    container_name: mosquitto
+    restart: unless-stopped
     ports:
-      - "1884:1884"
+      - "1883:1883"
       - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
   mqtt-ui:
     image: smeagolworms4/mqtt-explorer
     container_name: mqtt-ui

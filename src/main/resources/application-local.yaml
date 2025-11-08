@@ -20,6 +20,7 @@ mqtt:
     - waterTank/#
     - germinationTopic/#
     - actuator/oxygenPump/#
+    - water_flow
   qos: 1
   topicPrefix: ""
   enabled: true

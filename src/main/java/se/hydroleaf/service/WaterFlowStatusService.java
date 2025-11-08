@@ -7,6 +7,7 @@ import se.hydroleaf.model.WaterFlowStatus;
 import se.hydroleaf.repository.WaterFlowStatusRepository;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -20,18 +21,33 @@ public class WaterFlowStatusService {
 
     @Transactional
     public void recordStatus(String status, Instant timestamp, String source) {
-        if (status == null || status.isBlank()) {
+        String normalizedStatus = status != null ? status.trim() : null;
+        if (normalizedStatus == null || normalizedStatus.isEmpty()) {
             log.warn("Skipping water_flow message without status (source={})", source);
             return;
         }
 
+        Optional<WaterFlowStatus> latest = repository.findFirstByOrderByTimestampDescIdDesc();
+        if (latest.isPresent() && sameStatus(latest.get(), normalizedStatus)) {
+            log.debug("Skipping water_flow status '{}' because it matches the most recent entry", normalizedStatus);
+            return;
+        }
+
         WaterFlowStatus entity = WaterFlowStatus.builder()
-                .status(status)
+                .status(normalizedStatus)
                 .timestamp(timestamp != null ? timestamp : Instant.now())
                 .source(source)
                 .build();
 
         repository.save(entity);
+    }
+
+    private boolean sameStatus(WaterFlowStatus lastStatus, String nextStatus) {
+        String previous = lastStatus.getStatus();
+        if (previous == null) {
+            return false;
+        }
+        return previous.equalsIgnoreCase(nextStatus);
     }
 }
 

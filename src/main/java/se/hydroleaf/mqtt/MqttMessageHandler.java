@@ -9,6 +9,9 @@ import se.hydroleaf.service.WaterFlowStatusService;
 import se.hydroleaf.model.TopicName;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 @Slf4j
@@ -77,18 +80,30 @@ public class MqttMessageHandler {
         String status = node.path("status").asText(null);
         String source = node.path("source").asText(null);
 
-        Instant timestamp = null;
-        JsonNode tsNode = node.path("timestamp");
-        if (tsNode.isTextual()) {
-            String tsValue = tsNode.asText();
-            try {
-                timestamp = Instant.parse(tsValue);
-            } catch (DateTimeParseException ex) {
-                log.warn("Unable to parse timestamp '{}' in water_flow payload", tsValue, ex);
-            }
-        }
+        Instant timestamp = parseTimestamp(node.path("timestamp"));
 
         waterFlowStatusService.recordStatus(status, timestamp, source);
+    }
+
+    private Instant parseTimestamp(JsonNode tsNode) {
+        if (!tsNode.isTextual()) {
+            return null;
+        }
+
+        String tsValue = tsNode.asText();
+        try {
+            return Instant.parse(tsValue);
+        } catch (DateTimeParseException ignored) {
+            // Fall through to attempt parsing without timezone information.
+        }
+
+        try {
+            LocalDateTime dateTime = LocalDateTime.parse(tsValue, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            return dateTime.toInstant(ZoneOffset.UTC);
+        } catch (DateTimeParseException ex) {
+            log.warn("Unable to parse timestamp '{}' in water_flow payload", tsValue, ex);
+            return null;
+        }
     }
 
     private static String readCompositeId(JsonNode n) {

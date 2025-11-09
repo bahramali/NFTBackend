@@ -20,10 +20,10 @@ public class WaterFlowStatusService {
     }
 
     @Transactional
-    public void recordStatus(String status, Instant timestamp, String source) {
+    public void recordStatus(String status, Instant timestamp, String sensorName, String sensorType) {
         String normalizedStatus = status != null ? status.trim() : null;
         if (normalizedStatus == null || normalizedStatus.isEmpty()) {
-            log.warn("Skipping water_flow message without status (source={})", source);
+            log.warn("Skipping water_flow message without status (sensorName={})", sensorName);
             return;
         }
 
@@ -34,16 +34,17 @@ public class WaterFlowStatusService {
         }
 
         WaterFlowStatus entity = WaterFlowStatus.builder()
-                .status(normalizedStatus)
+                .value(normalizedStatus)
                 .timestamp(timestamp != null ? timestamp : Instant.now())
-                .source(source)
+                .sensorName(sensorName)
+                .sensorType(sensorType)
                 .build();
 
         repository.save(entity);
     }
 
     private boolean sameStatus(WaterFlowStatus lastStatus, String nextStatus) {
-        String previous = lastStatus.getStatus();
+        String previous = lastStatus.getValue();
         if (previous == null) {
             return false;
         }

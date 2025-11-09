@@ -35,12 +35,15 @@ public class WaterFlowStatus {
     private Long id;
 
     @Column(name = "status", nullable = false)
-    private String status;
+    private String value;
 
     @Column(name = "status_time", nullable = false)
     private Instant timestamp;
 
     @Column(name = "source")
-    private String source;
+    private String sensorName;
+
+    @Column(name = "sensor_type")
+    private String sensorType;
 }
 

@@ -12,6 +12,7 @@ import se.hydroleaf.repository.LatestSensorValueRepository;
 import se.hydroleaf.repository.WaterFlowStatusRepository;
 import se.hydroleaf.repository.dto.TopicSensorsResponse;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,7 +48,7 @@ class TopicServiceTest {
         when(latestSensorValueRepository.findAll())
                 .thenReturn(List.of(ph, temp, duplicatePh, level, missingType));
         when(waterFlowStatusRepository.findDistinctSensorTypes())
-                .thenReturn(List.of("flow_status", " ", null));
+                .thenReturn(Arrays.asList("flow_status", " ", null));
 
         TopicSensorsResponse response = topicService.getSensorTypesByTopic();
 

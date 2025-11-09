@@ -49,6 +49,7 @@ class TopicServiceTest {
         assertEquals(List.of("ph", "temperature"), sensorsForTopic(response, TopicName.growSensors));
         assertEquals(List.of("level"), sensorsForTopic(response, TopicName.waterTank));
         assertEquals(List.of(), sensorsForTopic(response, TopicName.germinationTopic));
+        assertEquals(List.of(), sensorsForTopic(response, TopicName.water_flow));
     }
 
     private List<String> sensorsForTopic(TopicSensorsResponse response, TopicName topicName) {

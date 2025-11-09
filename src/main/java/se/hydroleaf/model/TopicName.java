@@ -4,7 +4,8 @@ public enum TopicName {
     growSensors,
     waterTank,
     actuatorOxygenPump,
-    germinationTopic;
+    germinationTopic,
+    water_flow;
 
     public static TopicName fromMqttTopic(String topic) {
         if (topic == null || topic.isBlank()) {

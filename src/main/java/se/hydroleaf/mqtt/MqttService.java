@@ -32,7 +32,7 @@ public class MqttService implements MqttCallbackExtended {
     @Value("${mqtt.qos:1}")
     private int qos;
 
-    @Value("${mqtt.topics:growSensors/#,waterTank/#,germinationTopic/#,actuator/oxygenPump/#}")
+    @Value("${mqtt.topics:growSensors/#,waterTank/#,germinationTopic/#,actuator/oxygenPump/#,water_flow}")
     private String[] topics;
 
     private MqttClient client;

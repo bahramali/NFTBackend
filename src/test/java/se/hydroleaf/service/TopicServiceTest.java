@@ -9,6 +9,7 @@ import se.hydroleaf.model.Device;
 import se.hydroleaf.model.LatestSensorValue;
 import se.hydroleaf.model.TopicName;
 import se.hydroleaf.repository.LatestSensorValueRepository;
+import se.hydroleaf.repository.WaterFlowStatusRepository;
 import se.hydroleaf.repository.dto.TopicSensorsResponse;
 
 import java.util.List;
@@ -23,11 +24,14 @@ class TopicServiceTest {
     @Mock
     LatestSensorValueRepository latestSensorValueRepository;
 
+    @Mock
+    WaterFlowStatusRepository waterFlowStatusRepository;
+
     private TopicService topicService;
 
     @BeforeEach
     void setup() {
-        topicService = new TopicService(latestSensorValueRepository);
+        topicService = new TopicService(latestSensorValueRepository, waterFlowStatusRepository);
     }
 
     @Test
@@ -42,6 +46,8 @@ class TopicServiceTest {
 
         when(latestSensorValueRepository.findAll())
                 .thenReturn(List.of(ph, temp, duplicatePh, level, missingType));
+        when(waterFlowStatusRepository.findDistinctSensorTypes())
+                .thenReturn(List.of("flow_status", " ", null));
 
         TopicSensorsResponse response = topicService.getSensorTypesByTopic();
 
@@ -49,7 +55,7 @@ class TopicServiceTest {
         assertEquals(List.of("ph", "temperature"), sensorsForTopic(response, TopicName.growSensors));
         assertEquals(List.of("level"), sensorsForTopic(response, TopicName.waterTank));
         assertEquals(List.of(), sensorsForTopic(response, TopicName.germinationTopic));
-        assertEquals(List.of(), sensorsForTopic(response, TopicName.water_flow));
+        assertEquals(List.of("flow_status"), sensorsForTopic(response, TopicName.water_flow));
     }
 
     private List<String> sensorsForTopic(TopicSensorsResponse response, TopicName topicName) {

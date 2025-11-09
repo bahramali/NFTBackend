@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import se.hydroleaf.model.LatestSensorValue;
 import se.hydroleaf.model.TopicName;
 import se.hydroleaf.repository.LatestSensorValueRepository;
+import se.hydroleaf.repository.WaterFlowStatusRepository;
 import se.hydroleaf.repository.dto.TopicSensorsResponse;
 
 import java.time.Instant;
@@ -21,9 +22,12 @@ import java.util.stream.Collectors;
 public class TopicService {
 
     private final LatestSensorValueRepository latestSensorValueRepository;
+    private final WaterFlowStatusRepository waterFlowStatusRepository;
 
-    public TopicService(LatestSensorValueRepository latestSensorValueRepository) {
+    public TopicService(LatestSensorValueRepository latestSensorValueRepository,
+                        WaterFlowStatusRepository waterFlowStatusRepository) {
         this.latestSensorValueRepository = latestSensorValueRepository;
+        this.waterFlowStatusRepository = waterFlowStatusRepository;
     }
 
     public TopicSensorsResponse getSensorTypesByTopic() {
@@ -34,6 +38,23 @@ public class TopicService {
                         () -> new EnumMap<>(TopicName.class),
                         Collectors.mapping(LatestSensorValue::getSensorType,
                                 Collectors.toCollection(TreeSet::new))));
+
+        List<String> waterFlowTypes = waterFlowStatusRepository.findDistinctSensorTypes();
+        if (waterFlowTypes == null) {
+            waterFlowTypes = Collections.emptyList();
+        }
+
+        Set<String> waterFlowSensors = waterFlowTypes.stream()
+                .filter(type -> type != null && !type.isBlank())
+                .map(String::trim)
+                .collect(Collectors.toCollection(TreeSet::new));
+
+        if (!waterFlowSensors.isEmpty()) {
+            sensorsByTopic.merge(TopicName.water_flow, waterFlowSensors, (existing, addition) -> {
+                existing.addAll(addition);
+                return existing;
+            });
+        }
 
         List<TopicSensorsResponse.TopicSensors> topics = Arrays.stream(TopicName.values())
                 .map(topicName -> {

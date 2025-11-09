@@ -27,12 +27,12 @@ class MqttMessageHandlerTest {
 
     @Test
     void handleWaterFlowTimestampWithoutTimezoneAssumesUtc() {
-        String payload = "{\"status\":\"ON\",\"timestamp\":\"2025-11-08T19:38:49\",\"source\":\"sensor\"}";
+        String payload = "{\"sensorName\":\"camera\",\"sensorType\":\"flow_status\",\"value\":\"on\",\"timestamp\":\"2025-11-08T19:38:49\"}";
 
         handler.handle("water_flow", payload);
 
         ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(waterFlowStatusService).recordStatus(eq("ON"), instantCaptor.capture(), eq("sensor"));
+        verify(waterFlowStatusService).recordStatus(eq("on"), instantCaptor.capture(), eq("camera"), eq("flow_status"));
 
         Instant expected = LocalDateTime.of(2025, 11, 8, 19, 38, 49).toInstant(ZoneOffset.UTC);
         assertEquals(expected, instantCaptor.getValue());

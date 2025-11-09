@@ -77,12 +77,32 @@ public class MqttMessageHandler {
             return;
         }
 
-        String status = node.path("status").asText(null);
-        String source = node.path("source").asText(null);
+        String status = readText(node, "value", "status");
+        String source = readText(node, "sensorName", "source");
+        String sensorType = readText(node, "sensorType");
 
         Instant timestamp = parseTimestamp(node.path("timestamp"));
 
-        waterFlowStatusService.recordStatus(status, timestamp, source);
+        waterFlowStatusService.recordStatus(status, timestamp, source, sensorType);
+    }
+
+    private static String readText(JsonNode node, String... fieldNames) {
+        if (node == null || fieldNames == null) {
+            return null;
+        }
+
+        for (String fieldName : fieldNames) {
+            if (fieldName == null) {
+                continue;
+            }
+
+            JsonNode field = node.get(fieldName);
+            if (field != null && field.isTextual()) {
+                return field.asText();
+            }
+        }
+
+        return null;
     }
 
     private Instant parseTimestamp(JsonNode tsNode) {

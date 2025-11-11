@@ -170,8 +170,11 @@ public class RecordService {
             throw new IllegalArgumentException("Unknown device composite_id: " + compositeId);
         }
 
+        long bucketSeconds = InstantUtil.bucketSeconds(bucket);
+
         Instant bucketFrom = InstantUtil.truncateToBucket(from, bucket);
-        Instant bucketTo   = InstantUtil.truncateToBucket(to, bucket);
+        Instant bucketTo   = InstantUtil.truncateToBucket(to.minusNanos(1), bucket)
+                .plusSeconds(bucketSeconds);
 
         List<String> canonicalSensorTypes = sensorTypes;
         if (sensorTypes != null && !sensorTypes.isEmpty()) {

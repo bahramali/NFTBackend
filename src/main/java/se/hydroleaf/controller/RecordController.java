@@ -16,7 +16,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 @RestController
@@ -67,7 +66,7 @@ public class RecordController {
                 if (!SENSOR_TYPE_PATTERN.matcher(trimmed).matches()) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sensorType");
                 }
-                normalizedSensorTypes.add(trimmed.toUpperCase(Locale.ROOT));
+                normalizedSensorTypes.add(trimmed);
             }
         }
         try {

@@ -173,11 +173,16 @@ public class RecordService {
         Instant bucketFrom = InstantUtil.truncateToBucket(from, bucket);
         Instant bucketTo   = InstantUtil.truncateToBucket(to, bucket);
 
+        List<String> canonicalSensorTypes = sensorTypes;
+        if (sensorTypes != null && !sensorTypes.isEmpty()) {
+            canonicalSensorTypes = canonicalizeSensorTypes(compositeId, sensorTypes);
+        }
+
         List<SensorAggregateResult> results = new ArrayList<>();
-        if (sensorTypes == null || sensorTypes.isEmpty()) {
+        if (canonicalSensorTypes == null || canonicalSensorTypes.isEmpty()) {
             results.addAll(aggregationReader.aggregate(compositeId, bucketFrom, bucketTo, bucket, null));
         } else {
-            for (String st : sensorTypes) {
+            for (String st : canonicalSensorTypes) {
                 results.addAll(aggregationReader.aggregate(compositeId, bucketFrom, bucketTo, bucket, st));
             }
         }
@@ -213,6 +218,31 @@ public class RecordService {
     }
 
     // ---------- helpers ----------
+
+    private List<String> canonicalizeSensorTypes(String compositeId, List<String> sensorTypes) {
+        List<LatestSensorValue> latestValues = latestSensorValueRepository.findByDevice_CompositeId(compositeId);
+        if (latestValues.isEmpty()) {
+            return new ArrayList<>(new LinkedHashSet<>(sensorTypes));
+        }
+
+        Map<String, String> canonicalByLower = new LinkedHashMap<>();
+        for (LatestSensorValue value : latestValues) {
+            String sensorType = value.getSensorType();
+            if (sensorType == null) continue;
+            canonicalByLower.putIfAbsent(sensorType.toLowerCase(Locale.ROOT), sensorType);
+        }
+
+        List<String> resolved = new ArrayList<>(sensorTypes.size());
+        Set<String> dedup = new LinkedHashSet<>();
+        for (String requested : sensorTypes) {
+            if (requested == null) continue;
+            String canonical = canonicalByLower.getOrDefault(requested.toLowerCase(Locale.ROOT), requested);
+            if (dedup.add(canonical)) {
+                resolved.add(canonical);
+            }
+        }
+        return resolved;
+    }
 
     private Optional<Instant> parseTimestamp(JsonNode node) {
         if (node == null || node.isMissingNode() || node.isNull()) return Optional.empty();

@@ -61,8 +61,6 @@ class RecordServiceAggregatedHistoryTest {
         Instant to = Instant.parse("2023-11-01T00:08:00Z");
 
         when(deviceRepository.existsById(eq(DEVICE_ID))).thenReturn(true);
-        when(latestSensorValueRepository.findByDevice_CompositeId(eq(DEVICE_ID)))
-                .thenReturn(Collections.emptyList());
 
         AggregatedHistoryResponse response = recordService.aggregatedHistory(
                 DEVICE_ID,

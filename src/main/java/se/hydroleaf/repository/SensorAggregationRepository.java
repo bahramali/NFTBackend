@@ -24,7 +24,7 @@ public interface SensorAggregationRepository extends Repository<SensorValueHisto
               AND svh.value_time >= :fromTs
               AND svh.value_time <  :toTs
               AND svh.sensor_value IS NOT NULL
-              AND (:sensorType IS NULL OR svh.sensor_type = :sensorType)
+              AND (:sensorType IS NULL OR LOWER(svh.sensor_type) = LOWER(:sensorType))
             GROUP BY bucket_time, svh.sensor_type, lsv.unit
             ORDER BY bucket_time
             """, nativeQuery = true)
@@ -48,7 +48,7 @@ public interface SensorAggregationRepository extends Repository<SensorValueHisto
               AND svh.value_time >= :fromTs
               AND svh.value_time <  :toTs
               AND svh.sensor_value IS NOT NULL
-              AND (:sensorType IS NULL OR svh.sensor_type = :sensorType)
+              AND (:sensorType IS NULL OR LOWER(svh.sensor_type) = LOWER(:sensorType))
             GROUP BY bucket_time, svh.sensor_type, lsv.unit
             ORDER BY bucket_time
             """, nativeQuery = true)

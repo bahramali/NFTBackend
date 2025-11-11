@@ -14,6 +14,7 @@ import se.hydroleaf.service.RecordService;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -54,16 +55,23 @@ public class RecordController {
         if (Duration.between(fromInst, toInst).toDays() > MAX_RANGE_DAYS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Range exceeds " + MAX_RANGE_DAYS + " days");
         }
+        List<String> normalizedSensorTypes = null;
         if (sensorTypes != null) {
+            normalizedSensorTypes = new ArrayList<>(sensorTypes.size());
             for (String st : sensorTypes) {
-                if (!SENSOR_TYPE_PATTERN.matcher(st).matches()) {
+                if (st == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sensorType");
                 }
+                String trimmed = st.trim();
+                if (!SENSOR_TYPE_PATTERN.matcher(trimmed).matches()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sensorType");
+                }
+                normalizedSensorTypes.add(trimmed);
             }
         }
         try {
             return recordService.aggregatedHistory(
-                    compositeId, fromInst, toInst, bucket, sensorTypes,
+                    compositeId, fromInst, toInst, bucket, normalizedSensorTypes,
                     bucketLimit, bucketOffset, sensorLimit, sensorOffset);
         } catch (IllegalArgumentException iae) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, iae.getMessage(), iae);

@@ -101,4 +101,22 @@ public class MqttService implements MqttCallbackExtended {
         // not publishing; ignore
     }
 
+    public void publish(String topic, String payload) {
+        if (client == null) {
+            throw new IllegalStateException("MQTT client not initialized");
+        }
+
+        try {
+            if (!client.isConnected()) {
+                client.connect(connectOptions);
+            }
+
+            MqttMessage message = new MqttMessage(payload.getBytes(StandardCharsets.UTF_8));
+            message.setQos(qos);
+            client.publish(topic, message);
+        } catch (MqttException e) {
+            throw new IllegalStateException("Failed to publish MQTT message to " + topic, e);
+        }
+    }
+
 }

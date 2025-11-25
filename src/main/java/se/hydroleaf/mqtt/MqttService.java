@@ -45,18 +45,22 @@ public class MqttService implements MqttCallbackExtended {
     }
 
     @PostConstruct
-    public void start() throws Exception {
+    public void start() {
         MemoryPersistence persistence = new MemoryPersistence();
-        client = new MqttClient(brokerUri, clientId, persistence);
-        client.setCallback(this);
-
         connectOptions = new MqttConnectOptions();
         connectOptions.setAutomaticReconnect(true);
         connectOptions.setCleanSession(true);
         connectOptions.setConnectionTimeout(10);
 
-        log.info("MQTT connecting to {} with clientId={} topics={}", brokerUri, clientId, Arrays.toString(topics));
-        client.connect(connectOptions);
+        try {
+            client = new MqttClient(brokerUri, clientId, persistence);
+            client.setCallback(this);
+
+            log.info("MQTT connecting to {} with clientId={} topics={}", brokerUri, clientId, Arrays.toString(topics));
+            client.connect(connectOptions);
+        } catch (MqttException e) {
+            log.error("MQTT initial connection failed; will rely on reconnect/publish attempts", e);
+        }
     }
 
     @PreDestroy

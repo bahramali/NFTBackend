@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import se.hydroleaf.controller.dto.LedCommandRequest;
 import se.hydroleaf.controller.dto.LedCommandResponse;
+import se.hydroleaf.controller.dto.LedScheduleRequest;
 import se.hydroleaf.mqtt.MqttService;
 
 import java.util.LinkedHashMap;
@@ -32,7 +33,6 @@ public class ActuatorCommandService {
         payload.put("system", normalizeSystem(request.system()));
         payload.put("layer", normalizeLayer(request.layer()));
         payload.put("deviceId", normalizeDeviceId(request.deviceId()));
-        payload.put("controller", normalizeController(request.controller()));
         payload.put("command", normalizeCommand(request.command()));
         if (request.durationSec() != null) {
             payload.put("durationSec", request.durationSec());
@@ -44,6 +44,24 @@ public class ActuatorCommandService {
             return new LedCommandResponse(LED_COMMAND_TOPIC, json);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize LED command", e);
+        }
+    }
+
+    public LedCommandResponse publishLedSchedule(LedScheduleRequest request) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("system", normalizeSystem(request.system()));
+        payload.put("deviceId", normalizeDeviceId(request.deviceId()));
+        payload.put("command", normalizeCommand(request.command()));
+        payload.put("onHour", normalizeHour(request.onHour()));
+        payload.put("onMinute", normalizeMinute(request.onMinute()));
+        payload.put("durationHours", request.durationHours());
+
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            mqttService.publish(LED_COMMAND_TOPIC, json);
+            return new LedCommandResponse(LED_COMMAND_TOPIC, json);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize LED schedule command", e);
         }
     }
 
@@ -65,11 +83,8 @@ public class ActuatorCommandService {
         }
 
         String upper = trimmed.toUpperCase();
-        if (upper.matches("^L?0?1$")) {
-            return "L01";
-        }
-        if (upper.matches("^L?0?2$")) {
-            return "L02";
+        if (upper.matches("^L?0?([1-4])$")) {
+            return "L0" + upper.replaceAll("^L?0?", "");
         }
         return upper;
     }
@@ -81,17 +96,18 @@ public class ActuatorCommandService {
         return deviceId.trim();
     }
 
-    private String normalizeController(String controller) {
-        if (controller == null || controller.isBlank()) {
-            return null;
-        }
-        return controller.trim().toLowerCase();
-    }
-
     private String normalizeCommand(String command) {
         if (command == null || command.isBlank()) {
             return null;
         }
         return command.trim().toUpperCase();
+    }
+
+    private int normalizeHour(int hour) {
+        return Math.max(0, Math.min(23, hour));
+    }
+
+    private int normalizeMinute(int minute) {
+        return Math.max(0, Math.min(59, minute));
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import se.hydroleaf.controller.dto.LedCommandRequest;
 import se.hydroleaf.controller.dto.LedCommandResponse;
+import se.hydroleaf.controller.dto.LedScheduleRequest;
 import se.hydroleaf.service.ActuatorCommandService;
 
 @RestController
@@ -27,5 +28,11 @@ public class ActuatorController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public LedCommandResponse sendLedCommand(@Valid @RequestBody LedCommandRequest request) {
         return actuatorCommandService.publishLedCommand(request);
+    }
+
+    @PostMapping("/led/schedule")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public LedCommandResponse setLedSchedule(@Valid @RequestBody LedScheduleRequest request) {
+        return actuatorCommandService.publishLedSchedule(request);
     }
 }

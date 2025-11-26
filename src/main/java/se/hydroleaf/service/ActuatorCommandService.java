@@ -32,7 +32,7 @@ public class ActuatorCommandService {
     public LedCommandResponse publishLedCommand(LedCommandRequest request) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("system", normalizeSystem(request.system()));
-        payload.put("layer", normalizeLayer(request.layer()));
+        payload.put("layer", requireLayer(request.layer()));
         payload.put("deviceId", normalizeDeviceId(request.deviceId()));
         payload.put("command", normalizeCommand(request.command()));
         if (request.durationSec() != null) {
@@ -53,6 +53,7 @@ public class ActuatorCommandService {
         payload.put("system", normalizeSystem(request.system()));
         payload.put("deviceId", normalizeDeviceId(request.deviceId()));
         payload.put("command", resolveScheduleCommand(request.command()));
+        payload.put("layer", requireLayer(request.layer()));
         payload.put("onHour", normalizeHour(request.onHour()));
         payload.put("onMinute", normalizeMinute(request.onMinute()));
         payload.put("durationHours", request.durationHours());
@@ -88,6 +89,14 @@ public class ActuatorCommandService {
             return "L0" + upper.replaceAll("^L?0?", "");
         }
         return upper;
+    }
+
+    private String requireLayer(String layer) {
+        String normalized = normalizeLayer(layer);
+        if (normalized == null) {
+            throw new IllegalArgumentException("Layer is required and must be between L01 and L04");
+        }
+        return normalized;
     }
 
     private String normalizeDeviceId(String deviceId) {

@@ -19,6 +19,7 @@ public class ActuatorCommandService {
     private static final String LED_COMMAND_TOPIC = "actuator/led/cmd";
     private static final String DEFAULT_SYSTEM = "S01";
     private static final String DEFAULT_DEVICE_ID = "R01";
+    private static final String DEFAULT_SCHEDULE_COMMAND = "SET_SCHEDULE";
 
     private final ObjectMapper objectMapper;
     private final MqttService mqttService;
@@ -51,7 +52,7 @@ public class ActuatorCommandService {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("system", normalizeSystem(request.system()));
         payload.put("deviceId", normalizeDeviceId(request.deviceId()));
-        payload.put("command", normalizeCommand(request.command()));
+        payload.put("command", resolveScheduleCommand(request.command()));
         payload.put("onHour", normalizeHour(request.onHour()));
         payload.put("onMinute", normalizeMinute(request.onMinute()));
         payload.put("durationHours", request.durationHours());
@@ -101,6 +102,14 @@ public class ActuatorCommandService {
             return null;
         }
         return command.trim().toUpperCase();
+    }
+
+    private String resolveScheduleCommand(String command) {
+        String normalized = normalizeCommand(command);
+        if (normalized == null) {
+            return DEFAULT_SCHEDULE_COMMAND;
+        }
+        return normalized;
     }
 
     private int normalizeHour(int hour) {

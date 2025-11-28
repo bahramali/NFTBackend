@@ -107,3 +107,8 @@ CREATE EXTENSION IF NOT EXISTS timescaledb;
 The supplied `docker-compose.yml` uses the `timescale/timescaledb` image (PostgreSQL 15) so the extension is available out of the box. When deploying to other environments, install TimescaleDB for your PostgreSQL version and enable the extension manually.
 
 TimescaleDB 2.x on PostgreSQL 15 has been tested. If you build your own PostgreSQL, make sure `shared_preload_libraries` includes `timescaledb`.
+
+## Documentation notes
+
+- For writing right-to-left content (e.g., Farsi) in Markdown without breaking alignment, see [`docs/rtl-formatting.md`](docs/rtl-formatting.md).
+- For a Farsi (RTL) technical overview of the service, including a UML sequence of the data flow, see [`docs/overview-fa.html`](docs/overview-fa.html).

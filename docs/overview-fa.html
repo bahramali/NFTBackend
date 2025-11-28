@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>راهنمای فنی NFTBackend (به فارسی)</title>
+  <style>
+    body { direction: rtl; text-align: right; font-family: Vazirmatn, "IRANSans", "Arial", sans-serif; line-height: 1.7; }
+    code, pre { direction: ltr; text-align: left; font-family: "Fira Code", Consolas, monospace; }
+    h1, h2, h3, h4 { margin-top: 1.6em; }
+    .pill { display: inline-block; padding: 4px 10px; margin: 2px; background: #f0f4ff; border-radius: 999px; font-size: 0.9em; }
+    .section { border-right: 3px solid #d9e2ff; padding-right: 12px; margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <h1>راهنمای فنی NFTBackend (به فارسی)</h1>
+
+  <div class="section">
+    <h2>معرفی سریع</h2>
+    <p>
+      این سرویس یک برنامه <span class="pill">Spring Boot</span> است که پیام‌های سنسور را از <span class="pill">MQTT</span>
+      دریافت می‌کند، داده‌ها را در <span class="pill">PostgreSQL/TimescaleDB</span> ذخیره می‌کند و هم‌زمان از طریق
+      <span class="pill">WebSocket/STOMP</span> به مشترکان زنده ارسال می‌کند. نقطهٔ ورود برنامه کلاس <code>NftBackendApplication</code> است و زمان‌بندی Spring نیز فعال شده است.
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>ساختار کلی کد</h2>
+    <ul>
+      <li><strong>ورود MQTT:</strong> کلاس <code>MqttService</code> اتصال به بروکر، مدیریت اشتراک موضوعات و ارسال پیام خام به <code>MqttMessageHandler</code> را انجام می‌دهد؛ در صورت قطع ارتباط دوباره متصل می‌شود.</li>
+      <li><strong>پردازش پیام:</strong> <code>MqttMessageHandler</code> بار JSON را به مدل داخلی تبدیل می‌کند، دستگاه‌ها را در صورت نیاز ثبت می‌کند و برای درج/به‌روزرسانی به <code>RecordService</code> می‌سپارد.</li>
+      <li><strong>خدمت رکوردها:</strong> <code>RecordService</code> منطق مرکزی است: بافر کردن داده‌ها برای تجمیع، به‌روزرسانی جدول آخرین مقادیر، ذخیره وضعیت actuatorها و آماده‌سازی پاسخ‌های تاریخچه‌ای.</li>
+      <li><strong>مخازن و مدل‌ها:</strong> زیر پکیج <code>se.hydroleaf.repository</code> و <code>se.hydroleaf.model</code> قرار دارند و با جداول TimescaleDB برای هیستوگرام‌های زمانی و جدول آخرین مقادیر کار می‌کنند.</li>
+      <li><strong>REST API:</strong> کنترلر <code>RecordController</code> مسیر <code>/api/records/history/aggregated</code> را ارائه می‌دهد، ورودی را اعتبارسنجی می‌کند (محدودیت بازه و الگوی نام سنسور) و پاسخ bucket شده را برمی‌گرداند.</li>
+      <li><strong>وب‌سوکت:</strong> <code>WebSocketConfig</code> مسیر <code>/ws</code> و بروکر ساده <code>/topic</code> را فعال می‌کند تا مشترکان بتوانند فید زنده دریافت کنند.</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>پیکربندی و اجرا</h2>
+    <ul>
+      <li><strong>تنظیمات پیش‌فرض:</strong> فایل <code>src/main/resources/application.yml</code> شامل URL پایگاه‌داده، کرنل MQTT، و گزینه‌های SSL/WSS است. متغیرهای محیطی در استقرار Docker جایگزین مقادیر می‌شوند.</li>
+      <li><strong>حالت توسعه محلی:</strong> پروفایل <code>local</code> در <code>src/main/resources/application-local.yaml</code> برای اتصال به Postgres و MQTT لوکال استفاده می‌شود. اجرای نمونه: <code>SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run</code>.</li>
+      <li><strong>Docker Compose:</strong> فایل <code>docker-compose.yml</code> یک TimescaleDB و یک بروکر MQTT بالا می‌آورد؛ برای شروع سریع، دستور <code>docker compose up -d</code> کافی است.</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>روند حرکت داده (UML Sequence)</h2>
+    <p>این نمودار ترتیب عبور یک پیام سنسور را نشان می‌دهد:</p>
+    <pre><code class="language-mermaid">sequenceDiagram
+    participant Device as دستگاه
+    participant MQTTBroker as بروکر MQTT
+    participant MqttService as MqttService
+    participant Handler as MqttMessageHandler
+    participant RecordService as RecordService
+    participant Repo as TimescaleDB
+    participant WebSocket as وب‌سوکت
+
+    Device-&gt;&gt;MQTTBroker: انتشار JSON سنسور
+    MQTTBroker-&gt;&gt;MqttService: تحویل پیام MQTT
+    MqttService-&gt;&gt;Handler: ارسال payload خام
+    Handler-&gt;&gt;RecordService: نرمال‌سازی و آماده‌سازی درج
+    RecordService-&gt;&gt;Repo: ذخیره/تجمیع داده‌ها
+    Repo--&gt;&gt;RecordService: داده‌های bucket شده
+    RecordService--&gt;WebSocket: انتشار فید زنده (/topic)
+    WebSocket--&gt;&gt;Clients: پیام به مشترکان</code></pre>
+  </div>
+
+  <div class="section">
+    <h2>مسیرها و وب‌سوکت‌های مهم</h2>
+    <ul>
+      <li><code>GET /api/records/history/aggregated</code>: بازگرداندن تاریخچه bucket شده (حدود ۳۰۰ نقطه) بر اساس بازهٔ زمانی و نوع سنسور اختیاری.</li>
+      <li><code>POST /api/records/history/aggregated</code>: نسخهٔ POST برای ورودی بدنهٔ JSON با فیلترهای مشابه.</li>
+      <li><code>/ws</code> + مقصد <code>/topic</code>: مشترکان STOMP می‌توانند به فید زنده متصل شوند.</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>نکات کلیدی برای یادگیری عمیق‌تر</h2>
+    <ul>
+      <li>منطق بافر و تجمیع: کلاس‌های <code>SensorValueBuffer</code> و متدهای bucket در <code>RecordService</code> نحوهٔ کاهش حجم داده و جلوگیری از تکرار را نشان می‌دهند.</li>
+      <li>کشف و ثبت دستگاه: مسیرهای درج در <code>MqttMessageHandler</code> و مخازن دستگاه نحوهٔ ایجاد رکورد جدید برای سخت‌افزار ناشناس را مشخص می‌کنند.</li>
+      <li>اتصال به TimescaleDB: توابع <code>time_bucket</code> و کوئری‌های مجموعه‌ای در مخازن تاریخچه، نحوهٔ بهره‌گیری از قابلیت‌های زمان‌محور را روشن می‌کنند.</li>
+      <li>پشتیبانی SSL/WSS: متغیرهای محیطی <code>SSL_ENABLED</code>، <code>SSL_KEY_STORE</code> و <code>SSL_KEY_STORE_PASSWORD</code> را در <code>application.yml</code> بررسی کنید تا سرویس را روی HTTPS/WSS اجرا کنید.</li>
+    </ul>
+  </div>
+</body>
+</html>

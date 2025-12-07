@@ -2,6 +2,7 @@ package se.hydroleaf.shelly.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import se.hydroleaf.shelly.dto.ShellyScheduleRequest;
@@ -29,7 +30,7 @@ public class ShellyScheduleService {
     private final TaskScheduler taskScheduler;
     private final Map<String, List<ScheduledFuture<?>>> scheduledTasks = new ConcurrentHashMap<>();
 
-    public ShellyScheduleService(ShellyClientService clientService, TaskScheduler taskScheduler) {
+    public ShellyScheduleService(ShellyClientService clientService, @Qualifier("scheduler") TaskScheduler taskScheduler) {
         this.clientService = clientService;
         this.taskScheduler = taskScheduler;
     }

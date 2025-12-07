@@ -8,7 +8,6 @@ import se.hydroleaf.shelly.dto.ShellyScheduleRequest;
 import se.hydroleaf.shelly.dto.ShellyScheduleResponse;
 import se.hydroleaf.shelly.exception.ShellyException;
 import se.hydroleaf.shelly.model.ShellyDeviceConfig;
-import se.hydroleaf.shelly.registry.ShellyDeviceRegistry;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -27,19 +26,15 @@ public class ShellyScheduleService {
     private static final Logger log = LoggerFactory.getLogger(ShellyScheduleService.class);
 
     private final ShellyClientService clientService;
-    private final ShellyDeviceRegistry deviceRegistry;
     private final TaskScheduler taskScheduler;
     private final Map<String, List<ScheduledFuture<?>>> scheduledTasks = new ConcurrentHashMap<>();
 
-    public ShellyScheduleService(ShellyClientService clientService, ShellyDeviceRegistry deviceRegistry, TaskScheduler taskScheduler) {
+    public ShellyScheduleService(ShellyClientService clientService, TaskScheduler taskScheduler) {
         this.clientService = clientService;
-        this.deviceRegistry = deviceRegistry;
         this.taskScheduler = taskScheduler;
     }
 
-    public ShellyScheduleResponse scheduleDevice(String deviceId, ShellyScheduleRequest request) {
-        ShellyDeviceConfig device = resolveDevice(deviceId);
-
+    public ShellyScheduleResponse scheduleDevice(ShellyDeviceConfig device, ShellyScheduleRequest request) {
         LocalDateTime turnOnAt = Optional.ofNullable(request.getTurnOnAt()).orElse(LocalDateTime.now());
         LocalDateTime turnOffAt = request.getTurnOffAt();
 
@@ -59,16 +54,11 @@ public class ShellyScheduleService {
         scheduleTask(device, turnOffAt, false);
 
         return ShellyScheduleResponse.builder()
-                .deviceId(deviceId)
+                .deviceId(device.getId())
                 .scheduled(true)
                 .turnOnAt(turnOnAt)
                 .turnOffAt(turnOffAt)
                 .build();
-    }
-
-    private ShellyDeviceConfig resolveDevice(String deviceId) {
-        return deviceRegistry.getDevice(deviceId)
-                .orElseThrow(() -> new IllegalArgumentException("Unknown device id: " + deviceId));
     }
 
     private void scheduleTask(ShellyDeviceConfig device, LocalDateTime time, boolean turnOn) {

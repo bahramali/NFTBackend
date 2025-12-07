@@ -85,7 +85,8 @@ public class ShellyController {
     @PostMapping("/devices/{deviceId}/schedule")
     public ShellyScheduleResponse schedule(@PathVariable String deviceId, @RequestBody ShellyScheduleRequest request) {
         try {
-            return scheduleService.scheduleDevice(deviceId, request);
+            ShellyDeviceConfig device = resolveDevice(deviceId);
+            return scheduleService.scheduleDevice(device, request);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }

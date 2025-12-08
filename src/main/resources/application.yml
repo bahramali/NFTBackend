@@ -3,6 +3,8 @@ spring:
     active: prod
   application:
     name: NFTBackend
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://hydroleaf.app,https://www.hydroleaf.app,http://localhost:3000}
 ---
 spring:
   config:

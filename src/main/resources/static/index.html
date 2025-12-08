@@ -3,10 +3,125 @@
 <head>
   <meta charset="UTF-8" />
   <title>HydroLeaf</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f8f9fb;
+      color: #0f172a;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 16px 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+      padding: 24px;
+      align-items: start;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      height: calc(100vh - 48px);
+      padding: 16px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .sidebar h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: #0f172a;
+    }
+
+    .sidebar nav a {
+      display: block;
+      padding: 10px 12px;
+      margin: 6px 0;
+      text-decoration: none;
+      color: #0f172a;
+      border-radius: 8px;
+      transition: background 0.2s ease;
+    }
+
+    .sidebar nav a:hover,
+    .sidebar nav a:focus {
+      background: #f1f5f9;
+      outline: none;
+    }
+
+    main {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+      min-height: 120vh;
+    }
+
+    main h1 {
+      margin-top: 0;
+    }
+  </style>
 </head>
 <body>
-  <h1>HydroLeaf Application</h1>
-  <p>This is a placeholder page served by the backend.</p>
+  <header>
+    <strong>HydroLeaf Application</strong>
+  </header>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Navigation">
+      <h2>Navigation</h2>
+      <nav>
+        <a href="#overview">Overview</a>
+        <a href="#live">Live feed</a>
+        <a href="#history">History</a>
+        <a href="#mqtt">MQTT</a>
+      </nav>
+    </aside>
+    <main>
+      <h1 id="overview">Overview</h1>
+      <p>
+        This placeholder page is served by the backend. Scroll to see how the sidebar stays anchored in
+        place while the content moves.
+      </p>
+      <h2 id="live">Live feed</h2>
+      <p>
+        The backend exposes a STOMP endpoint at <code>/ws</code> and a topic broker under <code>/topic</code>. Use your
+        preferred client to subscribe and receive live updates in real time.
+      </p>
+      <h2 id="history">History</h2>
+      <p>
+        REST endpoints under <code>/api/records/history/aggregated</code> return time-bucketed data. Adjust your query
+        parameters to filter by sensor type and desired time windows.
+      </p>
+      <h2 id="mqtt">MQTT</h2>
+      <p>
+        Devices publish messages to the configured MQTT broker. The backend consumes those payloads, normalizes them,
+        and persists both raw and aggregated values for downstream consumers.
+      </p>
+      <p>
+        Keep scrolling to confirm the sidebar remains fixed; this layout uses CSS <code>position: sticky</code> to anchor
+        the navigation even as the main content grows.
+      </p>
+    </main>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
   <script>

@@ -73,6 +73,14 @@ docker run -p 8080:8080 \
   nft-backend
 ```
 
+## User roles
+
+The application differentiates between three roles for backend users:
+
+- `SUPERUSER` – full administrative access across both the dashboard and customer areas.
+- `ADMIN` – access to dashboard functionality but not elevated to superuser actions.
+- `CLIENT` – access limited to their own personal/customer pages.
+
 
 ## REST Endpoints
 

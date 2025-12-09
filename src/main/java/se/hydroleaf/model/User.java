@@ -1,16 +1,23 @@
 package se.hydroleaf.model;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
+import java.util.EnumSet;
+import java.util.Set;
+import se.hydroleaf.model.Permission;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -55,6 +62,13 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", length = 32, nullable = false)
     private UserRole role;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "app_user_permissions", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "permission", length = 64)
+    @Builder.Default
+    private Set<Permission> permissions = EnumSet.noneOf(Permission.class);
 
     @Column(name = "active", nullable = false)
     @Builder.Default

@@ -2,10 +2,12 @@ package se.hydroleaf.service;
 
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import se.hydroleaf.controller.dto.UserCreateRequest;
 import se.hydroleaf.controller.dto.UserUpdateRequest;
+import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.User;
 import se.hydroleaf.model.UserRole;
 import se.hydroleaf.repository.UserRepository;
@@ -40,7 +42,8 @@ public class UserService {
                 .email(request.email().trim())
                 .password(request.password())
                 .displayName(request.displayName())
-                .role(role == null ? UserRole.CLIENT : role)
+                .role(role == null ? UserRole.CUSTOMER : role)
+                .permissions(request.permissions() == null ? Set.of() : Set.copyOf(request.permissions()))
                 .active(request.active() == null || request.active())
                 .build();
         return userRepository.save(user);
@@ -86,6 +89,10 @@ public class UserService {
 
         if (request.role() != null) {
             user.setRole(request.role());
+        }
+
+        if (request.permissions() != null) {
+            user.setPermissions(Set.copyOf(request.permissions()));
         }
 
         if (request.active() != null) {

@@ -20,7 +20,6 @@ import se.hydroleaf.controller.dto.UserResponse;
 import se.hydroleaf.controller.dto.UserUpdateRequest;
 import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.UserRole;
-import se.hydroleaf.service.AuthService;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.UserService;
@@ -30,13 +29,12 @@ import se.hydroleaf.service.UserService;
 @RequiredArgsConstructor
 public class SuperAdminController {
 
-    private final AuthService authService;
     private final AuthorizationService authorizationService;
     private final UserService userService;
 
     @GetMapping("/admins")
     public List<UserResponse> listAdmins(@RequestHeader(name = "Authorization", required = false) String token) {
-        AuthenticatedUser user = authenticate(token);
+        AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         authorizationService.requireSuperAdmin(user);
         return userService.listUsers().stream()
                 .filter(u -> u.getRole() == UserRole.ADMIN)
@@ -49,7 +47,7 @@ public class SuperAdminController {
     public UserResponse createAdmin(
             @RequestHeader(name = "Authorization", required = false) String token,
             @Valid @RequestBody AdminUpsertRequest request) {
-        AuthenticatedUser user = authenticate(token);
+        AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         authorizationService.requireSuperAdmin(user);
         try {
             UserCreateRequest createRequest = new UserCreateRequest(
@@ -72,7 +70,7 @@ public class SuperAdminController {
             @RequestHeader(name = "Authorization", required = false) String token,
             @PathVariable Long id,
             @Valid @RequestBody AdminUpdateRequest request) {
-        AuthenticatedUser user = authenticate(token);
+        AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         authorizationService.requireSuperAdmin(user);
         try {
             UserUpdateRequest updateRequest = new UserUpdateRequest(
@@ -98,11 +96,4 @@ public class SuperAdminController {
                                      Boolean active, Set<Permission> permissions) {
     }
 
-    private AuthenticatedUser authenticate(String token) {
-        try {
-            return authService.authenticate(token);
-        } catch (SecurityException se) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, se.getMessage(), se);
-        }
-    }
 }

@@ -1,5 +1,9 @@
 package se.hydroleaf.service;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -7,25 +11,39 @@ import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.UserRole;
 
 @Service
+@RequiredArgsConstructor
 public class AuthorizationService {
 
-    public void requireRole(AuthenticatedUser user, UserRole expected) {
-        if (user == null) {
-            throw forbidden();
+    private final AuthService authService;
+
+    public AuthenticatedUser requireAuthenticated(String token) {
+        try {
+            return authService.authenticate(token);
+        } catch (SecurityException se) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, se.getMessage(), se);
         }
+    }
+
+    public void requireRole(AuthenticatedUser user, UserRole... allowedRoles) {
         if (user.role() == UserRole.SUPER_ADMIN) {
             return;
         }
-        if (user.role() != expected) {
+        boolean allowed = Arrays.stream(allowedRoles).anyMatch(role -> role == user.role());
+        if (!allowed) {
             throw forbidden();
         }
     }
 
-    public void requirePermission(AuthenticatedUser user, Permission permission) {
+    public void requirePermission(AuthenticatedUser user, Permission... requiredPermissions) {
         if (user.role() == UserRole.SUPER_ADMIN) {
             return;
         }
-        if (user.role() != UserRole.ADMIN || !user.permissions().contains(permission)) {
+        if (user.role() != UserRole.ADMIN) {
+            throw forbidden();
+        }
+        Set<Permission> userPermissions = new HashSet<>(user.permissions());
+        boolean hasAllPermissions = Arrays.stream(requiredPermissions).allMatch(userPermissions::contains);
+        if (!hasAllPermissions) {
             throw forbidden();
         }
     }
@@ -37,9 +55,7 @@ public class AuthorizationService {
     }
 
     public void requireSuperAdmin(AuthenticatedUser user) {
-        if (user.role() != UserRole.SUPER_ADMIN) {
-            throw forbidden();
-        }
+        requireRole(user, UserRole.SUPER_ADMIN);
     }
 
     private ResponseStatusException forbidden() {

@@ -16,7 +16,7 @@ import se.hydroleaf.service.AuthService;
 import se.hydroleaf.service.AuthenticatedUser;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -26,7 +26,7 @@ public class AuthController {
     @ResponseStatus(HttpStatus.OK)
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         try {
-            AuthService.LoginResult result = authService.login(request.credential(), request.password());
+            AuthService.LoginResult result = authService.login(request.email(), request.password());
             AuthenticatedUser user = result.user();
             List<String> permissions = user.permissions().stream().map(Enum::name).toList();
             return new LoginResponse(user.userId(), user.role(), permissions, result.token());

@@ -31,11 +31,9 @@ public class AuthService {
         return authenticatedUser;
     }
 
-    public LoginResult login(String credential, String password) {
-        Optional<User> byUsername = userRepository.findByUsernameIgnoreCase(credential);
-        Optional<User> byEmail = userRepository.findByEmailIgnoreCase(credential);
-        User user = byUsername.or(() -> byEmail)
-                .orElseThrow(() -> new SecurityException("Invalid credentials"));
+    public LoginResult login(String email, String password) {
+        Optional<User> byEmail = userRepository.findByEmailIgnoreCase(email);
+        User user = byEmail.orElseThrow(() -> new SecurityException("Invalid credentials"));
 
         if (!user.isActive()) {
             throw new SecurityException("User is inactive");

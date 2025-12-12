@@ -112,3 +112,5 @@ TimescaleDB 2.x on PostgreSQL 15 has been tested. If you build your own PostgreS
 
 - For writing right-to-left content (e.g., Farsi) in Markdown without breaking alignment, see [`docs/rtl-formatting.md`](docs/rtl-formatting.md).
 - For a Farsi (RTL) technical overview of the service, including a UML sequence of the data flow, see [`docs/overview-fa.html`](docs/overview-fa.html).
+- For a quick reference to user management behavior and authentication/authorization flows, see [`docs/wiki/user-management.md`](docs/wiki/user-management.md).
+- A Bruno collection covering all REST endpoints (with sample payloads) is available at [`postman/nft-backend.bru`](postman/nft-backend.bru).

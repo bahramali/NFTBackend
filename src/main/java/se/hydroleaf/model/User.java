@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
@@ -75,8 +76,20 @@ public class User {
 
     @PrePersist
     public void prePersist() {
+        normalizeEmail();
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        normalizeEmail();
+    }
+
+    private void normalizeEmail() {
+        if (email != null) {
+            email = email.trim().toLowerCase();
         }
     }
 }

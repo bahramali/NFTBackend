@@ -73,6 +73,19 @@ docker run -p 8080:8080 \
   nft-backend
 ```
 
+## SUPER_ADMIN provisioning
+
+The backend seeds the initial `SUPER_ADMIN` account **only** on server startup when no existing `SUPER_ADMIN` is present. The credentials are read from configuration or environment variables:
+
+- `APP_SUPERADMIN_EMAIL` (required)
+- `APP_SUPERADMIN_PASSWORD` (required, minimum 12 characters)
+- `APP_SUPERADMIN_DISPLAY_NAME` (optional, defaults to `Super Admin`)
+- `APP_SUPERADMIN_ACTIVE` (optional, defaults to `true`)
+
+If the required values are missing, the seed is skipped (no public API or UI can create a `SUPER_ADMIN`).
+
+No `ADMIN`, `WORKER`, or `CUSTOMER` accounts are auto-created; they must be provisioned later via secured APIs. Demo seeds remain disabled by default and can be toggled explicitly with `app.demo-seed.enabled=true` for local development only.
+
 
 ## REST Endpoints
 

@@ -27,27 +27,28 @@ public class DataInitializer {
             }
             BCryptPasswordEncoder encoder = authService.passwordEncoder();
             User superAdmin = User.builder()
-                    .username("superadmin")
                     .email("super@admin.com")
                     .password(encoder.encode("password"))
                     .role(UserRole.SUPER_ADMIN)
-                    .permissions(Set.of(Permission.VIEW_DASHBOARD, Permission.MANAGE_ORDERS, Permission.MANAGE_PRODUCTS))
+                    .permissions(Set.of(
+                            Permission.VIEW_DASHBOARD,
+                            Permission.MANAGE_ORDERS,
+                            Permission.MANAGE_PRODUCTS,
+                            Permission.MANAGE_USERS))
                     .active(true)
                     .displayName("Super Admin")
                     .build();
 
             User admin = User.builder()
-                    .username("admin")
                     .email("admin@example.com")
                     .password(encoder.encode("password"))
                     .role(UserRole.ADMIN)
-                    .permissions(Set.of(Permission.VIEW_DASHBOARD, Permission.MANAGE_ORDERS))
+                    .permissions(Set.of(Permission.VIEW_DASHBOARD, Permission.MANAGE_ORDERS, Permission.MANAGE_USERS))
                     .active(true)
                     .displayName("Admin User")
                     .build();
 
             User worker = User.builder()
-                    .username("worker")
                     .email("worker@example.com")
                     .password(encoder.encode("password"))
                     .role(UserRole.WORKER)
@@ -57,7 +58,6 @@ public class DataInitializer {
                     .build();
 
             User customer = User.builder()
-                    .username("customer")
                     .email("customer@example.com")
                     .password(encoder.encode("password"))
                     .role(UserRole.CUSTOMER)

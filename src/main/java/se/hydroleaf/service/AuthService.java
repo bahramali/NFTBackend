@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.User;
 import se.hydroleaf.repository.UserRepository;
@@ -32,11 +33,12 @@ public class AuthService {
     }
 
     public LoginResult login(String email, String password) {
-        Optional<User> byEmail = userRepository.findByEmailIgnoreCase(email);
+        String normalizedEmail = normalizeEmail(email);
+        Optional<User> byEmail = userRepository.findByEmailIgnoreCase(normalizedEmail);
         User user = byEmail.orElseThrow(() -> new SecurityException("Invalid credentials"));
 
         if (!user.isActive()) {
-            throw new SecurityException("User is inactive");
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "User is inactive");
         }
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new SecurityException("Invalid credentials");
@@ -46,6 +48,17 @@ public class AuthService {
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(user.getId(), user.getRole(), permissions);
         tokens.put(token, authenticatedUser);
         return new LoginResult(token, authenticatedUser);
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) {
+            throw new SecurityException("Invalid credentials");
+        }
+        String trimmed = email.trim().toLowerCase();
+        if (trimmed.isEmpty()) {
+            throw new SecurityException("Invalid credentials");
+        }
+        return trimmed;
     }
 
     public BCryptPasswordEncoder passwordEncoder() {

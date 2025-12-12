@@ -9,7 +9,6 @@ import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.UserRole;
 
 public record UserCreateRequest(
-        @NotBlank @Size(max = 64) String username,
         @NotBlank @Email @Size(max = 128) String email,
         @NotBlank @Size(min = 6, max = 255) String password,
         @Size(max = 128) String displayName,

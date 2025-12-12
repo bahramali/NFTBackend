@@ -37,7 +37,6 @@ import lombok.ToString;
 @Table(
         name = "app_user",
         uniqueConstraints = {
-                @UniqueConstraint(name = "ux_app_user_username", columnNames = "username"),
                 @UniqueConstraint(name = "ux_app_user_email", columnNames = "email")
         }
 )
@@ -46,9 +45,6 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "username", length = 64, nullable = false)
-    private String username;
 
     @Column(name = "email", length = 128, nullable = false)
     private String email;

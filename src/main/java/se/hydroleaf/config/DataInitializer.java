@@ -27,7 +27,6 @@ public class DataInitializer {
             }
             BCryptPasswordEncoder encoder = authService.passwordEncoder();
             User superAdmin = User.builder()
-                    .username("superadmin")
                     .email("super@admin.com")
                     .password(encoder.encode("password"))
                     .role(UserRole.SUPER_ADMIN)
@@ -41,7 +40,6 @@ public class DataInitializer {
                     .build();
 
             User admin = User.builder()
-                    .username("admin")
                     .email("admin@example.com")
                     .password(encoder.encode("password"))
                     .role(UserRole.ADMIN)
@@ -51,7 +49,6 @@ public class DataInitializer {
                     .build();
 
             User worker = User.builder()
-                    .username("worker")
                     .email("worker@example.com")
                     .password(encoder.encode("password"))
                     .role(UserRole.WORKER)
@@ -61,7 +58,6 @@ public class DataInitializer {
                     .build();
 
             User customer = User.builder()
-                    .username("customer")
                     .email("customer@example.com")
                     .password(encoder.encode("password"))
                     .role(UserRole.CUSTOMER)

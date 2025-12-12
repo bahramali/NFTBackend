@@ -49,7 +49,6 @@ public class SuperAdminController {
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         authorizationService.requireSuperAdmin(user);
         UserCreateRequest createRequest = new UserCreateRequest(
-                request.username(),
                 request.email(),
                 request.password(),
                 request.displayName(),
@@ -68,7 +67,6 @@ public class SuperAdminController {
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         authorizationService.requireSuperAdmin(user);
         UserUpdateRequest updateRequest = new UserUpdateRequest(
-                request.username(),
                 request.email(),
                 request.password(),
                 request.displayName(),
@@ -79,11 +77,11 @@ public class SuperAdminController {
         return UserResponse.from(userService.update(id, updateRequest));
     }
 
-    public record AdminUpsertRequest(String username, String email, String password, String displayName,
+    public record AdminUpsertRequest(String email, String password, String displayName,
                                      Boolean active, Set<Permission> permissions) {
     }
 
-    public record AdminUpdateRequest(String username, String email, String password, String displayName,
+    public record AdminUpdateRequest(String email, String password, String displayName,
                                      Boolean active, Set<Permission> permissions) {
     }
 

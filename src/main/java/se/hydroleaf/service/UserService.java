@@ -33,11 +33,6 @@ public class UserService {
     @Transactional
     public User create(UserCreateRequest request) {
         String normalizedEmail = normalizeEmail(request.email());
-        String normalizedUsername = normalizeUsername(request.username());
-
-        if (userRepository.existsByUsernameIgnoreCase(normalizedUsername)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
-        }
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         }
@@ -48,7 +43,6 @@ public class UserService {
         }
 
         User user = User.builder()
-                .username(normalizedUsername)
                 .email(normalizedEmail)
                 .password(hashPassword(request.password()))
                 .displayName(request.displayName())
@@ -65,14 +59,6 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         UserRole targetRole = request.role() != null ? request.role() : user.getRole();
-
-        if (request.username() != null) {
-            String trimmed = normalizeUsername(request.username());
-            if (userRepository.existsByUsernameIgnoreCaseAndIdNot(trimmed, id)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
-            }
-            user.setUsername(trimmed);
-        }
 
         if (request.email() != null) {
             String normalizedEmail = normalizeEmail(request.email());
@@ -120,17 +106,6 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email cannot be empty");
         }
         return normalized;
-    }
-
-    private String normalizeUsername(String username) {
-        if (username == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username is required");
-        }
-        String trimmed = username.trim();
-        if (trimmed.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username cannot be empty");
-        }
-        return trimmed;
     }
 
     private String hashPassword(String password) {

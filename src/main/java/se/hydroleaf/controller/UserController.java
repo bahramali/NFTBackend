@@ -2,6 +2,7 @@ package se.hydroleaf.controller;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import se.hydroleaf.controller.dto.UserResponse;
 import se.hydroleaf.controller.dto.UserUpdateRequest;
 import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.User;
+import se.hydroleaf.model.UserRole;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.UserService;
@@ -35,6 +37,12 @@ public class UserController {
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         authorizationService.requirePermission(user, Permission.MANAGE_USERS);
         return user;
+    }
+
+    private void requireSuperAdminForRoleChanges(AuthenticatedUser user, UserRole requestedRole, Set<Permission> permissions) {
+        if (requestedRole != null || permissions != null) {
+            authorizationService.requireSuperAdmin(user);
+        }
     }
 
     @GetMapping
@@ -58,9 +66,10 @@ public class UserController {
     public UserResponse createUser(
             @RequestHeader(name = "Authorization", required = false) String token,
             @Valid @RequestBody UserCreateRequest request) {
-        requireManageUsers(token);
-        User user = userService.create(request);
-        return UserResponse.from(user);
+        AuthenticatedUser user = requireManageUsers(token);
+        requireSuperAdminForRoleChanges(user, request.role(), request.permissions());
+        User created = userService.create(request);
+        return UserResponse.from(created);
     }
 
     @PutMapping("/{id}")
@@ -68,8 +77,9 @@ public class UserController {
             @RequestHeader(name = "Authorization", required = false) String token,
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request) {
-        requireManageUsers(token);
-        User user = userService.update(id, request);
-        return UserResponse.from(user);
+        AuthenticatedUser user = requireManageUsers(token);
+        requireSuperAdminForRoleChanges(user, request.role(), request.permissions());
+        User updated = userService.update(id, request);
+        return UserResponse.from(updated);
     }
 }

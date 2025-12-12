@@ -41,6 +41,7 @@ public class UserService {
         if (role == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role is required");
         }
+        rejectSuperAdminRole(role);
 
         User user = User.builder()
                 .email(normalizedEmail)
@@ -59,6 +60,10 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         UserRole targetRole = request.role() != null ? request.role() : user.getRole();
+
+        if (request.role() != null) {
+            rejectSuperAdminRole(request.role());
+        }
 
         if (request.email() != null) {
             String normalizedEmail = normalizeEmail(request.email());
@@ -97,6 +102,13 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
+    public void delete(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        userRepository.delete(user);
+    }
+
     private String normalizeEmail(String email) {
         if (email == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
@@ -126,5 +138,11 @@ public class UserService {
             return Set.of();
         }
         return Set.copyOf(requestedPermissions);
+    }
+
+    private void rejectSuperAdminRole(UserRole role) {
+        if (role == UserRole.SUPER_ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "SUPER_ADMIN role cannot be assigned via API");
+        }
     }
 }

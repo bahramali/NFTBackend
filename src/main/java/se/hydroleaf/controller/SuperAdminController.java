@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,10 +19,12 @@ import se.hydroleaf.controller.dto.UserCreateRequest;
 import se.hydroleaf.controller.dto.UserResponse;
 import se.hydroleaf.controller.dto.UserUpdateRequest;
 import se.hydroleaf.model.Permission;
+import se.hydroleaf.model.User;
 import se.hydroleaf.model.UserRole;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.UserService;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/super-admin")
@@ -75,6 +78,20 @@ public class SuperAdminController {
                 request.permissions()
         );
         return UserResponse.from(userService.update(id, updateRequest));
+    }
+
+    @DeleteMapping("/admins/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAdmin(
+            @RequestHeader(name = "Authorization", required = false) String token,
+            @PathVariable Long id) {
+        AuthenticatedUser user = authorizationService.requireAuthenticated(token);
+        authorizationService.requireSuperAdmin(user);
+        User target = userService.getById(id);
+        if (target.getRole() != UserRole.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only ADMIN users can be deleted here");
+        }
+        userService.delete(id);
     }
 
     public record AdminUpsertRequest(String email, String password, String displayName,

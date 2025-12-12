@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.model.Permission;
@@ -17,7 +17,7 @@ import se.hydroleaf.repository.UserRepository;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
     private final ConcurrentHashMap<String, AuthenticatedUser> tokens = new ConcurrentHashMap<>();
 
     public AuthenticatedUser authenticate(String bearerToken) {
@@ -59,10 +59,6 @@ public class AuthService {
             throw new SecurityException("Invalid credentials");
         }
         return trimmed;
-    }
-
-    public BCryptPasswordEncoder passwordEncoder() {
-        return passwordEncoder;
     }
 
     public record LoginResult(String token, AuthenticatedUser user) {}

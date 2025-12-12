@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.controller.dto.UserCreateRequest;
@@ -19,7 +20,7 @@ import org.springframework.http.HttpStatus;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final AuthService authService;
+    private final PasswordEncoder passwordEncoder;
 
     public List<User> listUsers() {
         return userRepository.findAll();
@@ -127,7 +128,7 @@ public class UserService {
         if (password.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password cannot be blank");
         }
-        return authService.passwordEncoder().encode(password);
+        return passwordEncoder.encode(password);
     }
 
     private Set<Permission> resolvePermissions(UserRole role, Set<Permission> requestedPermissions) {

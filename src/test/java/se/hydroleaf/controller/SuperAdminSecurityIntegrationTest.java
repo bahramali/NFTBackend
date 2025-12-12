@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import se.hydroleaf.model.Permission;
@@ -41,6 +42,9 @@ class SuperAdminSecurityIntegrationTest {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -125,7 +129,7 @@ class SuperAdminSecurityIntegrationTest {
     private User createUser(String email, String password, UserRole role, Set<Permission> permissions) {
         User user = User.builder()
                 .email(email)
-                .password(authService.passwordEncoder().encode(password))
+                .password(passwordEncoder.encode(password))
                 .role(role)
                 .permissions(permissions)
                 .active(true)

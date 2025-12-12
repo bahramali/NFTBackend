@@ -84,6 +84,8 @@ The backend seeds the initial `SUPER_ADMIN` account **only** on server startup w
 
 If the required values are missing, the seed is skipped (no public API or UI can create a `SUPER_ADMIN`).
 
+No `ADMIN`, `WORKER`, or `CUSTOMER` accounts are auto-created; they must be provisioned later via secured APIs. Demo seeds remain disabled by default and can be toggled explicitly with `app.demo-seed.enabled=true` for local development only.
+
 
 ## REST Endpoints
 

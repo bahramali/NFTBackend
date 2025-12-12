@@ -1,0 +1,336 @@
+meta {
+  name: "NFT Backend API"
+  type: "collection"
+  version: "1.0.0"
+}
+
+env "local" {
+  baseUrl: "http://localhost:8080"
+  authToken: ""
+}
+
+folder "Auth" {
+  req "Login" {
+    method: "POST"
+    url: "{{baseUrl}}/api/auth/login"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "email": "admin@example.com",
+        "password": "admin123"
+      }
+      """
+    }
+  }
+}
+
+folder "Users" {
+  req "List Users" {
+    method: "GET"
+    url: "{{baseUrl}}/api/users"
+    headers { "Accept": "application/json" }
+  }
+
+  req "Get User" {
+    method: "GET"
+    url: "{{baseUrl}}/api/users/1"
+    headers { "Accept": "application/json" }
+  }
+
+  req "Create User" {
+    method: "POST"
+    url: "{{baseUrl}}/api/users"
+    headers {
+      "Content-Type": "application/json"
+      "Authorization": "{{authToken}}"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "username": "customer1",
+        "email": "customer1@example.com",
+        "password": "securePass!",
+        "displayName": "Customer One",
+        "role": "CUSTOMER",
+        "active": true,
+        "permissions": ["VIEW_DASHBOARD"]
+      }
+      """
+    }
+  }
+
+  req "Update User" {
+    method: "PUT"
+    url: "{{baseUrl}}/api/users/1"
+    headers {
+      "Content-Type": "application/json"
+      "Authorization": "{{authToken}}"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "displayName": "Updated Customer",
+        "password": "newSecurePass!",
+        "active": true
+      }
+      """
+    }
+  }
+}
+
+folder "Super Admin" {
+  req "List Admins" {
+    method: "GET"
+    url: "{{baseUrl}}/api/super-admin/admins"
+    headers { "Authorization": "{{authToken}}" }
+  }
+
+  req "Create Admin" {
+    method: "POST"
+    url: "{{baseUrl}}/api/super-admin/admins"
+    headers {
+      "Content-Type": "application/json"
+      "Authorization": "{{authToken}}"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "username": "ops-admin",
+        "email": "ops-admin@example.com",
+        "password": "AdminPass!23",
+        "displayName": "Operations Admin",
+        "active": true,
+        "permissions": ["MANAGE_PRODUCTS", "MANAGE_ORDERS"]
+      }
+      """
+    }
+  }
+
+  req "Update Admin" {
+    method: "PUT"
+    url: "{{baseUrl}}/api/super-admin/admins/1"
+    headers {
+      "Content-Type": "application/json"
+      "Authorization": "{{authToken}}"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "displayName": "Updated Admin",
+        "permissions": ["VIEW_DASHBOARD"],
+        "active": true
+      }
+      """
+    }
+  }
+}
+
+folder "Health" {
+  req "Health Check" {
+    method: "GET"
+    url: "{{baseUrl}}/api/health"
+  }
+}
+
+folder "Devices" {
+  req "List Devices" {
+    method: "GET"
+    url: "{{baseUrl}}/api/devices"
+  }
+
+  req "List Composite IDs" {
+    method: "GET"
+    url: "{{baseUrl}}/api/devices/composite-ids?system=ebb&layer=1&deviceId=tray-a"
+  }
+
+  req "Devices With Sensors" {
+    method: "GET"
+    url: "{{baseUrl}}/api/devices/all"
+  }
+
+  req "Sensors For Devices" {
+    method: "GET"
+    url: "{{baseUrl}}/api/devices/sensors?compositeIds=ebb-1-tray-a&compositeIds=ebb-1-tray-b"
+  }
+}
+
+folder "Germination" {
+  req "Get Germination Status" {
+    method: "GET"
+    url: "{{baseUrl}}/api/germination"
+  }
+
+  req "Trigger Germination Start" {
+    method: "POST"
+    url: "{{baseUrl}}/api/germination/start"
+  }
+
+  req "Update Germination Start" {
+    method: "PUT"
+    url: "{{baseUrl}}/api/germination"
+    headers { "Content-Type": "application/json" }
+    body {
+      type: "json"
+      json: """
+      {
+        "startTime": "2024-01-01T00:00:00Z"
+      }
+      """
+    }
+  }
+}
+
+folder "Notes" {
+  req "List Notes" {
+    method: "GET"
+    url: "{{baseUrl}}/api/notes"
+  }
+
+  req "Search Notes" {
+    method: "GET"
+    url: "{{baseUrl}}/api/notes/search?query=hydroponics"
+  }
+
+  req "Create Note" {
+    method: "POST"
+    url: "{{baseUrl}}/api/notes"
+    headers { "Content-Type": "application/json" }
+    body {
+      type: "json"
+      json: """
+      {
+        "title": "Lighting adjustment",
+        "date": "2024-01-15T10:30:00",
+        "content": "Raised the light rack by 5 cm to reduce heat stress."
+      }
+      """
+    }
+  }
+
+  req "Update Note" {
+    method: "PUT"
+    url: "{{baseUrl}}/api/notes/1"
+    headers { "Content-Type": "application/json" }
+    body {
+      type: "json"
+      json: """
+      {
+        "title": "Lighting adjustment",
+        "date": "2024-01-15T12:00:00",
+        "content": "Adjusted the light rack height after checking leaf temperature."
+      }
+      """
+    }
+  }
+
+  req "Delete Note" {
+    method: "DELETE"
+    url: "{{baseUrl}}/api/notes/1"
+  }
+}
+
+folder "Records" {
+  req "Aggregated History (GET)" {
+    method: "GET"
+    url: "{{baseUrl}}/api/records/history/aggregated?compositeId=ebb-1-tray-a&from=2024-01-01T00:00:00Z&to=2024-01-07T00:00:00Z&bucket=5m&sensorType=temperature&sensorType=ph&bucketLimit=288&bucketOffset=0&sensorLimit=10&sensorOffset=0"
+  }
+
+  req "Aggregated History (POST)" {
+    method: "POST"
+    url: "{{baseUrl}}/api/records/history/aggregated?compositeId=ebb-1-tray-a&from=2024-01-01T00:00:00Z&to=2024-01-07T00:00:00Z&bucket=5m"
+  }
+}
+
+folder "Sensor Config" {
+  req "List Sensor Configurations" {
+    method: "GET"
+    url: "{{baseUrl}}/api/sensor-config"
+  }
+
+  req "Get Sensor Configuration" {
+    method: "GET"
+    url: "{{baseUrl}}/api/sensor-config/temperature"
+  }
+
+  req "Create Sensor Configuration" {
+    method: "POST"
+    url: "{{baseUrl}}/api/sensor-config"
+    headers { "Content-Type": "application/json" }
+    body {
+      type: "json"
+      json: """
+      {
+        "sensorType": "temperature",
+        "minValue": 18.0,
+        "maxValue": 24.0,
+        "description": "Ideal daytime temperature"
+      }
+      """
+    }
+  }
+
+  req "Create Sensor Configuration (Path Type)" {
+    method: "POST"
+    url: "{{baseUrl}}/api/sensor-config/ph"
+    headers { "Content-Type": "application/json" }
+    body {
+      type: "json"
+      json: """
+      {
+        "minValue": 5.5,
+        "maxValue": 6.2,
+        "description": "pH range for basil seedlings"
+      }
+      """
+    }
+  }
+
+  req "Update Sensor Configuration" {
+    method: "PUT"
+    url: "{{baseUrl}}/api/sensor-config/temperature"
+    headers { "Content-Type": "application/json" }
+    body {
+      type: "json"
+      json: """
+      {
+        "sensorType": "temperature",
+        "minValue": 19.0,
+        "maxValue": 23.5,
+        "description": "Updated range after calibration"
+      }
+      """
+    }
+  }
+
+  req "Delete Sensor Configuration" {
+    method: "DELETE"
+    url: "{{baseUrl}}/api/sensor-config/temperature"
+  }
+}
+
+folder "Status" {
+  req "Sensor Average" {
+    method: "GET"
+    url: "{{baseUrl}}/api/status/ebb/1/temperature/average"
+  }
+
+  req "All Sensor Averages" {
+    method: "GET"
+    url: "{{baseUrl}}/api/status/ebb/1/all/average"
+  }
+}
+
+folder "Topics" {
+  req "Sensor Types By Topic" {
+    method: "GET"
+    url: "{{baseUrl}}/api/topics/sensors"
+  }
+}

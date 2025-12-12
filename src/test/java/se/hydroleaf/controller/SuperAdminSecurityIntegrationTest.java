@@ -24,7 +24,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect",
+        "spring.sql.init.mode=never"
+})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class SuperAdminSecurityIntegrationTest {

@@ -7,11 +7,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import se.hydroleaf.model.User;
 import se.hydroleaf.model.UserRole;
 import se.hydroleaf.repository.UserRepository;
-import se.hydroleaf.service.AuthService;
 
 @SpringBootTest(properties = {
         "spring.jpa.hibernate.ddl-auto=create-drop",
@@ -27,7 +27,7 @@ class SuperAdminSeederTest {
     private UserRepository userRepository;
 
     @Autowired
-    private AuthService authService;
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private SuperAdminSeeder superAdminSeeder;
@@ -47,14 +47,14 @@ class SuperAdminSeederTest {
         assertThat(superAdmin.isActive()).isTrue();
         assertThat(superAdmin.getPermissions()).isEmpty();
         assertThat(userRepository.count()).isEqualTo(1);
-        assertThat(authService.passwordEncoder().matches("averystrongpassword", superAdmin.getPassword())).isTrue();
+        assertThat(passwordEncoder.matches("averystrongpassword", superAdmin.getPassword())).isTrue();
     }
 
     @Test
     void doesNothingWhenSuperAdminAlreadyExists() throws Exception {
         User existing = User.builder()
                 .email("seed@example.com")
-                .password(authService.passwordEncoder().encode("averystrongpassword"))
+                .password(passwordEncoder.encode("averystrongpassword"))
                 .role(UserRole.SUPER_ADMIN)
                 .active(true)
                 .build();

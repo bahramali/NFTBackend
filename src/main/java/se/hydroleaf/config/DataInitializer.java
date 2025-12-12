@@ -31,7 +31,11 @@ public class DataInitializer {
                     .email("super@admin.com")
                     .password(encoder.encode("password"))
                     .role(UserRole.SUPER_ADMIN)
-                    .permissions(Set.of(Permission.VIEW_DASHBOARD, Permission.MANAGE_ORDERS, Permission.MANAGE_PRODUCTS))
+                    .permissions(Set.of(
+                            Permission.VIEW_DASHBOARD,
+                            Permission.MANAGE_ORDERS,
+                            Permission.MANAGE_PRODUCTS,
+                            Permission.MANAGE_USERS))
                     .active(true)
                     .displayName("Super Admin")
                     .build();
@@ -41,7 +45,7 @@ public class DataInitializer {
                     .email("admin@example.com")
                     .password(encoder.encode("password"))
                     .role(UserRole.ADMIN)
-                    .permissions(Set.of(Permission.VIEW_DASHBOARD, Permission.MANAGE_ORDERS))
+                    .permissions(Set.of(Permission.VIEW_DASHBOARD, Permission.MANAGE_ORDERS, Permission.MANAGE_USERS))
                     .active(true)
                     .displayName("Admin User")
                     .build();

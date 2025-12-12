@@ -5,18 +5,21 @@ import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.controller.dto.UserCreateRequest;
 import se.hydroleaf.controller.dto.UserUpdateRequest;
 import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.User;
 import se.hydroleaf.model.UserRole;
 import se.hydroleaf.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+    private final AuthService authService;
 
     public List<User> listUsers() {
         return userRepository.findAll();
@@ -24,26 +27,33 @@ public class UserService {
 
     public User getById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     @Transactional
     public User create(UserCreateRequest request) {
-        if (userRepository.existsByUsernameIgnoreCase(request.username())) {
-            throw new IllegalArgumentException("Username already exists");
+        String normalizedEmail = normalizeEmail(request.email());
+        String normalizedUsername = normalizeUsername(request.username());
+
+        if (userRepository.existsByUsernameIgnoreCase(normalizedUsername)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
         }
-        if (userRepository.existsByEmailIgnoreCase(request.email())) {
-            throw new IllegalArgumentException("Email already exists");
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         }
 
         UserRole role = request.role();
+        if (role == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role is required");
+        }
+
         User user = User.builder()
-                .username(request.username().trim())
-                .email(request.email().trim())
-                .password(request.password())
+                .username(normalizedUsername)
+                .email(normalizedEmail)
+                .password(hashPassword(request.password()))
                 .displayName(request.displayName())
-                .role(role == null ? UserRole.CUSTOMER : role)
-                .permissions(request.permissions() == null ? Set.of() : Set.copyOf(request.permissions()))
+                .role(role)
+                .permissions(resolvePermissions(role, request.permissions()))
                 .active(request.active() == null || request.active())
                 .build();
         return userRepository.save(user);
@@ -52,35 +62,31 @@ public class UserService {
     @Transactional
     public User update(Long id, UserUpdateRequest request) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        UserRole targetRole = request.role() != null ? request.role() : user.getRole();
 
         if (request.username() != null) {
-            String trimmed = request.username().trim();
-            if (trimmed.isEmpty()) {
-                throw new IllegalArgumentException("Username cannot be empty");
-            }
+            String trimmed = normalizeUsername(request.username());
             if (userRepository.existsByUsernameIgnoreCaseAndIdNot(trimmed, id)) {
-                throw new IllegalArgumentException("Username already exists");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
             }
             user.setUsername(trimmed);
         }
 
         if (request.email() != null) {
-            String trimmed = request.email().trim();
-            if (trimmed.isEmpty()) {
-                throw new IllegalArgumentException("Email cannot be empty");
+            String normalizedEmail = normalizeEmail(request.email());
+            if (userRepository.existsByEmailIgnoreCaseAndIdNot(normalizedEmail, id)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
             }
-            if (userRepository.existsByEmailIgnoreCaseAndIdNot(trimmed, id)) {
-                throw new IllegalArgumentException("Email already exists");
-            }
-            user.setEmail(trimmed);
+            user.setEmail(normalizedEmail);
         }
 
         if (request.password() != null) {
             if (request.password().isBlank()) {
-                throw new IllegalArgumentException("Password cannot be blank");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password cannot be blank");
             }
-            user.setPassword(request.password());
+            user.setPassword(hashPassword(request.password()));
         }
 
         if (request.displayName() != null) {
@@ -89,10 +95,13 @@ public class UserService {
 
         if (request.role() != null) {
             user.setRole(request.role());
+            targetRole = request.role();
         }
 
-        if (request.permissions() != null) {
-            user.setPermissions(Set.copyOf(request.permissions()));
+        if (targetRole != UserRole.ADMIN) {
+            user.setPermissions(Set.of());
+        } else if (request.permissions() != null) {
+            user.setPermissions(resolvePermissions(targetRole, request.permissions()));
         }
 
         if (request.active() != null) {
@@ -100,5 +109,47 @@ public class UserService {
         }
 
         return userRepository.save(user);
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+        }
+        String normalized = email.trim().toLowerCase();
+        if (normalized.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email cannot be empty");
+        }
+        return normalized;
+    }
+
+    private String normalizeUsername(String username) {
+        if (username == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username is required");
+        }
+        String trimmed = username.trim();
+        if (trimmed.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username cannot be empty");
+        }
+        return trimmed;
+    }
+
+    private String hashPassword(String password) {
+        if (password == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required");
+        }
+        if (password.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password cannot be blank");
+        }
+        return authService.passwordEncoder().encode(password);
+    }
+
+    private Set<Permission> resolvePermissions(UserRole role, Set<Permission> requestedPermissions) {
+        if (role != UserRole.ADMIN) {
+            return Set.of();
+        }
+        if (requestedPermissions == null) {
+            return Set.of();
+        }
+        return Set.copyOf(requestedPermissions);
     }
 }

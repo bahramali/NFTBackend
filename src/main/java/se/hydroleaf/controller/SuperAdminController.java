@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.controller.dto.UserCreateRequest;
 import se.hydroleaf.controller.dto.UserResponse;
 import se.hydroleaf.controller.dto.UserUpdateRequest;
@@ -49,20 +48,16 @@ public class SuperAdminController {
             @Valid @RequestBody AdminUpsertRequest request) {
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         authorizationService.requireSuperAdmin(user);
-        try {
-            UserCreateRequest createRequest = new UserCreateRequest(
-                    request.username(),
-                    request.email(),
-                    request.password(),
-                    request.displayName(),
-                    UserRole.ADMIN,
-                    request.active(),
-                    request.permissions()
-            );
-            return UserResponse.from(userService.create(createRequest));
-        } catch (IllegalArgumentException iae) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, iae.getMessage(), iae);
-        }
+        UserCreateRequest createRequest = new UserCreateRequest(
+                request.username(),
+                request.email(),
+                request.password(),
+                request.displayName(),
+                UserRole.ADMIN,
+                request.active(),
+                request.permissions()
+        );
+        return UserResponse.from(userService.create(createRequest));
     }
 
     @PutMapping("/admins/{id}")
@@ -72,20 +67,16 @@ public class SuperAdminController {
             @Valid @RequestBody AdminUpdateRequest request) {
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         authorizationService.requireSuperAdmin(user);
-        try {
-            UserUpdateRequest updateRequest = new UserUpdateRequest(
-                    request.username(),
-                    request.email(),
-                    request.password(),
-                    request.displayName(),
-                    UserRole.ADMIN,
-                    request.active(),
-                    request.permissions()
-            );
-            return UserResponse.from(userService.update(id, updateRequest));
-        } catch (IllegalArgumentException iae) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, iae.getMessage(), iae);
-        }
+        UserUpdateRequest updateRequest = new UserUpdateRequest(
+                request.username(),
+                request.email(),
+                request.password(),
+                request.displayName(),
+                UserRole.ADMIN,
+                request.active(),
+                request.permissions()
+        );
+        return UserResponse.from(userService.update(id, updateRequest));
     }
 
     public record AdminUpsertRequest(String username, String email, String password, String displayName,

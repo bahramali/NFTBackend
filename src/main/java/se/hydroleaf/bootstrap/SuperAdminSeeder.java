@@ -5,11 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import se.hydroleaf.model.User;
 import se.hydroleaf.model.UserRole;
 import se.hydroleaf.repository.UserRepository;
-import se.hydroleaf.service.AuthService;
 
 @Component
 @RequiredArgsConstructor
@@ -19,7 +19,7 @@ public class SuperAdminSeeder implements ApplicationRunner {
     private static final int MIN_PASSWORD_LENGTH = 12;
 
     private final UserRepository userRepository;
-    private final AuthService authService;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${APP_SUPERADMIN_EMAIL:}")
     private String superAdminEmail;
@@ -64,7 +64,7 @@ public class SuperAdminSeeder implements ApplicationRunner {
 
         User superAdmin = User.builder()
                 .email(normalizedEmail)
-                .password(authService.passwordEncoder().encode(superAdminPassword))
+                .password(passwordEncoder.encode(superAdminPassword))
                 .role(UserRole.SUPER_ADMIN)
                 .displayName(displayName)
                 .active(superAdminActive)

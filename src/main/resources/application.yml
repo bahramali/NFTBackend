@@ -3,6 +3,9 @@ spring:
     active: prod
   application:
     name: NFTBackend
+app:
+  demo-seed:
+    enabled: false
 ---
 spring:
   config:

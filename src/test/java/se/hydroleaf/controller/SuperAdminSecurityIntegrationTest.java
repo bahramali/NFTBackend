@@ -86,12 +86,12 @@ class SuperAdminSecurityIntegrationTest {
         createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.MANAGE_USERS));
         String token = bearerToken("super@example.com", "password123");
 
-        mockMvc.perform(post("/api/super-admin/admins")
+        mockMvc.perform(post("/api/super-admin/admins/invite")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createUserRequestJson("new.admin@example.com", "ADMIN")))
+                        .content(createAdminInviteRequest("new.admin@example.com")))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.role").value("ADMIN"));
+                .andExpect(jsonPath("$.status").value("INVITED"));
 
         User createdAdmin = userRepository.findByEmailIgnoreCase("new.admin@example.com").orElseThrow();
 
@@ -100,12 +100,19 @@ class SuperAdminSecurityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].email").value("new.admin@example.com"));
 
-        mockMvc.perform(put("/api/super-admin/admins/" + createdAdmin.getId())
+        mockMvc.perform(put("/api/super-admin/admins/" + createdAdmin.getId() + "/permissions")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateAdminRequestJson("Updated Admin")))
+                        .content(updatePermissionsRequestJson()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.displayName").value("Updated Admin"));
+                .andExpect(jsonPath("$.permissions[0]").value("MANAGE_USERS"));
+
+        mockMvc.perform(put("/api/super-admin/admins/" + createdAdmin.getId() + "/status")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(statusUpdateJson(false)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("DISABLED"));
 
         mockMvc.perform(delete("/api/super-admin/admins/" + createdAdmin.getId())
                         .header("Authorization", token))
@@ -117,12 +124,17 @@ class SuperAdminSecurityIntegrationTest {
     @Test
     void unauthorizedRolesCannotUseSuperAdminEndpoints() throws Exception {
         createUser("worker@example.com", "password123", UserRole.WORKER, Set.of());
+        createUser("admin@example.com", "password123", UserRole.ADMIN, Set.of(Permission.MANAGE_USERS));
 
         mockMvc.perform(get("/api/super-admin/admins"))
                 .andExpect(status().isUnauthorized());
 
         mockMvc.perform(get("/api/super-admin/admins")
                         .header("Authorization", bearerToken("worker@example.com", "password123")))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/super-admin/admins")
+                        .header("Authorization", bearerToken("admin@example.com", "password123")))
                 .andExpect(status().isForbidden());
     }
 
@@ -150,13 +162,25 @@ class SuperAdminSecurityIntegrationTest {
         return objectMapper.writeValueAsString(new UserUpdatePayload(role));
     }
 
-    private String updateAdminRequestJson(String displayName) throws Exception {
-        return objectMapper.writeValueAsString(new AdminUpdatePayload(displayName));
+    private String createAdminInviteRequest(String email) throws Exception {
+        return objectMapper.writeValueAsString(new AdminInvitePayload(email));
+    }
+
+    private String updatePermissionsRequestJson() throws Exception {
+        return objectMapper.writeValueAsString(new PermissionPayload(Set.of("MANAGE_USERS")));
+    }
+
+    private String statusUpdateJson(boolean active) throws Exception {
+        return objectMapper.writeValueAsString(new StatusPayload(active));
     }
 
     private record UserRequestPayload(String email, String role, String password) {}
 
     private record UserUpdatePayload(String role) {}
 
-    private record AdminUpdatePayload(String displayName) {}
+    private record AdminInvitePayload(String email) {}
+
+    private record PermissionPayload(Set<String> permissions) {}
+
+    private record StatusPayload(boolean active) {}
 }

@@ -12,6 +12,7 @@ import se.hydroleaf.controller.dto.UserUpdateRequest;
 import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.User;
 import se.hydroleaf.model.UserRole;
+import se.hydroleaf.model.UserStatus;
 import se.hydroleaf.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 
@@ -51,6 +52,7 @@ public class UserService {
                 .role(role)
                 .permissions(resolvePermissions(role, request.permissions()))
                 .active(request.active() == null || request.active())
+                .status(resolveStatus(request.active()))
                 .build();
         return userRepository.save(user);
     }
@@ -98,6 +100,7 @@ public class UserService {
 
         if (request.active() != null) {
             user.setActive(request.active());
+            user.setStatus(resolveStatus(request.active()));
         }
 
         return userRepository.save(user);
@@ -139,6 +142,11 @@ public class UserService {
             return Set.of();
         }
         return Set.copyOf(requestedPermissions);
+    }
+
+    private UserStatus resolveStatus(Boolean active) {
+        boolean isActive = active == null || active;
+        return isActive ? UserStatus.ACTIVE : UserStatus.DISABLED;
     }
 
     private void rejectSuperAdminRole(UserRole role) {

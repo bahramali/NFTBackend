@@ -58,7 +58,7 @@ folder "Users" {
         "displayName": "Customer One",
         "role": "CUSTOMER",
         "active": true,
-        "permissions": ["VIEW_DASHBOARD"]
+        "permissions": []
       }
       """
     }
@@ -107,7 +107,7 @@ folder "Super Admin" {
         "password": "AdminPass!23",
         "displayName": "Operations Admin",
         "active": true,
-        "permissions": ["MANAGE_PRODUCTS", "MANAGE_ORDERS"]
+        "permissions": ["ADMIN_DASHBOARD", "TEAM"]
       }
       """
     }
@@ -125,7 +125,7 @@ folder "Super Admin" {
       json: """
       {
         "displayName": "Updated Admin",
-        "permissions": ["VIEW_DASHBOARD"],
+        "permissions": ["REPORTS"],
         "active": true
       }
       """

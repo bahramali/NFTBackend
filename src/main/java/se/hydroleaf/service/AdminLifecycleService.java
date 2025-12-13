@@ -7,6 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -157,10 +158,10 @@ public class AdminLifecycleService {
     }
 
     private Set<Permission> resolvePermissions(Set<Permission> permissions) {
-        if (permissions == null) {
-            return Set.of();
+        if (permissions == null || permissions.isEmpty()) {
+            return EnumSet.noneOf(Permission.class);
         }
-        return Set.copyOf(permissions);
+        return EnumSet.copyOf(permissions);
     }
 
     private String normalizeEmail(String email) {

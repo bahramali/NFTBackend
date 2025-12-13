@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import se.hydroleaf.model.User;
 import se.hydroleaf.model.UserRole;
+import se.hydroleaf.model.UserStatus;
 import se.hydroleaf.repository.UserRepository;
 
 @Component
@@ -68,6 +69,7 @@ public class SuperAdminSeeder implements ApplicationRunner {
                 .role(UserRole.SUPER_ADMIN)
                 .displayName(displayName)
                 .active(superAdminActive)
+                .status(superAdminActive ? UserStatus.ACTIVE : UserStatus.DISABLED)
                 .build();
 
         userRepository.save(superAdmin);

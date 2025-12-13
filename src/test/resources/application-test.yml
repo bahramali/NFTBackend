@@ -7,8 +7,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: org.hibernate.dialect.H2Dialect
     show-sql: true
+  sql:
+    init:
+      mode: always
 mqtt:
   broker: test-broker
   enabled: false

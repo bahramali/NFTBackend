@@ -2,7 +2,6 @@ package se.hydroleaf.controller;
 
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,16 +14,14 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import se.hydroleaf.controller.dto.UserCreateRequest;
-import se.hydroleaf.controller.dto.UserResponse;
-import se.hydroleaf.controller.dto.UserUpdateRequest;
-import se.hydroleaf.model.Permission;
-import se.hydroleaf.model.User;
-import se.hydroleaf.model.UserRole;
+import se.hydroleaf.controller.dto.AdminInviteRequest;
+import se.hydroleaf.controller.dto.AdminPermissionsUpdateRequest;
+import se.hydroleaf.controller.dto.AdminResponse;
+import se.hydroleaf.controller.dto.AdminStatusUpdateRequest;
+import se.hydroleaf.controller.dto.ResendInviteRequest;
+import se.hydroleaf.service.AdminLifecycleService;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
-import se.hydroleaf.service.UserService;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/super-admin")
@@ -32,52 +29,48 @@ import org.springframework.web.server.ResponseStatusException;
 public class SuperAdminController {
 
     private final AuthorizationService authorizationService;
-    private final UserService userService;
+    private final AdminLifecycleService adminLifecycleService;
 
-    @GetMapping("/admins")
-    public List<UserResponse> listAdmins(@RequestHeader(name = "Authorization", required = false) String token) {
+    private void requireSuperAdmin(String token) {
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         authorizationService.requireSuperAdmin(user);
-        return userService.listUsers().stream()
-                .filter(u -> u.getRole() == UserRole.ADMIN)
-                .map(UserResponse::from)
+    }
+
+    @GetMapping("/admins")
+    public List<AdminResponse> listAdmins(@RequestHeader(name = "Authorization", required = false) String token) {
+        requireSuperAdmin(token);
+        return adminLifecycleService.listAdmins().stream()
+                .map(AdminResponse::from)
                 .toList();
     }
 
-    @PostMapping("/admins")
+    @PostMapping("/admins/invite")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse createAdmin(
+    public AdminResponse inviteAdmin(
             @RequestHeader(name = "Authorization", required = false) String token,
-            @Valid @RequestBody AdminUpsertRequest request) {
-        AuthenticatedUser user = authorizationService.requireAuthenticated(token);
-        authorizationService.requireSuperAdmin(user);
-        UserCreateRequest createRequest = new UserCreateRequest(
-                request.email(),
-                request.password(),
-                request.displayName(),
-                UserRole.ADMIN,
-                request.active(),
-                request.permissions()
-        );
-        return UserResponse.from(userService.create(createRequest));
+            @Valid @RequestBody AdminInviteRequest request) {
+        requireSuperAdmin(token);
+        AdminLifecycleService.InviteResult result = adminLifecycleService.inviteAdmin(
+                request.email(), request.displayName(), request.permissions(), request.expiresInHours());
+        return AdminResponse.from(result.user());
     }
 
-    @PutMapping("/admins/{id}")
-    public UserResponse updateAdmin(
+    @PutMapping("/admins/{id}/permissions")
+    public AdminResponse updatePermissions(
             @RequestHeader(name = "Authorization", required = false) String token,
             @PathVariable Long id,
-            @Valid @RequestBody AdminUpdateRequest request) {
-        AuthenticatedUser user = authorizationService.requireAuthenticated(token);
-        authorizationService.requireSuperAdmin(user);
-        UserUpdateRequest updateRequest = new UserUpdateRequest(
-                request.email(),
-                request.password(),
-                request.displayName(),
-                UserRole.ADMIN,
-                request.active(),
-                request.permissions()
-        );
-        return UserResponse.from(userService.update(id, updateRequest));
+            @Valid @RequestBody AdminPermissionsUpdateRequest request) {
+        requireSuperAdmin(token);
+        return AdminResponse.from(adminLifecycleService.updatePermissions(id, request.permissions()));
+    }
+
+    @PutMapping("/admins/{id}/status")
+    public AdminResponse updateStatus(
+            @RequestHeader(name = "Authorization", required = false) String token,
+            @PathVariable Long id,
+            @Valid @RequestBody AdminStatusUpdateRequest request) {
+        requireSuperAdmin(token);
+        return AdminResponse.from(adminLifecycleService.updateStatus(id, request.active()));
     }
 
     @DeleteMapping("/admins/{id}")
@@ -85,21 +78,18 @@ public class SuperAdminController {
     public void deleteAdmin(
             @RequestHeader(name = "Authorization", required = false) String token,
             @PathVariable Long id) {
-        AuthenticatedUser user = authorizationService.requireAuthenticated(token);
-        authorizationService.requireSuperAdmin(user);
-        User target = userService.getById(id);
-        if (target.getRole() != UserRole.ADMIN) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only ADMIN users can be deleted here");
-        }
-        userService.delete(id);
+        requireSuperAdmin(token);
+        adminLifecycleService.deleteAdmin(id);
     }
 
-    public record AdminUpsertRequest(String email, String password, String displayName,
-                                     Boolean active, Set<Permission> permissions) {
+    @PostMapping("/admins/{id}/resend-invite")
+    public AdminResponse resendInvite(
+            @RequestHeader(name = "Authorization", required = false) String token,
+            @PathVariable Long id,
+            @Valid @RequestBody(required = false) ResendInviteRequest request) {
+        requireSuperAdmin(token);
+        Integer expiry = request != null ? request.expiresInHours() : null;
+        AdminLifecycleService.InviteResult result = adminLifecycleService.resendInvite(id, expiry);
+        return AdminResponse.from(result.user());
     }
-
-    public record AdminUpdateRequest(String email, String password, String displayName,
-                                     Boolean active, Set<Permission> permissions) {
-    }
-
 }

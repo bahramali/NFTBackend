@@ -18,7 +18,6 @@ import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.Set;
-import se.hydroleaf.model.Permission;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -26,6 +25,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import se.hydroleaf.model.Permission;
+import se.hydroleaf.model.UserStatus;
 
 @Entity
 @Getter
@@ -71,6 +72,24 @@ public class User {
     @Builder.Default
     private boolean active = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 32, nullable = false)
+    @Builder.Default
+    private UserStatus status = UserStatus.ACTIVE;
+
+    @Column(name = "invited", nullable = false)
+    @Builder.Default
+    private boolean invited = false;
+
+    @Column(name = "invite_token_hash", length = 128)
+    private String inviteTokenHash;
+
+    @Column(name = "invite_expires_at")
+    private LocalDateTime inviteExpiresAt;
+
+    @Column(name = "invite_used_at")
+    private LocalDateTime inviteUsedAt;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -80,16 +99,33 @@ public class User {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
+        syncLifecycle();
     }
 
     @PreUpdate
     public void preUpdate() {
         normalizeEmail();
+        syncLifecycle();
     }
 
     private void normalizeEmail() {
         if (email != null) {
             email = email.trim().toLowerCase();
+        }
+    }
+
+    private void syncLifecycle() {
+        if (status == null) {
+            status = active ? UserStatus.ACTIVE : UserStatus.DISABLED;
+        }
+        if (status == UserStatus.INVITED) {
+            active = false;
+            invited = true;
+        } else {
+            invited = false;
+            active = status == UserStatus.ACTIVE;
+            inviteTokenHash = null;
+            inviteExpiresAt = null;
         }
     }
 }

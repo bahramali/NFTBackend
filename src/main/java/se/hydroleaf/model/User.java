@@ -73,11 +73,11 @@ public class User {
     private boolean active = true;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 32, nullable = false)
+    @Column(name = "status", length = 32, nullable = false, columnDefinition = "varchar(32) default 'ACTIVE' not null")
     @Builder.Default
     private UserStatus status = UserStatus.ACTIVE;
 
-    @Column(name = "invited", nullable = false)
+    @Column(name = "invited", nullable = false, columnDefinition = "boolean default false not null")
     @Builder.Default
     private boolean invited = false;
 

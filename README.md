@@ -86,6 +86,16 @@ If the required values are missing, the seed is skipped (no public API or UI can
 
 No `ADMIN`, `WORKER`, or `CUSTOMER` accounts are auto-created; they must be provisioned later via secured APIs. Demo seeds remain disabled by default and can be toggled explicitly with `app.demo-seed.enabled=true` for local development only.
 
+## Admin invite emails
+
+- The backend only logs invite tokens by default to keep local/testing environments simple.
+- To deliver real emails, set `APP_INVITE_SMTP_ENABLED=true` and configure Spring Mail settings (e.g. `SPRING_MAIL_HOST`,
+  `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`).
+- Optional invite email overrides:
+  - `APP_INVITE_EMAIL_FROM` (default: `no-reply@hydroleaf.se`)
+  - `APP_INVITE_EMAIL_SUBJECT` (default: `You have been invited to Hydroleaf`)
+  - `APP_INVITE_LINK_TEMPLATE` (use `{token}` placeholder to embed the invite token in the URL)
+
 
 ## REST Endpoints
 

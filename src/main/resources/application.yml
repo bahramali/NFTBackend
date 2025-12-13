@@ -9,6 +9,11 @@ spring:
 app:
   demo-seed:
     enabled: false
+
+  cors:
+    allowed-origins:
+      - https://hydroleaf.se
+      - https://www.hydroleaf.se
 ---
 spring:
   config:

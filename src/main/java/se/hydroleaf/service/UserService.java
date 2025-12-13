@@ -44,7 +44,6 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role is required");
         }
         rejectSuperAdminRole(role);
-        rejectAdminLifecycleChanges(role);
 
         User user = User.builder()
                 .email(normalizedEmail)

@@ -101,23 +101,31 @@ public class AdminLifecycleService {
     }
 
     @Transactional
-    public User updateStatus(Long adminId, UserStatus status) {
-        if (status == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status is required");
-        }
-        if (status == UserStatus.INVITED) {
+    public User updateStatus(Long adminId, UserStatus status, Boolean active) {
+        UserStatus targetStatus = resolveStatus(status, active);
+        if (targetStatus == UserStatus.INVITED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status cannot be set to INVITED manually");
         }
         User admin = requireAdmin(adminId);
-        if (admin.getStatus() == UserStatus.INVITED && status == UserStatus.ACTIVE) {
+        if (admin.getStatus() == UserStatus.INVITED && targetStatus == UserStatus.ACTIVE) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invited admin must accept invite to activate");
         }
-        if (status == UserStatus.DISABLED) {
+        if (targetStatus == UserStatus.DISABLED) {
             clearInviteMetadata(admin);
         }
-        admin.setStatus(status);
-        admin.setActive(status == UserStatus.ACTIVE);
+        admin.setStatus(targetStatus);
+        admin.setActive(targetStatus == UserStatus.ACTIVE);
         return userRepository.save(admin);
+    }
+
+    private UserStatus resolveStatus(UserStatus status, Boolean active) {
+        if (status != null) {
+            return status;
+        }
+        if (active != null) {
+            return active ? UserStatus.ACTIVE : UserStatus.DISABLED;
+        }
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status is required");
     }
 
     @Transactional

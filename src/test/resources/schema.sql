@@ -10,9 +10,11 @@ CREATE TABLE app_user (
     active BOOLEAN NOT NULL,
     status VARCHAR(32) DEFAULT 'ACTIVE' NOT NULL,
     invited BOOLEAN DEFAULT FALSE NOT NULL,
+    invited_at TIMESTAMP,
     invite_token_hash VARCHAR(128),
     invite_expires_at TIMESTAMP,
     invite_used_at TIMESTAMP,
+    last_login_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL
 );
 

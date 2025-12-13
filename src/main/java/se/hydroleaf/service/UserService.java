@@ -64,6 +64,11 @@ public class UserService {
 
         UserRole targetRole = request.role() != null ? request.role() : user.getRole();
 
+        rejectAdminLifecycleChanges(targetRole);
+        if (user.getRole() == UserRole.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admins must be managed via super-admin endpoints");
+        }
+
         if (request.role() != null) {
             rejectSuperAdminRole(request.role());
         }
@@ -152,6 +157,14 @@ public class UserService {
     private void rejectSuperAdminRole(UserRole role) {
         if (role == UserRole.SUPER_ADMIN) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "SUPER_ADMIN role cannot be assigned via API");
+        }
+    }
+
+    private void rejectAdminLifecycleChanges(UserRole role) {
+        if (role == UserRole.ADMIN) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Admins must be created and managed via the super-admin invite flow");
         }
     }
 }

@@ -81,6 +81,9 @@ public class User {
     @Builder.Default
     private boolean invited = false;
 
+    @Column(name = "invited_at")
+    private LocalDateTime invitedAt;
+
     @Column(name = "invite_token_hash", length = 128)
     private String inviteTokenHash;
 
@@ -89,6 +92,9 @@ public class User {
 
     @Column(name = "invite_used_at")
     private LocalDateTime inviteUsedAt;
+
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

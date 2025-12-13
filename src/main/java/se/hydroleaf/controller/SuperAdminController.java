@@ -70,7 +70,7 @@ public class SuperAdminController {
             @PathVariable Long id,
             @Valid @RequestBody AdminStatusUpdateRequest request) {
         requireSuperAdmin(token);
-        return AdminResponse.from(adminLifecycleService.updateStatus(id, request.active()));
+        return AdminResponse.from(adminLifecycleService.updateStatus(id, request.status(), request.active()));
     }
 
     @DeleteMapping("/admins/{id}")

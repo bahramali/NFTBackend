@@ -49,6 +49,7 @@ public class AdminLifecycleService {
         String token = generateToken();
         String tokenHash = hashToken(token);
         LocalDateTime expiresAt = LocalDateTime.now().plusHours(hours);
+        LocalDateTime invitedAt = LocalDateTime.now();
 
         User admin = User.builder()
                 .email(normalizedEmail)
@@ -58,6 +59,7 @@ public class AdminLifecycleService {
                 .permissions(resolvePermissions(permissions))
                 .status(UserStatus.INVITED)
                 .invited(true)
+                .invitedAt(invitedAt)
                 .inviteTokenHash(tokenHash)
                 .inviteExpiresAt(expiresAt)
                 .active(false)
@@ -78,8 +80,10 @@ public class AdminLifecycleService {
         String token = generateToken();
         String tokenHash = hashToken(token);
         LocalDateTime expiresAt = LocalDateTime.now().plusHours(hours);
+        LocalDateTime invitedAt = LocalDateTime.now();
         admin.setInviteTokenHash(tokenHash);
         admin.setInviteExpiresAt(expiresAt);
+        admin.setInvitedAt(invitedAt);
         admin.setInvited(true);
         admin.setStatus(UserStatus.INVITED);
         admin.setInviteUsedAt(null);
@@ -97,20 +101,31 @@ public class AdminLifecycleService {
     }
 
     @Transactional
-    public User updateStatus(Long adminId, boolean active) {
-        User admin = requireAdmin(adminId);
-        if (admin.getStatus() == UserStatus.INVITED) {
-            if (active) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invited admin must accept invite to activate");
-            }
-            admin.setInvited(false);
-            admin.setInviteTokenHash(null);
-            admin.setInviteExpiresAt(null);
-            admin.setInviteUsedAt(null);
+    public User updateStatus(Long adminId, UserStatus status, Boolean active) {
+        UserStatus targetStatus = resolveStatus(status, active);
+        if (targetStatus == UserStatus.INVITED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status cannot be set to INVITED manually");
         }
-        admin.setStatus(active ? UserStatus.ACTIVE : UserStatus.DISABLED);
-        admin.setActive(active);
+        User admin = requireAdmin(adminId);
+        if (admin.getStatus() == UserStatus.INVITED && targetStatus == UserStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invited admin must accept invite to activate");
+        }
+        if (targetStatus == UserStatus.DISABLED) {
+            clearInviteMetadata(admin);
+        }
+        admin.setStatus(targetStatus);
+        admin.setActive(targetStatus == UserStatus.ACTIVE);
         return userRepository.save(admin);
+    }
+
+    private UserStatus resolveStatus(UserStatus status, Boolean active) {
+        if (status != null) {
+            return status;
+        }
+        if (active != null) {
+            return active ? UserStatus.ACTIVE : UserStatus.DISABLED;
+        }
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status is required");
     }
 
     @Transactional
@@ -143,6 +158,13 @@ public class AdminLifecycleService {
         admin.setInviteExpiresAt(null);
         admin.setInviteUsedAt(LocalDateTime.now());
         return userRepository.save(admin);
+    }
+
+    private void clearInviteMetadata(User admin) {
+        admin.setInvited(false);
+        admin.setInviteTokenHash(null);
+        admin.setInviteExpiresAt(null);
+        admin.setInviteUsedAt(null);
     }
 
     private void validatePassword(String password) {

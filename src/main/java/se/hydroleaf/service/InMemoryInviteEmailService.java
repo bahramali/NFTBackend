@@ -5,8 +5,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
 
 @Slf4j
+@Service
+@ConditionalOnProperty(prefix = "app.invite-email", name = "smtp-enabled", havingValue = "false", matchIfMissing = true)
 public class InMemoryInviteEmailService implements InviteEmailService {
 
     private final Map<String, String> lastTokens = new ConcurrentHashMap<>();

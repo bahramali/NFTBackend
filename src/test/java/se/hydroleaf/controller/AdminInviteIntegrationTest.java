@@ -20,6 +20,7 @@ import se.hydroleaf.service.AuthService;
 import se.hydroleaf.service.InviteEmailService;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,7 +58,7 @@ class AdminInviteIntegrationTest {
 
     @Test
     void inviteAcceptAndLoginFlow() throws Exception {
-        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.MANAGE_USERS));
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
         String token = bearerToken("super@example.com", "password123");
 
         mockMvc.perform(post("/api/super-admin/admins/invite")
@@ -84,7 +85,7 @@ class AdminInviteIntegrationTest {
 
     @Test
     void resendInviteGeneratesNewToken() throws Exception {
-        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.MANAGE_USERS));
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
         String token = bearerToken("super@example.com", "password123");
 
         mockMvc.perform(post("/api/super-admin/admins/invite")
@@ -110,6 +111,37 @@ class AdminInviteIntegrationTest {
         assertThat(refreshed.isActive()).isFalse();
     }
 
+    @Test
+    void invalidPermissionReturnsReadableError() throws Exception {
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
+        String token = bearerToken("super@example.com", "password123");
+
+        mockMvc.perform(post("/api/super-admin/admins/invite")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new InvalidPermissionInvitePayload(
+                                "invited@example.com", Set.of("INVALID_PERMISSION")))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("permissions[0]"))
+                .andExpect(jsonPath("$.errors[0].message", containsString("Allowed values")));
+    }
+
+    @Test
+    void unknownFieldIsRejected() throws Exception {
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
+        String token = bearerToken("super@example.com", "password123");
+
+        String body = "{\"email\":\"invited@example.com\",\"permissions\":[\"ADMIN_DASHBOARD\"],\"unexpected\":true}";
+
+        mockMvc.perform(post("/api/super-admin/admins/invite")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("unexpected"))
+                .andExpect(jsonPath("$.errors[0].message").value("Unrecognized field 'unexpected'"));
+    }
+
     private User createUser(String email, String password, UserRole role, Set<Permission> permissions) {
         User user = User.builder()
                 .email(email)
@@ -127,10 +159,12 @@ class AdminInviteIntegrationTest {
     }
 
     private String inviteRequestJson(String email) throws Exception {
-        return objectMapper.writeValueAsString(new InvitePayload(email));
+        return objectMapper.writeValueAsString(new InvitePayload(email, Set.of(Permission.ADMIN_DASHBOARD)));
     }
 
-    private record InvitePayload(String email) {}
+    private record InvitePayload(String email, Set<Permission> permissions) {}
+
+    private record InvalidPermissionInvitePayload(String email, Set<String> permissions) {}
 
     private record AcceptPayload(String token, String password) {}
 }

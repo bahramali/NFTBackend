@@ -113,7 +113,7 @@ class UserSecurityIntegrationTest {
                 "Admin",
                 UserRole.ADMIN,
                 null,
-                Set.of(Permission.VIEW_DASHBOARD)
+                Set.of(Permission.ADMIN_DASHBOARD)
         ));
 
         String token = bearerToken("admin.nopriv@example.com", "password123");

@@ -1,15 +1,18 @@
 package se.hydroleaf.service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.User;
+import se.hydroleaf.model.UserStatus;
 import se.hydroleaf.repository.UserRepository;
 
 @Service
@@ -37,12 +40,14 @@ public class AuthService {
         Optional<User> byEmail = userRepository.findByEmailIgnoreCase(normalizedEmail);
         User user = byEmail.orElseThrow(() -> new SecurityException("Invalid credentials"));
 
-        if (!user.isActive()) {
-            throw new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "User is inactive");
+        if (user.getStatus() == UserStatus.INVITED || user.getStatus() == UserStatus.DISABLED) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not allowed to login");
         }
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new SecurityException("Invalid credentials");
         }
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
         String token = UUID.randomUUID().toString();
         Set<Permission> permissions = user.getPermissions();
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(user.getId(), user.getRole(), permissions);

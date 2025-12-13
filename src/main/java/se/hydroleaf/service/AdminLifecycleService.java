@@ -100,7 +100,13 @@ public class AdminLifecycleService {
     public User updateStatus(Long adminId, boolean active) {
         User admin = requireAdmin(adminId);
         if (admin.getStatus() == UserStatus.INVITED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot toggle status for invited admin");
+            if (active) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invited admin must accept invite to activate");
+            }
+            admin.setInvited(false);
+            admin.setInviteTokenHash(null);
+            admin.setInviteExpiresAt(null);
+            admin.setInviteUsedAt(null);
         }
         admin.setStatus(active ? UserStatus.ACTIVE : UserStatus.DISABLED);
         admin.setActive(active);

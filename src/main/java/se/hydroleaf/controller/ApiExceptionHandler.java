@@ -67,9 +67,12 @@ public class ApiExceptionHandler {
     }
 
     private ValidationErrorResponse unrecognizedFieldResponse(UnrecognizedPropertyException ex) {
-        String fieldPath = pathFrom(ex.getPath());
+        List<JsonMappingException.Reference> path = ex.getPath();
         String fieldName = ex.getPropertyName();
-        String field = fieldPath.isBlank() ? fieldName : fieldPath + "." + fieldName;
+        String parentPath = (path == null || path.isEmpty())
+                ? ""
+                : pathFrom(path.subList(0, path.size() - 1));
+        String field = parentPath.isBlank() ? fieldName : parentPath + "." + fieldName;
         return new ValidationErrorResponse(List.of(new FieldErrorResponse(field, "Unrecognized field '%s'".formatted(fieldName))));
     }
 

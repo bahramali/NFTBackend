@@ -51,7 +51,7 @@ public class SuperAdminController {
             @Valid @RequestBody AdminInviteRequest request) {
         requireSuperAdmin(token);
         AdminLifecycleService.InviteResult result = adminLifecycleService.inviteAdmin(
-                request.email(), request.displayName(), request.permissions(), request.expiresInHours());
+                request.email(), request.displayName(), request.permissions(), request.expiresInHours(), request.expiresAt());
         return AdminResponse.from(result.user());
     }
 

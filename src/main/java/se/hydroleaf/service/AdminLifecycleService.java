@@ -40,15 +40,19 @@ public class AdminLifecycleService {
     }
 
     @Transactional
-    public InviteResult inviteAdmin(String email, String displayName, Set<Permission> permissions, Integer expiresInHours) {
+    public InviteResult inviteAdmin(
+            String email,
+            String displayName,
+            Set<Permission> permissions,
+            Integer expiresInHours,
+            java.time.OffsetDateTime expiresAt) {
         String normalizedEmail = normalizeEmail(email);
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         }
-        int hours = (expiresInHours == null || expiresInHours <= 0) ? DEFAULT_EXPIRY_HOURS : expiresInHours;
         String token = generateToken();
         String tokenHash = hashToken(token);
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(hours);
+        LocalDateTime resolvedExpiresAt = resolveExpiry(expiresInHours, expiresAt);
         LocalDateTime invitedAt = LocalDateTime.now();
 
         User admin = User.builder()
@@ -61,13 +65,25 @@ public class AdminLifecycleService {
                 .invited(true)
                 .invitedAt(invitedAt)
                 .inviteTokenHash(tokenHash)
-                .inviteExpiresAt(expiresAt)
+                .inviteExpiresAt(resolvedExpiresAt)
                 .active(false)
                 .build();
 
         userRepository.save(admin);
-        inviteEmailService.sendInviteEmail(admin.getEmail(), token, expiresAt);
+        inviteEmailService.sendInviteEmail(admin.getEmail(), token, resolvedExpiresAt);
         return new InviteResult(admin, token);
+    }
+
+    private LocalDateTime resolveExpiry(Integer expiresInHours, java.time.OffsetDateTime expiresAt) {
+        if (expiresAt != null) {
+            LocalDateTime candidate = expiresAt.toLocalDateTime();
+            if (candidate.isBefore(LocalDateTime.now())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "expiresAt must be in the future");
+            }
+            return candidate;
+        }
+        int hours = (expiresInHours == null || expiresInHours <= 0) ? DEFAULT_EXPIRY_HOURS : expiresInHours;
+        return LocalDateTime.now().plusHours(hours);
     }
 
     @Transactional

@@ -69,7 +69,11 @@ public class AdminLifecycleService {
                 .active(false)
                 .build();
 
-        userRepository.save(admin);
+        try {
+            userRepository.save(admin);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists", e);
+        }
         inviteEmailService.sendInviteEmail(admin.getEmail(), token, resolvedExpiresAt);
         return new InviteResult(admin, token);
     }

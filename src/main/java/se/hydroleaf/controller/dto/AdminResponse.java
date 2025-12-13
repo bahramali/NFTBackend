@@ -1,6 +1,7 @@
 package se.hydroleaf.controller.dto;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Set;
 import se.hydroleaf.model.User;
 import se.hydroleaf.model.UserStatus;
@@ -28,7 +29,15 @@ public record AdminResponse(
                 user.getInviteExpiresAt(),
                 user.getInviteUsedAt(),
                 user.getLastLoginAt(),
-                user.getPermissions().stream().map(Enum::name).collect(java.util.stream.Collectors.toSet())
+                safePermissions(user)
         );
+    }
+
+    private static Set<String> safePermissions(User user) {
+        Set<se.hydroleaf.model.Permission> permissions = user.getPermissions();
+        if (permissions == null) {
+            return Collections.emptySet();
+        }
+        return permissions.stream().map(Enum::name).collect(java.util.stream.Collectors.toSet());
     }
 }

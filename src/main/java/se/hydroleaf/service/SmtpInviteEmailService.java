@@ -2,18 +2,13 @@ package se.hydroleaf.service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.stereotype.Service;
 import se.hydroleaf.config.InviteEmailProperties;
 
-@Service
-@ConditionalOnBean(JavaMailSender.class)
-@ConditionalOnProperty(prefix = "app.invite-email", name = "smtp-enabled", havingValue = "true")
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 @RequiredArgsConstructor
 @Slf4j
 public class SmtpInviteEmailService implements InviteEmailService {

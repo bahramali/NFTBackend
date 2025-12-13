@@ -5,11 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.stereotype.Service;
 
-@Service
-@ConditionalOnMissingBean(InviteEmailService.class)
 @Slf4j
 public class InMemoryInviteEmailService implements InviteEmailService {
 

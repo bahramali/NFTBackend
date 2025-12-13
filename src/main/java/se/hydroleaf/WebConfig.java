@@ -7,11 +7,10 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import se.hydroleaf.config.CorsProperties;
-import se.hydroleaf.config.InviteEmailProperties;
 
 @Configuration
 @RequiredArgsConstructor
-@EnableConfigurationProperties({CorsProperties.class, InviteEmailProperties.class})
+@EnableConfigurationProperties({CorsProperties.class})
 public class WebConfig implements WebMvcConfigurer {
 
     private final CorsProperties corsProperties;

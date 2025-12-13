@@ -14,6 +14,11 @@ app:
     allowed-origins:
       - https://hydroleaf.se
       - https://www.hydroleaf.se
+  invite-email:
+    smtp-enabled: ${APP_INVITE_SMTP_ENABLED:false}
+    from: ${APP_INVITE_EMAIL_FROM:no-reply@hydroleaf.se}
+    subject: ${APP_INVITE_EMAIL_SUBJECT:You have been invited to Hydroleaf}
+    invite-link-template: ${APP_INVITE_LINK_TEMPLATE:}
 ---
 spring:
   config:

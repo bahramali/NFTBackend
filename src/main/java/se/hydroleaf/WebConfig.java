@@ -10,7 +10,7 @@ import se.hydroleaf.config.CorsProperties;
 
 @Configuration
 @RequiredArgsConstructor
-@EnableConfigurationProperties(CorsProperties.class)
+@EnableConfigurationProperties({CorsProperties.class})
 public class WebConfig implements WebMvcConfigurer {
 
     private final CorsProperties corsProperties;

@@ -5,9 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
-@Service
 @Slf4j
 public class InMemoryInviteEmailService implements InviteEmailService {
 
@@ -15,7 +13,7 @@ public class InMemoryInviteEmailService implements InviteEmailService {
 
     @Override
     public void sendInviteEmail(String email, String token, LocalDateTime expiresAt) {
-        log.info("Sending admin invite to {} expiring at {}", email, expiresAt);
+        log.info("Invite email captured for {} expiring at {} (SMTP disabled)", email, expiresAt);
         lastTokens.put(email.trim().toLowerCase(), token);
     }
 

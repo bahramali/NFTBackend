@@ -2,6 +2,17 @@ spring:
   jackson:
     deserialization:
       fail-on-unknown-properties: true
+  mail:
+    host: ${SPRING_MAIL_HOST:mailcluster.loopia.se}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:no-reply@hydroleaf.se}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   profiles:
     active: prod
   application:
@@ -15,7 +26,7 @@ app:
       - https://hydroleaf.se
       - https://www.hydroleaf.se
   invite-email:
-    smtp-enabled: ${APP_INVITE_SMTP_ENABLED:false}
+    smtp-enabled: ${APP_INVITE_EMAIL_SMTP_ENABLED:${APP_INVITE_SMTP_ENABLED:false}}
     from: ${APP_INVITE_EMAIL_FROM:no-reply@hydroleaf.se}
     subject: ${APP_INVITE_EMAIL_SUBJECT:You have been invited to Hydroleaf}
     invite-link-template: ${APP_INVITE_LINK_TEMPLATE:}

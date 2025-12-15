@@ -3,6 +3,7 @@ package se.hydroleaf.service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import se.hydroleaf.config.InviteEmailProperties;
 
@@ -20,13 +21,29 @@ public class SmtpInviteEmailService implements InviteEmailService {
 
     @Override
     public void sendInviteEmail(String email, String token, LocalDateTime expiresAt) {
+        log.info(
+                "Preparing to send admin invite email via SMTP to {} with from={} subject={} (inviteLinkTemplatePresent={})",
+                email,
+                inviteEmailProperties.getFrom(),
+                inviteEmailProperties.getSubject(),
+                inviteEmailProperties.getInviteLinkTemplate() != null
+                        && !inviteEmailProperties.getInviteLinkTemplate().isBlank());
+
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
         message.setFrom(inviteEmailProperties.getFrom());
         message.setSubject(inviteEmailProperties.getSubject());
         message.setText(buildBody(token, expiresAt));
-        mailSender.send(message);
-        log.info("Sent admin invite email to {}", email);
+
+        log.debug("Admin invite email payload for {} -> {}", email, message);
+
+        try {
+            mailSender.send(message);
+            log.info("Sent admin invite email to {}", email);
+        } catch (MailException ex) {
+            log.error("Failed to send admin invite email to {} via SMTP: {}", email, ex.getMessage(), ex);
+            throw ex;
+        }
     }
 
     private String buildBody(String token, LocalDateTime expiresAt) {

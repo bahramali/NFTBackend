@@ -89,7 +89,7 @@ No `ADMIN`, `WORKER`, or `CUSTOMER` accounts are auto-created; they must be prov
 ## Admin invite emails
 
 - The backend only logs invite tokens by default to keep local/testing environments simple.
-- To deliver real emails, set `APP_INVITE_SMTP_ENABLED=true` and configure Spring Mail settings (e.g. `SPRING_MAIL_HOST`,
+- To deliver real emails, set `APP_INVITE_EMAIL_SMTP_ENABLED=true` (or legacy `APP_INVITE_SMTP_ENABLED=true`) and configure Spring Mail settings (e.g. `SPRING_MAIL_HOST`,
   `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`).
 - For Loopia SMTP, use the following values (set `SPRING_MAIL_PASSWORD` to your real password in a `.env` file using the placeholder `LOOPIA_SMTP_PASSWORD`):
 
@@ -98,7 +98,7 @@ No `ADMIN`, `WORKER`, or `CUSTOMER` accounts are auto-created; they must be prov
   SPRING_MAIL_PORT=587
   SPRING_MAIL_USERNAME=no-reply@hydroleaf.se
   SPRING_MAIL_PASSWORD=<LOOPIA_SMTP_PASSWORD>
-  APP_INVITE_SMTP_ENABLED=true
+  APP_INVITE_EMAIL_SMTP_ENABLED=true
   ```
 - Optional invite email overrides:
   - `APP_INVITE_EMAIL_FROM` (default: `no-reply@hydroleaf.se`)

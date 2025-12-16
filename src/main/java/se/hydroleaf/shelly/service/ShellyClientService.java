@@ -5,7 +5,7 @@ import java.time.Instant;
 import io.netty.handler.logging.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -88,7 +88,7 @@ public class ShellyClientService {
 
     private ShellyException wrapException(SocketDevice device, Exception ex) {
         if (ex instanceof WebClientResponseException responseException) {
-            HttpStatus statusCode = responseException.getStatusCode();
+            HttpStatusCode statusCode = responseException.getStatusCode();
             log.warn("Shelly {} responded with {} for {}", device.getId(), statusCode, device.getIp());
             return new ShellyException(
                     device.getId(), device.getIp(), "Shelly responded with " + statusCode.getReasonPhrase(), ex);

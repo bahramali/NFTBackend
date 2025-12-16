@@ -81,6 +81,17 @@ public class MqttService implements MqttCallbackExtended {
     @Override
     public void connectComplete(boolean reconnect, String serverURI) {
         log.info("MQTT connection complete (reconnect={})", reconnect);
+
+        if (client == null) {
+            log.warn("MQTT connectComplete invoked but client is null; skipping subscriptions");
+            return;
+        }
+
+        if (!client.isConnected()) {
+            log.warn("MQTT connectComplete invoked but client is not connected; skipping subscriptions");
+            return;
+        }
+
         for (String t : topics) {
             String topic = t.trim();
             if (!topic.isEmpty()) {

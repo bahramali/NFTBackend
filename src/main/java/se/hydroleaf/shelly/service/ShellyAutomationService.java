@@ -13,6 +13,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import se.hydroleaf.shelly.model.SocketDevice;
 import se.hydroleaf.shelly.registry.ShellyRegistry;
 
 @Service
+@Profile("!test")
 public class ShellyAutomationService {
 
     private static final Logger log = LoggerFactory.getLogger(ShellyAutomationService.class);

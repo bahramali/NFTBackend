@@ -9,12 +9,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import se.hydroleaf.shelly.model.Rack;
 import se.hydroleaf.shelly.model.Room;
 import se.hydroleaf.shelly.model.SocketDevice;
 
 @Component
+@Profile("!test")
 public class ShellyRegistry {
 
     private final Map<String, Room> roomsById = new ConcurrentHashMap<>();

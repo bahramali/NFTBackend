@@ -42,4 +42,5 @@ Automations use Spring's `TaskScheduler`; they are lost on application restart.
 
 ## Operational notes
 - Backend uses Shelly Gen3 RPC endpoints via WebClient with timeouts and error handling. Failed calls are reported as `online=false` with HTTP 502 responses.
+- Shelly components are disabled under the `test` Spring profile to keep automated test suites isolated from real hardware.
 - CORS is restricted to the configured frontend domain (see `app.cors.allowed-origins`).

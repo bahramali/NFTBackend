@@ -149,9 +149,39 @@ public class AdminLifecycleService {
     }
 
     @Transactional
-    public void deleteAdmin(Long adminId) {
-        User admin = requireAdmin(adminId);
+    public void deleteAdmin(String idOrEmail) {
+        User admin = findAdminByIdOrEmail(idOrEmail);
         userRepository.delete(admin);
+    }
+
+    private User findAdminByIdOrEmail(String idOrEmail) {
+        if (idOrEmail == null || idOrEmail.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Admin identifier is required");
+        }
+        User admin = null;
+        Long adminId = parseId(idOrEmail);
+        if (adminId != null) {
+            admin = userRepository.findById(adminId).orElse(null);
+        }
+        if (admin == null) {
+            String normalizedEmail = normalizeEmail(idOrEmail);
+            admin = userRepository.findByEmailIgnoreCase(normalizedEmail).orElse(null);
+        }
+        if (admin == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found");
+        }
+        if (admin.getRole() != UserRole.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only ADMIN users can be managed here");
+        }
+        return admin;
+    }
+
+    private Long parseId(String idOrEmail) {
+        try {
+            return Long.parseLong(idOrEmail);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     @Transactional

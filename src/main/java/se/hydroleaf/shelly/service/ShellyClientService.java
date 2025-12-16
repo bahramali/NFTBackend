@@ -5,6 +5,7 @@ import java.time.Instant;
 import io.netty.handler.logging.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
@@ -90,8 +91,11 @@ public class ShellyClientService {
         if (ex instanceof WebClientResponseException responseException) {
             HttpStatusCode statusCode = responseException.getStatusCode();
             log.warn("Shelly {} responded with {} for {}", device.getId(), statusCode, device.getIp());
+            String statusText = statusCode instanceof HttpStatus httpStatus
+                    ? httpStatus.getReasonPhrase()
+                    : statusCode.toString();
             return new ShellyException(
-                    device.getId(), device.getIp(), "Shelly responded with " + statusCode.getReasonPhrase(), ex);
+                    device.getId(), device.getIp(), "Shelly responded with " + statusText, ex);
         }
         if (ex instanceof WebClientRequestException requestException) {
             log.warn("Shelly {} unreachable at {}: {}", device.getId(), device.getIp(), requestException.getMessage());

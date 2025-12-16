@@ -1,5 +1,6 @@
 package se.hydroleaf.shelly.model;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.Set;
 import lombok.Builder;
@@ -15,7 +16,7 @@ public class AutomationDefinition {
     // TIME_RANGE
     LocalTime onTime;
     LocalTime offTime;
-    Set<String> daysOfWeek;
+    Set<DayOfWeek> daysOfWeek;
 
     // INTERVAL_TOGGLE
     Integer intervalMinutes;

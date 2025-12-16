@@ -22,7 +22,7 @@ import se.hydroleaf.shelly.model.SocketDevice;
 
 @Service
 @Profile("!test")
-public class ShellyClientService {
+public class ShellyClientService implements ShellyClient {
 
     private static final Logger log = LoggerFactory.getLogger(ShellyClientService.class);
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
@@ -38,6 +38,7 @@ public class ShellyClientService {
                 .build();
     }
 
+    @Override
     public SocketStatusDTO getStatus(SocketDevice device) {
         String url = statusUrl(device);
         try {
@@ -62,16 +63,19 @@ public class ShellyClientService {
         }
     }
 
+    @Override
     public SocketStatusDTO turnOn(SocketDevice device) {
         sendSwitchCommand(device, true);
         return getStatus(device);
     }
 
+    @Override
     public SocketStatusDTO turnOff(SocketDevice device) {
         sendSwitchCommand(device, false);
         return getStatus(device);
     }
 
+    @Override
     public SocketStatusDTO toggle(SocketDevice device) {
         SocketStatusDTO current = getStatus(device);
         if (current.isOutput()) {

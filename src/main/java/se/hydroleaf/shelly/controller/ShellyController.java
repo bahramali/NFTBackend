@@ -3,9 +3,7 @@ package se.hydroleaf.shelly.controller;
 import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.shelly.dto.AutomationRequest;
 import se.hydroleaf.shelly.dto.AutomationResponse;
-import se.hydroleaf.shelly.dto.ErrorResponse;
 import se.hydroleaf.shelly.dto.SocketStatusDTO;
 import se.hydroleaf.shelly.dto.SocketSummaryDTO;
 import se.hydroleaf.shelly.exception.ShellyException;
@@ -27,19 +24,17 @@ import se.hydroleaf.shelly.model.Room;
 import se.hydroleaf.shelly.model.SocketDevice;
 import se.hydroleaf.shelly.registry.ShellyRegistry;
 import se.hydroleaf.shelly.service.ShellyAutomationService;
-import se.hydroleaf.shelly.service.ShellyClientService;
+import se.hydroleaf.shelly.service.ShellyClient;
 
 @RestController
 @RequestMapping("/api/shelly")
-@Profile("!test")
 public class ShellyController {
 
     private final ShellyRegistry registry;
-    private final ShellyClientService clientService;
+    private final ShellyClient clientService;
     private final ShellyAutomationService automationService;
 
-    public ShellyController(
-            ShellyRegistry registry, ShellyClientService clientService, ShellyAutomationService automationService) {
+    public ShellyController(ShellyRegistry registry, ShellyClient clientService, ShellyAutomationService automationService) {
         this.registry = registry;
         this.clientService = clientService;
         this.automationService = automationService;
@@ -69,41 +64,35 @@ public class ShellyController {
     }
 
     @GetMapping("/sockets/{socketId}/status")
-    public ResponseEntity<?> getStatus(@PathVariable String socketId) {
+    public ResponseEntity<SocketStatusDTO> getStatus(@PathVariable String socketId) {
         SocketDevice device = resolveSocket(socketId);
         try {
             SocketStatusDTO status = clientService.getStatus(device);
             return ResponseEntity.ok(status);
         } catch (ShellyException ex) {
             SocketStatusDTO offlineStatus = offline(device);
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(ErrorResponse.builder()
-                            .socketId(device.getId())
-                            .message(ex.getMessage())
-                            .status(offlineStatus)
-                            .build());
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(offlineStatus);
         }
     }
 
     @PostMapping("/sockets/{socketId}/on")
-    public ResponseEntity<?> turnOn(@PathVariable String socketId) {
+    public ResponseEntity<SocketStatusDTO> turnOn(@PathVariable String socketId) {
         return handleCommand(socketId, clientService::turnOn);
     }
 
     @PostMapping("/sockets/{socketId}/off")
-    public ResponseEntity<?> turnOff(@PathVariable String socketId) {
+    public ResponseEntity<SocketStatusDTO> turnOff(@PathVariable String socketId) {
         return handleCommand(socketId, clientService::turnOff);
     }
 
     @PostMapping("/sockets/{socketId}/toggle")
-    public ResponseEntity<?> toggle(@PathVariable String socketId) {
+    public ResponseEntity<SocketStatusDTO> toggle(@PathVariable String socketId) {
         return handleCommand(socketId, clientService::toggle);
     }
 
     @GetMapping("/status")
-    public Map<String, SocketStatusDTO> getAllStatuses() {
-        return registry.getAllSockets().stream()
-                .collect(Collectors.toMap(SocketDevice::getId, this::safeStatusLookup));
+    public List<SocketStatusDTO> getAllStatuses() {
+        return registry.getAllSockets().stream().map(this::safeStatusLookup).toList();
     }
 
     @PostMapping("/automation")
@@ -125,19 +114,14 @@ public class ShellyController {
         automationService.deleteAutomation(automationId);
     }
 
-    private ResponseEntity<?> handleCommand(String socketId, Command command) {
+    private ResponseEntity<SocketStatusDTO> handleCommand(String socketId, Command command) {
         SocketDevice device = resolveSocket(socketId);
         try {
             SocketStatusDTO status = command.execute(device);
             return ResponseEntity.ok(status);
         } catch (ShellyException ex) {
             SocketStatusDTO offlineStatus = offline(device);
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(ErrorResponse.builder()
-                            .socketId(device.getId())
-                            .message(ex.getMessage())
-                            .status(offlineStatus)
-                            .build());
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(offlineStatus);
         }
     }
 

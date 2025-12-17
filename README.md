@@ -102,8 +102,10 @@ No `ADMIN`, `WORKER`, or `CUSTOMER` accounts are auto-created; they must be prov
   ```
 - Optional invite email overrides:
   - `APP_INVITE_EMAIL_FROM` (default: `no-reply@hydroleaf.se`)
+  - `APP_INVITE_EMAIL_REPLY_TO` (default: empty, falls back to `APP_INVITE_EMAIL_FROM`)
   - `APP_INVITE_EMAIL_SUBJECT` (default: `You have been invited to Hydroleaf`)
   - `APP_INVITE_LINK_TEMPLATE` (use `{token}` placeholder to embed the invite token in the URL)
+  - If `APP_INVITE_EMAIL_FROM` is blank, the backend falls back to the Spring mail username so providers that require matching envelope/from addresses (e.g., Loopia) can accept the message.
 
 
 ## REST Endpoints

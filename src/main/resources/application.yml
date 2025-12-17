@@ -28,6 +28,7 @@ app:
   invite-email:
     smtp-enabled: ${APP_INVITE_EMAIL_SMTP_ENABLED:${APP_INVITE_SMTP_ENABLED:false}}
     from: ${APP_INVITE_EMAIL_FROM:no-reply@hydroleaf.se}
+    reply-to: ${APP_INVITE_EMAIL_REPLY_TO:}
     subject: ${APP_INVITE_EMAIL_SUBJECT:You have been invited to Hydroleaf}
     invite-link-template: ${APP_INVITE_LINK_TEMPLATE:}
 ---

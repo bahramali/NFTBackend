@@ -8,6 +8,7 @@ public class InviteEmailProperties {
 
     private boolean smtpEnabled = false;
     private String from = "no-reply@hydroleaf.se";
+    private String replyTo = "";
     private String subject = "You have been invited to Hydroleaf";
     private String inviteLinkTemplate = "";
 
@@ -25,6 +26,14 @@ public class InviteEmailProperties {
 
     public void setFrom(String from) {
         this.from = from;
+    }
+
+    public String getReplyTo() {
+        return replyTo;
+    }
+
+    public void setReplyTo(String replyTo) {
+        this.replyTo = replyTo;
     }
 
     public String getSubject() {

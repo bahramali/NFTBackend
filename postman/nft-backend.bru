@@ -6,7 +6,7 @@ meta {
 
 env "local" {
   baseUrl: "http://localhost:8080"
-  authToken: ""
+  authToken: "Bearer <token>"
 }
 
 folder "Auth" {
@@ -21,7 +21,24 @@ folder "Auth" {
       json: """
       {
         "email": "admin@example.com",
-        "password": "admin123"
+        "password": "AdminPass123!"
+      }
+      """
+    }
+  }
+
+  req "Accept Invite" {
+    method: "POST"
+    url: "{{baseUrl}}/api/auth/accept-invite"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "token": "<invite-token>",
+        "password": "NewSecurePass123"
       }
       """
     }
@@ -32,29 +49,32 @@ folder "Users" {
   req "List Users" {
     method: "GET"
     url: "{{baseUrl}}/api/users"
-    headers { "Accept": "application/json" }
+    headers {
+      "Authorization": "{{authToken}}"
+    }
   }
 
   req "Get User" {
     method: "GET"
     url: "{{baseUrl}}/api/users/1"
-    headers { "Accept": "application/json" }
+    headers {
+      "Authorization": "{{authToken}}"
+    }
   }
 
   req "Create User" {
     method: "POST"
     url: "{{baseUrl}}/api/users"
     headers {
-      "Content-Type": "application/json"
       "Authorization": "{{authToken}}"
+      "Content-Type": "application/json"
     }
     body {
       type: "json"
       json: """
       {
-        "username": "customer1",
         "email": "customer1@example.com",
-        "password": "securePass!",
+        "password": "securePass123!",
         "displayName": "Customer One",
         "role": "CUSTOMER",
         "active": true,
@@ -68,16 +88,19 @@ folder "Users" {
     method: "PUT"
     url: "{{baseUrl}}/api/users/1"
     headers {
-      "Content-Type": "application/json"
       "Authorization": "{{authToken}}"
+      "Content-Type": "application/json"
     }
     body {
       type: "json"
       json: """
       {
+        "email": "customer1@example.com",
+        "password": "newSecurePass123!",
         "displayName": "Updated Customer",
-        "password": "newSecurePass!",
-        "active": true
+        "role": "CUSTOMER",
+        "active": true,
+        "permissions": []
       }
       """
     }
@@ -88,55 +111,136 @@ folder "Super Admin" {
   req "List Admins" {
     method: "GET"
     url: "{{baseUrl}}/api/super-admin/admins"
-    headers { "Authorization": "{{authToken}}" }
+    headers {
+      "Authorization": "{{authToken}}"
+    }
   }
 
-  req "Create Admin" {
+  req "Invite Admin" {
     method: "POST"
-    url: "{{baseUrl}}/api/super-admin/admins"
+    url: "{{baseUrl}}/api/super-admin/admins/invite"
     headers {
-      "Content-Type": "application/json"
       "Authorization": "{{authToken}}"
+      "Content-Type": "application/json"
     }
     body {
       type: "json"
       json: """
       {
-        "username": "ops-admin",
         "email": "ops-admin@example.com",
-        "password": "AdminPass!23",
         "displayName": "Operations Admin",
-        "active": true,
-        "permissions": ["ADMIN_DASHBOARD", "TEAM"]
+        "permissions": ["ADMIN_DASHBOARD", "TEAM"],
+        "expiresInHours": 48,
+        "expiresAt": null
       }
       """
     }
   }
 
-  req "Update Admin" {
+  req "Update Admin Permissions" {
     method: "PUT"
-    url: "{{baseUrl}}/api/super-admin/admins/1"
+    url: "{{baseUrl}}/api/super-admin/admins/1/permissions"
     headers {
-      "Content-Type": "application/json"
       "Authorization": "{{authToken}}"
+      "Content-Type": "application/json"
     }
     body {
       type: "json"
       json: """
       {
-        "displayName": "Updated Admin",
-        "permissions": ["REPORTS"],
+        "permissions": ["REPORTS", "TEAM"]
+      }
+      """
+    }
+  }
+
+  req "Update Admin Status" {
+    method: "PUT"
+    url: "{{baseUrl}}/api/super-admin/admins/1/status"
+    headers {
+      "Authorization": "{{authToken}}"
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "status": "ACTIVE",
         "active": true
       }
       """
     }
   }
+
+  req "Resend Admin Invite" {
+    method: "POST"
+    url: "{{baseUrl}}/api/super-admin/admins/1/resend-invite"
+    headers {
+      "Authorization": "{{authToken}}"
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "expiresInHours": 24
+      }
+      """
+    }
+  }
+
+  req "Delete Admin" {
+    method: "DELETE"
+    url: "{{baseUrl}}/api/super-admin/admins/user@example.com"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
 }
 
-folder "Health" {
-  req "Health Check" {
+folder "Admin" {
+  req "Dashboard" {
     method: "GET"
-    url: "{{baseUrl}}/api/health"
+    url: "{{baseUrl}}/api/admin/dashboard"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "Orders" {
+    method: "GET"
+    url: "{{baseUrl}}/api/admin/orders"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+}
+
+folder "Customer" {
+  req "Me" {
+    method: "GET"
+    url: "{{baseUrl}}/api/customer/me"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "My Orders" {
+    method: "GET"
+    url: "{{baseUrl}}/api/customer/orders"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+}
+
+folder "Worker" {
+  req "Dashboard" {
+    method: "GET"
+    url: "{{baseUrl}}/api/worker/dashboard"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
   }
 }
 
@@ -162,6 +266,50 @@ folder "Devices" {
   }
 }
 
+folder "Actuators" {
+  req "LED Command" {
+    method: "POST"
+    url: "{{baseUrl}}/api/actuators/led/command"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "system": "ebb",
+        "layer": "L01",
+        "deviceId": "tray-a",
+        "command": "on",
+        "durationSec": 900
+      }
+      """
+    }
+  }
+
+  req "LED Schedule" {
+    method: "POST"
+    url: "{{baseUrl}}/api/actuators/led/schedule"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "system": "ebb",
+        "deviceId": "tray-a",
+        "command": "schedule",
+        "layer": "L02",
+        "onHour": 6,
+        "onMinute": 0,
+        "durationHours": 12
+      }
+      """
+    }
+  }
+}
+
 folder "Germination" {
   req "Get Germination Status" {
     method: "GET"
@@ -176,7 +324,9 @@ folder "Germination" {
   req "Update Germination Start" {
     method: "PUT"
     url: "{{baseUrl}}/api/germination"
-    headers { "Content-Type": "application/json" }
+    headers {
+      "Content-Type": "application/json"
+    }
     body {
       type: "json"
       json: """
@@ -202,7 +352,9 @@ folder "Notes" {
   req "Create Note" {
     method: "POST"
     url: "{{baseUrl}}/api/notes"
-    headers { "Content-Type": "application/json" }
+    headers {
+      "Content-Type": "application/json"
+    }
     body {
       type: "json"
       json: """
@@ -218,7 +370,9 @@ folder "Notes" {
   req "Update Note" {
     method: "PUT"
     url: "{{baseUrl}}/api/notes/1"
-    headers { "Content-Type": "application/json" }
+    headers {
+      "Content-Type": "application/json"
+    }
     body {
       type: "json"
       json: """
@@ -240,7 +394,7 @@ folder "Notes" {
 folder "Records" {
   req "Aggregated History (GET)" {
     method: "GET"
-    url: "{{baseUrl}}/api/records/history/aggregated?compositeId=ebb-1-tray-a&from=2024-01-01T00:00:00Z&to=2024-01-07T00:00:00Z&bucket=5m&sensorType=temperature&sensorType=ph&bucketLimit=288&bucketOffset=0&sensorLimit=10&sensorOffset=0"
+    url: "{{baseUrl}}/api/records/history/aggregated?compositeId=ebb-1-tray-a&from=2024-01-01T00:00:00Z&to=2024-01-07T00:00:00Z&bucket=5m&sensorType=temperature&sensorType=ph"
   }
 
   req "Aggregated History (POST)" {
@@ -263,7 +417,9 @@ folder "Sensor Config" {
   req "Create Sensor Configuration" {
     method: "POST"
     url: "{{baseUrl}}/api/sensor-config"
-    headers { "Content-Type": "application/json" }
+    headers {
+      "Content-Type": "application/json"
+    }
     body {
       type: "json"
       json: """
@@ -280,7 +436,9 @@ folder "Sensor Config" {
   req "Create Sensor Configuration (Path Type)" {
     method: "POST"
     url: "{{baseUrl}}/api/sensor-config/ph"
-    headers { "Content-Type": "application/json" }
+    headers {
+      "Content-Type": "application/json"
+    }
     body {
       type: "json"
       json: """
@@ -296,7 +454,9 @@ folder "Sensor Config" {
   req "Update Sensor Configuration" {
     method: "PUT"
     url: "{{baseUrl}}/api/sensor-config/temperature"
-    headers { "Content-Type": "application/json" }
+    headers {
+      "Content-Type": "application/json"
+    }
     body {
       type: "json"
       json: """
@@ -332,5 +492,19 @@ folder "Topics" {
   req "Sensor Types By Topic" {
     method: "GET"
     url: "{{baseUrl}}/api/topics/sensors"
+  }
+}
+
+folder "Products" {
+  req "List Products" {
+    method: "GET"
+    url: "{{baseUrl}}/api/products"
+  }
+}
+
+folder "Health" {
+  req "Health Check" {
+    method: "GET"
+    url: "{{baseUrl}}/api/health"
   }
 }

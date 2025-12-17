@@ -2,6 +2,7 @@ package se.hydroleaf.shelly.service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.TimeoutException;
 import io.netty.handler.logging.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +61,8 @@ public class ShellyClientService implements ShellyClient {
                     .build();
         } catch (WebClientResponseException | WebClientRequestException ex) {
             throw wrapException(device, ex);
+        } catch (RuntimeException ex) {
+            throw wrapException(device, ex);
         }
     }
 
@@ -90,10 +93,16 @@ public class ShellyClientService implements ShellyClient {
             webClient.get().uri(url).retrieve().toBodilessEntity().block(REQUEST_TIMEOUT);
         } catch (WebClientResponseException | WebClientRequestException ex) {
             throw wrapException(device, ex);
+        } catch (RuntimeException ex) {
+            throw wrapException(device, ex);
         }
     }
 
     private ShellyException wrapException(SocketDevice device, Exception ex) {
+        if (ex instanceof TimeoutException || ex.getCause() instanceof TimeoutException) {
+            log.warn("Shelly {} timed out at {}", device.getId(), device.getIp());
+            return new ShellyException(device.getId(), device.getIp(), "Shelly request timed out", ex);
+        }
         if (ex instanceof WebClientResponseException responseException) {
             HttpStatusCode statusCode = responseException.getStatusCode();
             log.warn("Shelly {} responded with {} for {}", device.getId(), statusCode, device.getIp());
@@ -107,6 +116,7 @@ public class ShellyClientService implements ShellyClient {
             log.warn("Shelly {} unreachable at {}: {}", device.getId(), device.getIp(), requestException.getMessage());
             return new ShellyException(device.getId(), device.getIp(), "Unable to reach Shelly device", ex);
         }
+        log.warn("Shelly {} operation failed for {}: {}", device.getId(), device.getIp(), ex.getMessage());
         return new ShellyException(device.getId(), device.getIp(), "Shelly operation failed", ex);
     }
 

@@ -152,9 +152,10 @@ public class AdminLifecycleService {
     }
 
     @Transactional
-    public void deleteAdmin(String idOrEmail) {
+    public User deleteAdmin(String idOrEmail) {
         User admin = findAdminByIdOrEmail(idOrEmail);
         userRepository.delete(admin);
+        return admin;
     }
 
     private User findAdminByIdOrEmail(String idOrEmail) {

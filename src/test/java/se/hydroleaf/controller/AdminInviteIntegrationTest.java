@@ -183,7 +183,7 @@ class AdminInviteIntegrationTest {
 
         mockMvc.perform(get("/api/auth/accept-invite/" + inviteToken))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Invite has expired"));
+                .andExpect(jsonPath("$.errors[0].message").value("Invite has expired"));
     }
 
     private User createUser(String email, String password, UserRole role, Set<Permission> permissions) {

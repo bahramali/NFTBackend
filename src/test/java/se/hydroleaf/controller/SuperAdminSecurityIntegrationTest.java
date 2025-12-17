@@ -117,7 +117,9 @@ class SuperAdminSecurityIntegrationTest {
 
         mockMvc.perform(delete("/api/super-admin/admins/" + createdAdmin.getId())
                         .header("Authorization", token))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("new.admin@example.com"))
+                .andExpect(jsonPath("$.status").value("DISABLED"));
 
         assertThat(userRepository.findById(createdAdmin.getId())).isEmpty();
     }

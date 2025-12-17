@@ -74,12 +74,11 @@ public class SuperAdminController {
     }
 
     @DeleteMapping("/admins/{idOrEmail}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteAdmin(
+    public AdminResponse deleteAdmin(
             @RequestHeader(name = "Authorization", required = false) String token,
             @PathVariable String idOrEmail) {
         requireSuperAdmin(token);
-        adminLifecycleService.deleteAdmin(idOrEmail);
+        return AdminResponse.from(adminLifecycleService.deleteAdmin(idOrEmail));
     }
 
     @PostMapping("/admins/{id}/resend-invite")

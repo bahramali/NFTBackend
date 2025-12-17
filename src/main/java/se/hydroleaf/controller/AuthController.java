@@ -5,12 +5,15 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.controller.dto.AcceptInviteRequest;
+import se.hydroleaf.controller.dto.InviteValidationResponse;
 import se.hydroleaf.controller.dto.LoginRequest;
 import se.hydroleaf.controller.dto.LoginResponse;
 import se.hydroleaf.model.User;
@@ -47,5 +50,12 @@ public class AuthController {
         AuthenticatedUser user = result.user();
         List<String> permissions = user.permissions().stream().map(Enum::name).toList();
         return new LoginResponse(user.userId(), user.role(), permissions, result.token());
+    }
+
+    @GetMapping("/accept-invite/{token}")
+    @ResponseStatus(HttpStatus.OK)
+    public InviteValidationResponse validateInvite(@PathVariable("token") String token) {
+        AdminLifecycleService.InviteValidationResult validation = adminLifecycleService.validateInvite(token);
+        return new InviteValidationResponse(validation.email(), validation.displayName(), validation.expiresAt());
     }
 }

@@ -15,6 +15,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import se.hydroleaf.config.InviteEmailProperties;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,5 +74,30 @@ class SmtpInviteEmailServiceTest {
         assertThat(message.getContent().toString())
                 .contains("Invite token: token-abc")
                 .doesNotContain("Accept your invite using this link:");
+    }
+
+    @Test
+    void fallsBackToSmtpUsernameWhenFromMissing() throws Exception {
+        properties.setFrom("  ");
+        properties.setReplyTo("");
+        StubJavaMailSender mailSender = new StubJavaMailSender();
+        mailSender.setUsername("no-reply@example.com");
+
+        SmtpInviteEmailService service = new SmtpInviteEmailService(mailSender, properties);
+
+        service.sendInviteEmail("admin@example.com", "token-fallback", null);
+
+        MimeMessage message = mailSender.lastMessage;
+        assertThat(message.getFrom()).extracting(Object::toString).containsExactly("no-reply@example.com");
+        assertThat(message.getReplyTo()).extracting(Object::toString).containsExactly("no-reply@example.com");
+    }
+
+    private static final class StubJavaMailSender extends JavaMailSenderImpl {
+        private MimeMessage lastMessage;
+
+        @Override
+        protected void doSend(MimeMessage[] mimeMessages, Object[] originalMessages) {
+            this.lastMessage = mimeMessages[0];
+        }
     }
 }

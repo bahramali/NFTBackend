@@ -9,6 +9,7 @@ import java.util.Date;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailPreparationException;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import se.hydroleaf.config.InviteEmailProperties;
 
@@ -27,10 +28,13 @@ public class SmtpInviteEmailService implements InviteEmailService {
     @Override
     public void sendInviteEmail(String email, String token, LocalDateTime expiresAt) {
         String toAddress = normalize(email);
-        String fromAddress = normalize(inviteEmailProperties.getFrom());
+        String fromAddress = resolveFromAddress();
         String replyToAddress = normalize(inviteEmailProperties.getReplyTo());
         if (replyToAddress == null) {
             replyToAddress = fromAddress;
+        }
+        if (toAddress == null || fromAddress == null || replyToAddress == null) {
+            throw new MailPreparationException("Invite email requires valid to/from/replyTo addresses");
         }
 
         log.info(
@@ -47,12 +51,8 @@ public class SmtpInviteEmailService implements InviteEmailService {
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, false, StandardCharsets.UTF_8.name());
             helper.setTo(toAddress);
-            if (fromAddress != null) {
-                helper.setFrom(fromAddress);
-            }
-            if (replyToAddress != null) {
-                helper.setReplyTo(replyToAddress);
-            }
+            helper.setFrom(fromAddress);
+            helper.setReplyTo(replyToAddress);
             helper.setSubject(inviteEmailProperties.getSubject());
             helper.setText(buildBody(token, expiresAt), false);
             helper.setSentDate(new Date());
@@ -70,6 +70,21 @@ public class SmtpInviteEmailService implements InviteEmailService {
             log.error("Failed to send admin invite email to {} via SMTP: {}", toAddress, ex.getMessage(), ex);
             throw ex;
         }
+    }
+
+    private String resolveFromAddress() {
+        String configured = normalize(inviteEmailProperties.getFrom());
+        if (configured != null) {
+            return configured;
+        }
+        if (mailSender instanceof JavaMailSenderImpl impl) {
+            String username = normalize(impl.getUsername());
+            if (username != null) {
+                log.warn("Invite email from address not set; falling back to SMTP username {}", username);
+                return username;
+            }
+        }
+        return null;
     }
 
     private String normalize(String value) {

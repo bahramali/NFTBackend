@@ -1,10 +1,15 @@
 package se.hydroleaf.service;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import org.springframework.mail.SimpleMailMessage;
+import java.util.Date;
 import org.springframework.mail.MailException;
+import org.springframework.mail.MailPreparationException;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import se.hydroleaf.config.InviteEmailProperties;
 
 import lombok.RequiredArgsConstructor;
@@ -21,29 +26,58 @@ public class SmtpInviteEmailService implements InviteEmailService {
 
     @Override
     public void sendInviteEmail(String email, String token, LocalDateTime expiresAt) {
+        String toAddress = normalize(email);
+        String fromAddress = normalize(inviteEmailProperties.getFrom());
+        String replyToAddress = normalize(inviteEmailProperties.getReplyTo());
+        if (replyToAddress == null) {
+            replyToAddress = fromAddress;
+        }
+
         log.info(
-                "Preparing to send admin invite email via SMTP to {} with from={} subject={} (inviteLinkTemplatePresent={})",
-                email,
-                inviteEmailProperties.getFrom(),
+                "Preparing to send admin invite email via SMTP to {} with from={} replyTo={} subject={} (inviteLinkTemplatePresent={})",
+                toAddress,
+                fromAddress,
+                replyToAddress,
                 inviteEmailProperties.getSubject(),
                 inviteEmailProperties.getInviteLinkTemplate() != null
                         && !inviteEmailProperties.getInviteLinkTemplate().isBlank());
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(email);
-        message.setFrom(inviteEmailProperties.getFrom());
-        message.setSubject(inviteEmailProperties.getSubject());
-        message.setText(buildBody(token, expiresAt));
+        MimeMessage message = mailSender.createMimeMessage();
 
-        log.debug("Admin invite email payload for {} -> {}", email, message);
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, StandardCharsets.UTF_8.name());
+            helper.setTo(toAddress);
+            if (fromAddress != null) {
+                helper.setFrom(fromAddress);
+            }
+            if (replyToAddress != null) {
+                helper.setReplyTo(replyToAddress);
+            }
+            helper.setSubject(inviteEmailProperties.getSubject());
+            helper.setText(buildBody(token, expiresAt), false);
+            helper.setSentDate(new Date());
+        } catch (MessagingException ex) {
+            log.error("Failed to prepare admin invite email to {} via SMTP: {}", toAddress, ex.getMessage(), ex);
+            throw new MailPreparationException("Failed to prepare admin invite email", ex);
+        }
+
+        log.debug("Admin invite email payload for {} -> {}", toAddress, message);
 
         try {
             mailSender.send(message);
-            log.info("Sent admin invite email to {}", email);
+            log.info("Sent admin invite email to {}", toAddress);
         } catch (MailException ex) {
-            log.error("Failed to send admin invite email to {} via SMTP: {}", email, ex.getMessage(), ex);
+            log.error("Failed to send admin invite email to {} via SMTP: {}", toAddress, ex.getMessage(), ex);
             throw ex;
         }
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private String buildBody(String token, LocalDateTime expiresAt) {

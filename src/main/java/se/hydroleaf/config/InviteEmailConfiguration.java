@@ -20,8 +20,9 @@ public class InviteEmailConfiguration {
     public InviteEmailService smtpInviteEmailService(
             JavaMailSender mailSender, InviteEmailProperties inviteEmailProperties) {
         log.info(
-                "SMTP invite email service enabled with from={} subject={} (inviteLinkTemplatePresent={})",
+                "SMTP invite email service enabled with from={} replyTo={} subject={} (inviteLinkTemplatePresent={})",
                 inviteEmailProperties.getFrom(),
+                inviteEmailProperties.getReplyTo(),
                 inviteEmailProperties.getSubject(),
                 inviteEmailProperties.getInviteLinkTemplate() != null
                         && !inviteEmailProperties.getInviteLinkTemplate().isBlank());

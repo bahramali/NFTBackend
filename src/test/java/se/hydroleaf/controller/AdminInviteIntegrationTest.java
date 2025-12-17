@@ -1,6 +1,7 @@
 package se.hydroleaf.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import se.hydroleaf.service.InviteEmailService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -142,6 +144,48 @@ class AdminInviteIntegrationTest {
                 .andExpect(jsonPath("$.errors[0].message").value("Unrecognized field 'unexpected'"));
     }
 
+    @Test
+    void validateInviteEndpointReturnsMetadata() throws Exception {
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
+        String token = bearerToken("super@example.com", "password123");
+
+        mockMvc.perform(post("/api/super-admin/admins/invite")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(inviteRequestJson("invited@example.com", "Invited Admin")))
+                .andExpect(status().isCreated());
+
+        String inviteToken = inviteEmailService.lastTokenFor("invited@example.com").orElseThrow();
+
+        mockMvc.perform(get("/api/auth/accept-invite/" + inviteToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("invited@example.com"))
+                .andExpect(jsonPath("$.displayName").value("Invited Admin"))
+                .andExpect(jsonPath("$.expiresAt").exists());
+    }
+
+    @Test
+    void validateInviteRejectsExpiredToken() throws Exception {
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
+        String token = bearerToken("super@example.com", "password123");
+
+        mockMvc.perform(post("/api/super-admin/admins/invite")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(inviteRequestJson("expired@example.com")))
+                .andExpect(status().isCreated());
+
+        User invited = userRepository.findByEmailIgnoreCase("expired@example.com").orElseThrow();
+        invited.setInviteExpiresAt(LocalDateTime.now().minusHours(1));
+        userRepository.save(invited);
+
+        String inviteToken = inviteEmailService.lastTokenFor("expired@example.com").orElseThrow();
+
+        mockMvc.perform(get("/api/auth/accept-invite/" + inviteToken))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invite has expired"));
+    }
+
     private User createUser(String email, String password, UserRole role, Set<Permission> permissions) {
         User user = User.builder()
                 .email(email)
@@ -159,10 +203,14 @@ class AdminInviteIntegrationTest {
     }
 
     private String inviteRequestJson(String email) throws Exception {
-        return objectMapper.writeValueAsString(new InvitePayload(email, Set.of(Permission.ADMIN_DASHBOARD)));
+        return inviteRequestJson(email, null);
     }
 
-    private record InvitePayload(String email, Set<Permission> permissions) {}
+    private String inviteRequestJson(String email, String displayName) throws Exception {
+        return objectMapper.writeValueAsString(new InvitePayload(email, displayName, Set.of(Permission.ADMIN_DASHBOARD)));
+    }
+
+    private record InvitePayload(String email, String displayName, Set<Permission> permissions) {}
 
     private record InvalidPermissionInvitePayload(String email, Set<String> permissions) {}
 

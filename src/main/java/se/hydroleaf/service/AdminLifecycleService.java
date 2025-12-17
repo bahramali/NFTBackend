@@ -35,6 +35,9 @@ public class AdminLifecycleService {
     public record InviteResult(User user, String token) {
     }
 
+    public record InviteValidationResult(String email, String displayName, LocalDateTime expiresAt) {
+    }
+
     public java.util.List<User> listAdmins() {
         return userRepository.findAllByRole(UserRole.ADMIN);
     }
@@ -186,6 +189,26 @@ public class AdminLifecycleService {
 
     @Transactional
     public User acceptInvite(String token, String password) {
+        User admin = findInvitedAdminByToken(token);
+        validatePassword(password);
+
+        admin.setPassword(passwordEncoder.encode(password));
+        admin.setStatus(UserStatus.ACTIVE);
+        admin.setActive(true);
+        admin.setInvited(false);
+        admin.setInviteTokenHash(null);
+        admin.setInviteExpiresAt(null);
+        admin.setInviteUsedAt(LocalDateTime.now());
+        return userRepository.save(admin);
+    }
+
+    @Transactional
+    public InviteValidationResult validateInvite(String token) {
+        User admin = findInvitedAdminByToken(token);
+        return new InviteValidationResult(admin.getEmail(), admin.getDisplayName(), admin.getInviteExpiresAt());
+    }
+
+    private User findInvitedAdminByToken(String token) {
         String tokenHash = hashToken(token);
         User admin = userRepository.findByInviteTokenHash(tokenHash)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token"));
@@ -198,16 +221,7 @@ public class AdminLifecycleService {
         if (admin.getInviteExpiresAt() == null || admin.getInviteExpiresAt().isBefore(LocalDateTime.now())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invite has expired");
         }
-        validatePassword(password);
-
-        admin.setPassword(passwordEncoder.encode(password));
-        admin.setStatus(UserStatus.ACTIVE);
-        admin.setActive(true);
-        admin.setInvited(false);
-        admin.setInviteTokenHash(null);
-        admin.setInviteExpiresAt(null);
-        admin.setInviteUsedAt(LocalDateTime.now());
-        return userRepository.save(admin);
+        return admin;
     }
 
     private void clearInviteMetadata(User admin) {

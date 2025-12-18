@@ -1,5 +1,8 @@
 package se.hydroleaf.store.web;
 
+import com.bucket4j.Bandwidth;
+import com.bucket4j.Bucket;
+import com.bucket4j.Refill;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,7 +11,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +30,7 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(StoreRateLimitFilter.class);
 
     private final StoreProperties storeProperties;
-    private final Map<String, CounterWindow> buckets = new ConcurrentHashMap<>();
+    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -38,8 +40,8 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String key = resolveKey(request);
-        CounterWindow window = buckets.computeIfAbsent(key, k -> new CounterWindow());
-        if (consume(window)) {
+        Bucket bucket = buckets.computeIfAbsent(key, this::newBucket);
+        if (bucket.tryConsume(1)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -55,26 +57,12 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
         return request.getRemoteAddr();
     }
 
-    private boolean consume(CounterWindow window) {
+    private Bucket newBucket(String key) {
         StoreProperties.RateLimitProperties rate = storeProperties.getRateLimit();
-        long limit = Math.max(1, Math.min(rate.getCapacity(), rate.getRefillTokens()));
-        long now = System.currentTimeMillis();
-        long windowMs = Duration.ofSeconds(rate.getRefillSeconds()).toMillis();
-        synchronized (window) {
-            if (now - window.windowStart >= windowMs) {
-                window.windowStart = now;
-                window.count.set(0);
-            }
-            if (window.count.get() >= limit) {
-                return false;
-            }
-            window.count.incrementAndGet();
-            return true;
-        }
-    }
-
-    private static class CounterWindow {
-        private long windowStart = System.currentTimeMillis();
-        private final AtomicInteger count = new AtomicInteger();
+        long capacity = Math.max(1, rate.getCapacity());
+        long refillTokens = Math.max(1, rate.getRefillTokens());
+        Bandwidth limit = Bandwidth.classic(capacity, Refill.intervally(refillTokens, Duration.ofSeconds(rate.getRefillSeconds())));
+        log.debug("Creating rate limit bucket for {} with cap {} refill {} per {}s", key, capacity, refillTokens, rate.getRefillSeconds());
+        return Bucket.builder().addLimit(limit).build();
     }
 }

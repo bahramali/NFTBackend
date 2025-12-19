@@ -58,10 +58,14 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
     }
 
     private String resolveKey(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (StringUtils.hasText(forwarded)) {
-            return forwarded.split(",")[0].trim();
+        String[] ipHeaders = {"CF-Connecting-IP", "X-Real-IP", "X-Forwarded-For"};
+        for (String header : ipHeaders) {
+            String value = request.getHeader(header);
+            if (StringUtils.hasText(value)) {
+                return value.split(",")[0].trim();
+            }
         }
+
         String remote = request.getRemoteAddr();
         return StringUtils.hasText(remote) ? remote : "unknown";
     }

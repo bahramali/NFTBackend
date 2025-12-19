@@ -51,6 +51,12 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(new ValidationErrorResponse(List.of(error)));
     }
 
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<ValidationErrorResponse> handleSecurity(SecurityException ex) {
+        FieldErrorResponse error = new FieldErrorResponse("", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ValidationErrorResponse(List.of(error)));
+    }
+
     private ValidationErrorResponse invalidFormatResponse(InvalidFormatException ex) {
         String field = pathFrom(ex.getPath());
         if (ex.getTargetType().isEnum()) {

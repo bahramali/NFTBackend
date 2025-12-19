@@ -39,8 +39,14 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        StoreProperties.RateLimitProperties rate = storeProperties.getRateLimit();
+        if (rate == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String key = resolveKey(request);
-        Bucket bucket = buckets.computeIfAbsent(key, this::newBucket);
+        Bucket bucket = buckets.computeIfAbsent(key, k -> newBucket(rate, k));
         if (bucket.tryConsume(1)) {
             filterChain.doFilter(request, response);
             return;
@@ -58,9 +64,7 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
         return StringUtils.hasText(remote) ? remote : "unknown";
     }
 
-    private Bucket newBucket(String key) {
-        StoreProperties.RateLimitProperties rate = storeProperties.getRateLimit();
-
+    private Bucket newBucket(StoreProperties.RateLimitProperties rate, String key) {
         long capacity = Math.max(1, rate.getCapacity());
         long refillTokens = Math.max(1, rate.getRefillTokens());
         long refillSeconds = Math.max(1, rate.getRefillSeconds());
@@ -75,7 +79,7 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
                 key, capacity, refillTokens, refillSeconds
         );
 
-        return Bucket4j.builder()
+        return Bucket.builder()
                 .addLimit(limit)
                 .build();
     }

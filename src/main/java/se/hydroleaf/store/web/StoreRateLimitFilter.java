@@ -8,19 +8,24 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import se.hydroleaf.common.api.RateLimitException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import se.hydroleaf.common.api.ApiError;
 import se.hydroleaf.store.config.StoreProperties;
 
 @Component
@@ -32,6 +37,7 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(StoreRateLimitFilter.class);
 
     private final StoreProperties storeProperties;
+    private final ObjectMapper objectMapper;
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
     @Override
@@ -54,7 +60,7 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
             return;
         }
         log.warn("Rate limit exceeded for {}", key);
-        throw new RateLimitException("RATE_LIMITED", "Too many requests, please slow down");
+        handleRateLimitExceeded(response, rate);
     }
 
     private String resolveKey(HttpServletRequest request) {
@@ -90,4 +96,17 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
                 .build();
     }
 
+    private void handleRateLimitExceeded(HttpServletResponse response, StoreProperties.RateLimitProperties rate) throws IOException {
+        if (response.isCommitted()) {
+            return;
+        }
+
+        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(rate.getRefillSeconds()));
+
+        ApiError apiError = new ApiError("RATE_LIMITED", "Too many requests, please slow down");
+        response.getWriter().write(objectMapper.writeValueAsString(apiError));
+    }
 }

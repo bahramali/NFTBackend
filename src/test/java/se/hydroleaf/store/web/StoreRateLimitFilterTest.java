@@ -63,9 +63,9 @@ class StoreRateLimitFilterTest {
         assertThat(limitedResponse.getContentType()).startsWith(MediaType.APPLICATION_JSON_VALUE);
         assertThat(limitedResponse.getHeader(HttpHeaders.RETRY_AFTER)).isEqualTo("60");
 
-        ApiError error = objectMapper.readValue(limitedResponse.getContentAsByteArray(), ApiError.class);
-        assertThat(error.getCode()).isEqualTo("RATE_LIMITED");
-        assertThat(error.getMessage()).isEqualTo("Too many requests, please slow down");
+        var error = objectMapper.readTree(limitedResponse.getContentAsByteArray());
+        assertThat(error.get("code").asText()).isEqualTo("RATE_LIMITED");
+        assertThat(error.get("message").asText()).isEqualTo("Too many requests, please slow down");
     }
 
     private FilterChain markInvoked(AtomicBoolean invoked) {

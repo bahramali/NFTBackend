@@ -21,6 +21,23 @@ app:
   demo-seed:
     enabled: false
 
+  store:
+    currency: SEK
+    shipping-flat-cents: 0
+    tax-rate-percent: 0
+    fallback-payment-url: https://hydroleaf.se/store/pay/{orderId}
+    rate-limit:
+      capacity: 120
+      refill-tokens: 120
+      refill-seconds: 60
+
+  stripe:
+    enabled: ${STRIPE_ENABLED:false}
+    api-key: ${STRIPE_API_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    success-url: ${STRIPE_SUCCESS_URL:https://hydroleaf.se/store/checkout/success?orderId={orderId}}
+    cancel-url: ${STRIPE_CANCEL_URL:https://hydroleaf.se/store/checkout/cancel?orderId={orderId}}
+
   cors:
     allowed-origins:
       - https://hydroleaf.se

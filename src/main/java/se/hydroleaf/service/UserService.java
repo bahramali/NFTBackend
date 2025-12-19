@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import se.hydroleaf.controller.dto.CustomerRegistrationRequest;
 import se.hydroleaf.controller.dto.UserCreateRequest;
 import se.hydroleaf.controller.dto.UserUpdateRequest;
 import se.hydroleaf.model.Permission;
@@ -55,6 +56,18 @@ public class UserService {
                 .status(resolveStatus(request.active()))
                 .build();
         return userRepository.save(user);
+    }
+
+    @Transactional
+    public User registerCustomer(CustomerRegistrationRequest request) {
+        return create(new UserCreateRequest(
+                request.email(),
+                request.password(),
+                request.displayName(),
+                UserRole.CUSTOMER,
+                true,
+                Set.of()
+        ));
     }
 
     @Transactional

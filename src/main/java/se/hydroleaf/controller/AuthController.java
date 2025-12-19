@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.controller.dto.AcceptInviteRequest;
+import se.hydroleaf.controller.dto.CustomerRegistrationRequest;
 import se.hydroleaf.controller.dto.InviteValidationResponse;
 import se.hydroleaf.controller.dto.LoginRequest;
 import se.hydroleaf.controller.dto.LoginResponse;
@@ -20,6 +21,7 @@ import se.hydroleaf.model.User;
 import se.hydroleaf.service.AuthService;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AdminLifecycleService;
+import se.hydroleaf.service.UserService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,6 +30,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final AdminLifecycleService adminLifecycleService;
+    private final UserService userService;
 
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
@@ -47,6 +50,16 @@ public class AuthController {
     public LoginResponse acceptInvite(@Valid @RequestBody AcceptInviteRequest request) {
         User activated = adminLifecycleService.acceptInvite(request.token(), request.password());
         AuthService.LoginResult result = authService.login(activated.getEmail(), request.password());
+        AuthenticatedUser user = result.user();
+        List<String> permissions = user.permissions().stream().map(Enum::name).toList();
+        return new LoginResponse(user.userId(), user.role(), permissions, result.token());
+    }
+
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LoginResponse register(@Valid @RequestBody CustomerRegistrationRequest request) {
+        User created = userService.registerCustomer(request);
+        AuthService.LoginResult result = authService.login(created.getEmail(), request.password());
         AuthenticatedUser user = result.user();
         List<String> permissions = user.permissions().stream().map(Enum::name).toList();
         return new LoginResponse(user.userId(), user.role(), permissions, result.token());

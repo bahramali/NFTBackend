@@ -25,7 +25,7 @@ class StoreRateLimitFilterTest {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
+        objectMapper = new ObjectMapper().findAndRegisterModules();
         storeProperties = new StoreProperties();
         storeProperties.getRateLimit().setCapacity(1);
         storeProperties.getRateLimit().setRefillTokens(1);

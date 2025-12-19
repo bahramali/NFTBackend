@@ -60,10 +60,24 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
 
     private Bucket newBucket(String key) {
         StoreProperties.RateLimitProperties rate = storeProperties.getRateLimit();
+
         long capacity = Math.max(1, rate.getCapacity());
         long refillTokens = Math.max(1, rate.getRefillTokens());
-        Bandwidth limit = Bandwidth.classic(capacity, Refill.intervally(refillTokens, Duration.ofSeconds(rate.getRefillSeconds())));
-        log.debug("Creating rate limit bucket for {} with cap {} refill {} per {}s", key, capacity, refillTokens, rate.getRefillSeconds());
-        return Bucket.builder().addLimit(limit).build();
+        long refillSeconds = Math.max(1, rate.getRefillSeconds());
+
+        Bandwidth limit = Bandwidth.classic(
+                capacity,
+                Refill.intervally(refillTokens, Duration.ofSeconds(refillSeconds))
+        );
+
+        log.debug(
+                "Creating rate limit bucket for {} with cap {} refill {} per {}s",
+                key, capacity, refillTokens, refillSeconds
+        );
+
+        return Bucket4j.builder()
+                .addLimit(limit)
+                .build();
     }
+
 }

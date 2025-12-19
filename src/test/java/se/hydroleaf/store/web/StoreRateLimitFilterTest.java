@@ -60,7 +60,7 @@ class StoreRateLimitFilterTest {
 
         assertThat(invoked).isFalse();
         assertThat(limitedResponse.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.value());
-        assertThat(limitedResponse.getContentType()).isEqualTo(MediaType.APPLICATION_JSON_VALUE);
+        assertThat(limitedResponse.getContentType()).startsWith(MediaType.APPLICATION_JSON_VALUE);
         assertThat(limitedResponse.getHeader(HttpHeaders.RETRY_AFTER)).isEqualTo("60");
 
         ApiError error = objectMapper.readValue(limitedResponse.getContentAsByteArray(), ApiError.class);

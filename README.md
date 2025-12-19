@@ -112,6 +112,10 @@ No `ADMIN`, `WORKER`, or `CUSTOMER` accounts are auto-created; they must be prov
 
 * `GET /api/records/history/aggregated` - groups values by sensor and lists timestamp/value pairs. Results are automatically downsampled to roughly 300 points based on the requested time range, discarding zero values when possible. An optional `sensorType` parameter filters the data before aggregation, and bucketing uses TimescaleDB's `time_bucket` for efficiency.
 
+## Public store APIs
+
+A minimal e-commerce backend powers the public Hydroleaf store (`/api/store`). Products, carts, checkout, and Stripe webhook handling are documented in [`docs/wiki/store-public-api.md`](docs/wiki/store-public-api.md), and ready-to-use Bruno/Postman requests live in [`postman/nft-backend.bru`](postman/nft-backend.bru).
+
 ## Local development
 
 A separate `application-local.yaml` allows running the service with a Postgres instance on your machine. Start the app using the `local` profile:

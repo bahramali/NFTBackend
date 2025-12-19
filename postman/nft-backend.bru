@@ -198,6 +198,126 @@ folder "Super Admin" {
   }
 }
 
+folder "Store" {
+  req "List Active Products" {
+    method: "GET"
+    url: "{{baseUrl}}/api/store/products?active=true"
+  }
+
+  req "Get Product" {
+    method: "GET"
+    url: "{{baseUrl}}/api/store/products/{{productId}}"
+  }
+
+  req "Create Cart" {
+    method: "POST"
+    url: "{{baseUrl}}/api/store/cart"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "sessionId": "",
+        "userId": null
+      }
+      """
+    }
+  }
+
+  req "Get Cart" {
+    method: "GET"
+    url: "{{baseUrl}}/api/store/cart/{{cartId}}"
+  }
+
+  req "Add Cart Item" {
+    method: "POST"
+    url: "{{baseUrl}}/api/store/cart/{{cartId}}/items"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "productId": "{{productId}}",
+        "qty": 2
+      }
+      """
+    }
+  }
+
+  req "Update Cart Item" {
+    method: "PATCH"
+    url: "{{baseUrl}}/api/store/cart/{{cartId}}/items/{{itemId}}"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "qty": 1
+      }
+      """
+    }
+  }
+
+  req "Remove Cart Item" {
+    method: "DELETE"
+    url: "{{baseUrl}}/api/store/cart/{{cartId}}/items/{{itemId}}"
+  }
+
+  req "Checkout Cart" {
+    method: "POST"
+    url: "{{baseUrl}}/api/store/checkout"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "cartId": "{{cartId}}",
+        "email": "customer@example.com",
+        "shippingAddress": {
+          "name": "Hydroleaf Customer",
+          "line1": "Storgatan 1",
+          "line2": "",
+          "city": "Stockholm",
+          "state": "",
+          "postalCode": "11120",
+          "country": "SE",
+          "phone": "+4612345678"
+        }
+      }
+      """
+    }
+  }
+
+  req "Stripe Webhook (manual trigger)" {
+    method: "POST"
+    url: "{{baseUrl}}/api/store/webhook/stripe"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "type": "checkout.session.completed",
+        "data": {
+          "object": {
+            "id": "cs_test_replace_me"
+          }
+        }
+      }
+      """
+    }
+  }
+}
+
 folder "Admin" {
   req "Dashboard" {
     method: "GET"

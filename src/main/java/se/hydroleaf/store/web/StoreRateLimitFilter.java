@@ -39,12 +39,13 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        Bucket bucket = buckets.computeIfAbsent(resolveKey(request), this::newBucket);
+        String key = resolveKey(request);
+        Bucket bucket = buckets.computeIfAbsent(key, this::newBucket);
         if (bucket.tryConsume(1)) {
             filterChain.doFilter(request, response);
             return;
         }
-        log.warn("Rate limit exceeded for {}", request.getRemoteAddr());
+        log.warn("Rate limit exceeded for {}", key);
         throw new RateLimitException("RATE_LIMITED", "Too many requests, please slow down");
     }
 
@@ -53,13 +54,16 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(forwarded)) {
             return forwarded.split(",")[0].trim();
         }
-        return request.getRemoteAddr();
+        String remote = request.getRemoteAddr();
+        return StringUtils.hasText(remote) ? remote : "unknown";
     }
 
     private Bucket newBucket(String key) {
         StoreProperties.RateLimitProperties rate = storeProperties.getRateLimit();
-        log.debug("Creating rate limit bucket for {}", key);
-        Bandwidth limit = Bandwidth.classic(rate.getCapacity(), Refill.intervally(rate.getRefillTokens(), Duration.ofSeconds(rate.getRefillSeconds())));
+        long capacity = Math.max(1, rate.getCapacity());
+        long refillTokens = Math.max(1, rate.getRefillTokens());
+        Bandwidth limit = Bandwidth.classic(capacity, Refill.intervally(refillTokens, Duration.ofSeconds(rate.getRefillSeconds())));
+        log.debug("Creating rate limit bucket for {} with cap {} refill {} per {}s", key, capacity, refillTokens, rate.getRefillSeconds());
         return Bucket.builder().addLimit(limit).build();
     }
 }

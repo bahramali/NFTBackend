@@ -15,7 +15,7 @@ import se.hydroleaf.store.service.ProductService;
 @RestController
 @RequestMapping("/api/store/products")
 @RequiredArgsConstructor
-public class ProductController {
+public class StoreProductController {
 
     private final ProductService productService;
 

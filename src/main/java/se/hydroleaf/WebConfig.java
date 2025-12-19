@@ -3,6 +3,7 @@ package se.hydroleaf;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -17,6 +18,9 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addViewController("/favicon.ico")
+                .setStatusCode(HttpStatus.NO_CONTENT);
+
         // Single-segment paths without dots (e.g. /reports)
         registry.addViewController("/{path:[^\\.]*}")
                 .setViewName("forward:/index.html");

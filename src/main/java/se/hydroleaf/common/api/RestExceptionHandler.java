@@ -13,6 +13,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class RestExceptionHandler {
@@ -42,6 +43,13 @@ public class RestExceptionHandler {
         log.warn("Constraint violation on {} {}: {}", request.getMethod(), request.getRequestURI(), details);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiError("VALIDATION_ERROR", "Request validation failed", details));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiError> handleResponseStatus(ResponseStatusException ex, HttpServletRequest request) {
+        log.warn("Request failed with status {} on {} {}: {}", ex.getStatusCode(), request.getMethod(), request.getRequestURI(), ex.getReason());
+        return ResponseEntity.status(ex.getStatusCode())
+                .body(new ApiError("REQUEST_FAILED", ex.getReason()));
     }
 
     @ExceptionHandler(Exception.class)

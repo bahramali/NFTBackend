@@ -3,8 +3,6 @@ package se.hydroleaf.store.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,11 +69,6 @@ class StoreRateLimitFilterTest {
     }
 
     private FilterChain markInvoked(AtomicBoolean invoked) {
-        return new FilterChain() {
-            @Override
-            public void doFilter(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-                invoked.set(true);
-            }
-        };
+        return (request, response) -> invoked.set(true);
     }
 }

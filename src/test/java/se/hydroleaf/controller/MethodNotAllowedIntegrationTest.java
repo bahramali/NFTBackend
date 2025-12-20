@@ -6,6 +6,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.DeviceService;
 import se.hydroleaf.service.RecordService;
 
@@ -25,6 +26,9 @@ class MethodNotAllowedIntegrationTest {
 
     @MockBean
     private DeviceService deviceService;
+
+    @MockBean
+    private AuthorizationService authorizationService;
 
     @Test
     void putHistoryAggregatedReturns405() throws Exception {

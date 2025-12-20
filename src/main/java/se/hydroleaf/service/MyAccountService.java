@@ -46,6 +46,7 @@ public class MyAccountService {
 
     public List<MyDeviceResponse> listMyDevices(String token) {
         AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
+        authorizationService.requireAdminOrOperator(authenticatedUser);
         return deviceRepository.findByOwnerUserId(authenticatedUser.userId()).stream()
                 .map(this::toDeviceResponse)
                 .toList();
@@ -53,6 +54,7 @@ public class MyAccountService {
 
     public MyDeviceResponse getMyDevice(String token, String deviceId) {
         AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
+        authorizationService.requireAdminOrOperator(authenticatedUser);
         Device device = deviceRepository.findByOwnerUserIdAndDeviceId(authenticatedUser.userId(), deviceId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Device not found"));
         return toDeviceResponse(device);

@@ -7,9 +7,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.repository.dto.history.AggregatedHistoryResponse;
+import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.RecordService;
 
 import java.time.Duration;
@@ -26,14 +28,17 @@ public class RecordController {
     private static final Pattern SENSOR_TYPE_PATTERN = Pattern.compile("[A-Za-z0-9_\\-]{1,32}");
 
     private final RecordService recordService;
+    private final AuthorizationService authorizationService;
 
     @Autowired
-    public RecordController(RecordService recordService) {
+    public RecordController(RecordService recordService, AuthorizationService authorizationService) {
         this.recordService = recordService;
+        this.authorizationService = authorizationService;
     }
 
     @GetMapping("/history/aggregated")
     public AggregatedHistoryResponse getHistoryAggregated(
+            @RequestHeader(name = "Authorization", required = false) String token,
             @RequestParam("compositeId") String compositeId,
             @RequestParam("from") String from,
             @RequestParam("to") String to,
@@ -44,6 +49,7 @@ public class RecordController {
             @RequestParam(name = "sensorLimit", required = false) Integer sensorLimit,
             @RequestParam(name = "sensorOffset", required = false) Integer sensorOffset
     ) {
+        authorizationService.requireAdminOrOperator(token);
         Instant fromInst = parseInstant(from);
         Instant toInst = parseInstant(to);
         if (fromInst == null || toInst == null) {
@@ -80,6 +86,7 @@ public class RecordController {
 
     @PostMapping("/history/aggregated")
     public AggregatedHistoryResponse postHistoryAggregated(
+            @RequestHeader(name = "Authorization", required = false) String token,
             @RequestParam("compositeId") String compositeId,
             @RequestParam("from") String from,
             @RequestParam("to") String to,
@@ -90,7 +97,9 @@ public class RecordController {
             @RequestParam(name = "sensorLimit", required = false) Integer sensorLimit,
             @RequestParam(name = "sensorOffset", required = false) Integer sensorOffset
     ) {
+        authorizationService.requireAdminOrOperator(token);
         return getHistoryAggregated(
+                token,
                 compositeId,
                 from,
                 to,

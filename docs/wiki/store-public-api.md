@@ -1,44 +1,59 @@
 # Public store backend (hydroleaf.se)
 
-This service now exposes a minimal but production-ready e-commerce backend for the Hydroleaf public store. All money values are handled in integer cents (SEK) and every cart change re-prices items server-side.
+This Spring Boot service powers the Hydroleaf public store with server-priced carts, checkout, and Stripe integration. Money values are always integer cents in the configured currency (`app.store.currency`, default `SEK`).
+
+## Base behavior, access, and rate limiting
+
+- All endpoints live under `/api/store` and are CORS-allowed for `https://hydroleaf.se` and `https://www.hydroleaf.se`.
+- Requests return structured errors `{ code, message }`. Too many requests return HTTP 429 with `Retry-After` (seconds until the bucket refills).
+- Bucket4j rate limiting is enabled outside the `test` profile. Defaults: 120 capacity, refilling 120 tokens every 60s. The client key is resolved in order: `CF-Connecting-IP` → `X-Real-IP` → `X-Forwarded-For` (first value) → `remoteAddr`.
 
 ## Data model (JPA entities)
 
-- `product` — `id` (UUID), `sku` (unique), `name`, `description`, `priceCents`, `currency` (SEK), `active`, `inventoryQty`, `imageUrl`, `category`, `createdAt`, `updatedAt`.
-- `cart` — `id` (UUID), `sessionId` (unique), `userId` (nullable), `status` (`OPEN|CHECKED_OUT|ABANDONED`), `createdAt`, `updatedAt`.
+- `product` — `id` (UUID), `sku` (unique), `name`, `description`, `priceCents`, `currency`, `active`, `inventoryQty`, `imageUrl`, `category`, `createdAt`, `updatedAt`.
+- `cart` — `id`, `sessionId` (unique), `userId` (nullable), `status` (`OPEN|CHECKED_OUT|ABANDONED`), `createdAt`, `updatedAt`.
 - `cart_item` — `id`, `cart_id`, `product_id`, `qty`, `unitPriceCents`, `lineTotalCents`.
-- `store_order` — `id`, `orderNumber` (unique), `userId` (nullable), `email`, `status` (`PENDING_PAYMENT|PAID|CANCELLED|FULFILLED`), `subtotalCents`, `shippingCents`, `taxCents`, `totalCents`, `currency`, `shippingAddress`, `createdAt`.
+- `store_order` — `id`, `orderNumber` (unique `HL-<epochMillis>`), `userId` (nullable), `email`, `status` (`PENDING_PAYMENT|PAID|CANCELLED|FULFILLED`), `subtotalCents`, `shippingCents`, `taxCents`, `totalCents`, `currency`, `shippingAddress`, `createdAt`.
 - `order_item` — `id`, `order_id`, `product_id`, `nameSnapshot`, `unitPriceCents`, `qty`, `lineTotalCents`.
-- `payment` — `id`, `order_id`, `provider` (`STRIPE`), `status`, `providerRef`, `createdAt`.
+- `payment` — `id`, `order_id`, `provider` (`STRIPE`), `status` (`PENDING|PAID`), `providerRef`, `createdAt`.
 
-> Inventory is validated on every cart mutation and during checkout with pessimistic locks on products to prevent negative stock.
+Inventory is validated on every cart mutation and during checkout with pessimistic locks to prevent negative stock.
 
-## Public endpoints
+## Key request/response shapes
 
-All endpoints live under `/api/store` and are CORS-allowed for `https://hydroleaf.se` and `https://www.hydroleaf.se`. Requests are rate-limited (bucket of 120 requests per 60s per client IP) and return structured errors `{ code, message }`.
+- `ProductResponse`: `{ id, sku, name, description, priceCents, currency, active, inventoryQty, imageUrl, category, createdAt, updatedAt }`.
+- `CartResponse`: `{ id, sessionId, userId, status, items: [{ id, productId, sku, name, qty, unitPriceCents, lineTotalCents, imageUrl, currency }], totals: { subtotalCents, shippingCents, taxCents, totalCents, currency }, updatedAt }`.
+- `CheckoutRequest`: `{ cartId, email, shippingAddress: { name, line1, line2?, city, state?, postalCode, country, phone? }, userId? }` → `CheckoutResponse`: `{ orderId, paymentUrl }`.
 
-- `GET /api/store/products?active=true` — list products (optionally only active ones).
-- `GET /api/store/products/{id}` — fetch a single product.
-- `POST /api/store/cart` — create/retrieve an open cart. Body (optional): `{ "sessionId": "...", "userId": "..." }`.
-- `GET /api/store/cart/{cartId}` — get cart with recalculated totals.
-- `POST /api/store/cart/{cartId}/items` — add item `{ productId, qty }` (qty ≥ 1). Items with the same product accumulate quantity.
-- `PATCH /api/store/cart/{cartId}/items/{itemId}` — update quantity `{ qty }` using live pricing.
-- `DELETE /api/store/cart/{cartId}/items/{itemId}` — remove an item.
-- `POST /api/store/checkout` — create an order and Stripe Checkout session. Body: `{ cartId, email, shippingAddress: { name, line1, line2?, city, state?, postalCode, country, phone? }, userId? }`. Response: `{ orderId, paymentUrl }`.
-- `POST /api/store/webhook/stripe` — Stripe webhook to mark orders as paid when a `checkout.session.completed` event arrives.
+## Cart lifecycle
 
-## Pricing & totals
+- `POST /api/store/cart` creates or retrieves an open cart by `sessionId` (auto-generated when omitted) and attaches `userId` if provided later.
+- `GET /api/store/cart/{cartId}` recalculates prices and availability before returning the cart.
+- `POST /api/store/cart/{cartId}/items` upserts a product, merging quantities for the same product and enforcing `qty ≥ 1` plus live inventory.
+- `PATCH /api/store/cart/{cartId}/items/{itemId}` updates quantity with fresh pricing; `DELETE` removes an item.
+- Server-side repricing updates `unitPriceCents`/`lineTotalCents`, recomputes `totals`, and stamps `updatedAt`.
 
-- The server re-fetches product prices on every cart change and at checkout; client totals are ignored.
-- Shipping uses a configurable flat amount (`app.store.shipping-flat-cents`, default `0`). Tax is computed from `app.store.tax-rate-percent` (default `0`).
-- `CartResponse` and orders include `subtotalCents`, `shippingCents`, `taxCents`, `totalCents`, and `currency`.
+## Checkout, orders, and payments
 
-## Stripe checkout
+- Checkout requires an `OPEN` cart with at least one item; optional `userId` is copied to the order when the cart lacks one.
+- Inventory is revalidated under pessimistic locks. Currency mismatches or inactive products cause `409 Conflict`.
+- Orders capture shipping/tax totals, currency, and a snapshot of product names/prices. Inventory is decremented immediately during checkout.
+- A `payment` row is created with `providerRef` set to the Stripe session id when available; otherwise it remains the generated order number while using the fallback URL.
+- Order status moves to `PAID` only when the webhook marks the linked payment as paid.
 
-- Controlled by `app.stripe.enabled` (plus `app.stripe.api-key`). When enabled, checkout creates a Stripe Checkout Session with order + shipping + tax line items and returns its `paymentUrl`; otherwise a fallback payment URL template (`app.store.fallback-payment-url`) is returned.
-- Webhook verification uses `app.stripe.webhook-secret` when provided; otherwise payloads are parsed without signature enforcement (suitable for local testing).
-- Only `checkout.session.completed` updates the payment status to `PAID` and flips the order status to `PAID`.
+## Stripe integration
 
-## Seeded products
+- Controlled by `app.stripe.enabled` and `app.stripe.api-key`. When enabled, checkout creates a Stripe Checkout Session with line items for each cart item plus optional shipping/tax, returning `paymentUrl` from Stripe.
+- Success/cancel URLs are templated: `app.stripe.success-url` and `app.stripe.cancel-url` (default `.../checkout/success|cancel?orderId={orderId}`).
+- Webhook parsing enforces the signature when `app.stripe.webhook-secret` is set; otherwise payloads are deserialized without verification for local testing.
+- Only `checkout.session.completed` events are processed; unknown or duplicate sessions are safely logged.
 
-On startup, if no products exist the service seeds three real products (starter kit, nutrient A, climate sensor) with SEK pricing so the public store is populated without UI hard-coding.
+## Configuration knobs
+
+- Pricing: `app.store.shipping-flat-cents` (default 0), `app.store.tax-rate-percent` (default 0), `app.store.currency`.
+- Payment fallback: `app.store.fallback-payment-url` (default `https://hydroleaf.se/store/pay/{orderId}`) used when Stripe is disabled or misconfigured.
+- Rate limit: `app.store.rate-limit.capacity|refill-tokens|refill-seconds`.
+
+## Seed data
+
+On startup, when no products exist the service seeds three products (starter kit, nutrient A, climate sensor) using the configured currency so the public store is immediately usable without UI hard-coding.

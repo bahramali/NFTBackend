@@ -29,6 +29,7 @@ import se.hydroleaf.repository.UserRepository;
 import se.hydroleaf.service.AuthService;
 import se.hydroleaf.service.UserService;
 import se.hydroleaf.store.model.OrderStatus;
+import se.hydroleaf.store.model.ShippingAddress;
 import se.hydroleaf.store.model.StoreOrder;
 import se.hydroleaf.store.repository.OrderRepository;
 
@@ -190,6 +191,13 @@ class MyAccountIntegrationTest {
                 .taxCents(0)
                 .totalCents(totalCents)
                 .currency("SEK")
+                .shippingAddress(ShippingAddress.builder()
+                        .name("Tester")
+                        .line1("123 Test St")
+                        .city("Testville")
+                        .postalCode("12345")
+                        .country("SE")
+                        .build())
                 .build();
         return orderRepository.save(order);
     }

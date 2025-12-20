@@ -52,6 +52,12 @@ public class Device {
     @Column(name = "device_id", length = 64, nullable = false)
     private String deviceId;
 
+    @Column(name = "name", length = 128)
+    private String name;
+
+    @Column(name = "owner_user_id")
+    private Long ownerUserId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "topic", length = 64, nullable = false)
     private TopicName topic;

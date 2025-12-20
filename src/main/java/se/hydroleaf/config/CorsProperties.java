@@ -6,8 +6,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app.cors")
 public class CorsProperties {
 
-    private static final List<String> DEFAULT_ALLOWED_ORIGINS =
-            List.of("https://hydroleaf.se", "https://www.hydroleaf.se");
+    private static final List<String> DEFAULT_ALLOWED_ORIGINS = List.of(
+            "https://hydroleaf.se",
+            "https://www.hydroleaf.se",
+            "http://localhost:5173"
+    );
 
     private List<String> allowedOrigins = DEFAULT_ALLOWED_ORIGINS;
 

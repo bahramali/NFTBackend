@@ -15,7 +15,8 @@ import org.springframework.web.filter.CorsFilter;
 @EnableConfigurationProperties(CorsProperties.class)
 public class StoreCorsConfig {
 
-    private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "DELETE", "OPTIONS");
+    private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
+    private static final List<String> ALLOWED_HEADERS = List.of("Content-Type", "Authorization", "X-Requested-With");
     private static final List<String> EXPOSED_HEADERS = List.of("Location", "Retry-After");
 
     @Bean
@@ -23,13 +24,13 @@ public class StoreCorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
         configuration.setAllowedMethods(ALLOWED_METHODS);
-        configuration.addAllowedHeader(CorsConfiguration.ALL);
+        configuration.setAllowedHeaders(ALLOWED_HEADERS);
         configuration.setExposedHeaders(EXPOSED_HEADERS);
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/store/**", configuration);
+        source.registerCorsConfiguration("/api/**", configuration);
         return source;
     }
 

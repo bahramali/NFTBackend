@@ -1,15 +1,21 @@
 package se.hydroleaf.store.service;
 
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import se.hydroleaf.common.api.BadRequestException;
+import se.hydroleaf.common.api.ConflictException;
 import se.hydroleaf.common.api.NotFoundException;
+import se.hydroleaf.store.api.dto.ProductRequest;
 import se.hydroleaf.store.api.dto.ProductResponse;
 import se.hydroleaf.store.config.StoreProperties;
 import se.hydroleaf.store.model.Product;
+import se.hydroleaf.store.repository.CartItemRepository;
+import se.hydroleaf.store.repository.OrderRepository;
 import se.hydroleaf.store.repository.ProductRepository;
 
 @Service
@@ -21,6 +27,8 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final StoreMapper storeMapper;
     private final StoreProperties storeProperties;
+    private final CartItemRepository cartItemRepository;
+    private final OrderRepository orderRepository;
 
     public List<ProductResponse> listProducts(Boolean active) {
         List<Product> products = Boolean.TRUE.equals(active)
@@ -35,11 +43,86 @@ public class ProductService {
         return storeMapper.toProductResponse(product);
     }
 
+    @Transactional
+    public ProductResponse createProduct(ProductRequest request) {
+        String normalizedSku = normalizeSku(request.getSku());
+        ensureUniqueSku(normalizedSku, null);
+
+        Product product = new Product();
+        applyDetails(product, request, normalizedSku);
+        product = productRepository.save(product);
+        log.info("Created product id={} sku={}", product.getId(), product.getSku());
+        return storeMapper.toProductResponse(product);
+    }
+
+    @Transactional
+    public ProductResponse updateProduct(UUID productId, ProductRequest request) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("PRODUCT_NOT_FOUND", "Product not found"));
+
+        String normalizedSku = normalizeSku(request.getSku());
+        ensureUniqueSku(normalizedSku, productId);
+        applyDetails(product, request, normalizedSku);
+        product = productRepository.save(product);
+        log.info("Updated product id={} sku={}", product.getId(), product.getSku());
+        return storeMapper.toProductResponse(product);
+    }
+
+    @Transactional
+    public void deleteProduct(UUID productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("PRODUCT_NOT_FOUND", "Product not found"));
+
+        if (cartItemRepository.existsByProductId(productId)) {
+            throw new ConflictException("PRODUCT_IN_CART", "Cannot delete a product that exists in a cart. Deactivate it instead.");
+        }
+        if (orderRepository.existsByItemsProductId(productId)) {
+            throw new ConflictException("PRODUCT_IN_ORDER", "Cannot delete a product that has been part of an order.");
+        }
+
+        productRepository.delete(product);
+        log.info("Deleted product id={} sku={}", product.getId(), product.getSku());
+    }
+
     public Product requireActiveProduct(UUID productId) {
         Product product = productRepository.findByIdAndActiveTrue(productId)
                 .orElseThrow(() -> new NotFoundException("PRODUCT_NOT_FOUND", "Product not available"));
         validateCurrency(product);
         return product;
+    }
+
+    private void applyDetails(Product product, ProductRequest request, String normalizedSku) {
+        product.setSku(normalizedSku);
+        product.setName(request.getName().trim());
+        product.setDescription(request.getDescription());
+        product.setPriceCents(request.getPriceCents());
+        product.setCurrency(resolveCurrency(request.getCurrency()));
+        product.setActive(request.isActive());
+        product.setInventoryQty(request.getInventoryQty());
+        product.setImageUrl(request.getImageUrl());
+        product.setCategory(request.getCategory());
+    }
+
+    private void ensureUniqueSku(String sku, UUID currentId) {
+        productRepository.findBySku(sku).ifPresent(existing -> {
+            if (currentId == null || !existing.getId().equals(currentId)) {
+                throw new ConflictException("DUPLICATE_SKU", "A product with this SKU already exists");
+            }
+        });
+    }
+
+    private String normalizeSku(String sku) {
+        return sku.trim().toUpperCase();
+    }
+
+    private String resolveCurrency(String currency) {
+        String resolved = currency == null || currency.isBlank()
+                ? storeProperties.getCurrency()
+                : currency.trim().toUpperCase();
+        if (!storeProperties.getCurrency().equalsIgnoreCase(resolved)) {
+            throw new BadRequestException("UNSUPPORTED_CURRENCY", "Currency must be " + storeProperties.getCurrency());
+        }
+        return resolved;
     }
 
     private void validateCurrency(Product product) {

@@ -15,4 +15,6 @@ public interface OrderRepository extends JpaRepository<StoreOrder, UUID> {
     Optional<StoreOrder> findByOrderNumber(String orderNumber);
 
     List<StoreOrder> findByEmailIgnoreCase(String email);
+
+    boolean existsByItemsProductId(UUID productId);
 }

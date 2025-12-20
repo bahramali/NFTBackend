@@ -68,6 +68,8 @@ class StoreRateLimitFilterTest {
         assertThat(limitedResponse.getHeader(HttpHeaders.RETRY_AFTER)).isEqualTo("60");
         assertThat(limitedResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).isEqualTo("https://hydroleaf.se");
         assertThat(limitedResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS)).isEqualTo("true");
+        assertThat(limitedResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS)).isEqualTo("*");
+        assertThat(limitedResponse.getHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS)).isEqualTo(HttpHeaders.RETRY_AFTER);
 
         var error = objectMapper.readTree(limitedResponse.getContentAsByteArray());
         assertThat(error.get("code").asText()).isEqualTo("RATE_LIMITED");

@@ -11,7 +11,7 @@ import se.hydroleaf.config.CorsProperties;
 
 @Configuration
 @RequiredArgsConstructor
-@EnableConfigurationProperties({CorsProperties.class})
+@EnableConfigurationProperties(CorsProperties.class)
 public class WebConfig implements WebMvcConfigurer {
 
     private final CorsProperties corsProperties;
@@ -22,11 +22,11 @@ public class WebConfig implements WebMvcConfigurer {
                 .setStatusCode(HttpStatus.NO_CONTENT);
 
         // Single-segment paths without dots (e.g. /reports)
-        registry.addViewController("/{path:[^\\.]*}")
+        registry.addViewController("/{path:^(?!api$)[^\\.]*}")
                 .setViewName("forward:/index.html");
 
         // multi-segment paths without dots (e.g. /dashboard/layer/L01)
-        registry.addViewController("/{path:[^\\.]*}/**")
+        registry.addViewController("/{path:^(?!api$)[^\\.]*}/**")
                 .setViewName("forward:/index.html");
     }
 
@@ -34,8 +34,10 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(corsProperties.getAllowedOrigins().toArray(String[]::new))
-                .allowedMethods("*")
-                .allowedHeaders("*")
-                .allowCredentials(true);
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                .allowedHeaders("Authorization", "Content-Type", "Accept", "Origin")
+                .exposedHeaders("Location")
+                .allowCredentials(true)
+                .maxAge(3600);
     }
 }

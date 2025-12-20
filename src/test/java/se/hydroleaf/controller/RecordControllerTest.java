@@ -7,13 +7,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import se.hydroleaf.model.Permission;
+import se.hydroleaf.model.UserRole;
 import se.hydroleaf.repository.dto.history.AggregatedHistoryResponse;
 import se.hydroleaf.repository.dto.history.AggregatedSensorData;
 import se.hydroleaf.repository.dto.history.TimestampValue;
+import se.hydroleaf.service.AuthenticatedUser;
+import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.RecordService;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -32,8 +37,16 @@ class RecordControllerTest {
     @MockitoBean
     private RecordService recordService;
 
+    @MockitoBean
+    private AuthorizationService authorizationService;
+
+    private AuthenticatedUser adminUser() {
+        return new AuthenticatedUser(1L, UserRole.ADMIN, Set.<Permission>of());
+    }
+
     @Test
     void aggregatedHistoryReturnsTemperatureData() throws Exception {
+        when(authorizationService.requireAdminOrOperator(anyString())).thenReturn(adminUser());
         AggregatedSensorData tempData = new AggregatedSensorData(
                 "temperature",
                 "°C",
@@ -51,7 +64,8 @@ class RecordControllerTest {
                         .param("compositeId", "dev1")
                         .param("from", "2023-01-01T00:00:00Z")
                         .param("to", "2023-01-02T00:00:00Z")
-                        .param("bucket", "5m"))
+                        .param("bucket", "5m")
+                        .header("Authorization", "Bearer admin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sensors[0].sensorType").value("temperature"))
                 .andExpect(jsonPath("$.sensors[0].data[0].value").value(25.0));
@@ -59,6 +73,7 @@ class RecordControllerTest {
 
     @Test
     void aggregatedHistoryReturnsMultipleSensors() throws Exception {
+        when(authorizationService.requireAdminOrOperator(anyString())).thenReturn(adminUser());
         AggregatedSensorData tempData = new AggregatedSensorData(
                 "temperature",
                 "°C",
@@ -84,7 +99,8 @@ class RecordControllerTest {
                         .param("to", "2023-01-02T00:00:00Z")
                         .param("bucket", "5m")
                         .param("sensorType", "temperature")
-                        .param("sensorType", "humidity"))
+                        .param("sensorType", "humidity")
+                        .header("Authorization", "Bearer admin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sensors.length()" ).value(2));
     }

@@ -54,6 +54,16 @@ public class AuthorizationService {
         }
     }
 
+    public void requireAdminOrOperator(AuthenticatedUser user) {
+        requireRole(user, UserRole.ADMIN, UserRole.WORKER);
+    }
+
+    public AuthenticatedUser requireAdminOrOperator(String token) {
+        AuthenticatedUser authenticatedUser = requireAuthenticated(token);
+        requireAdminOrOperator(authenticatedUser);
+        return authenticatedUser;
+    }
+
     public void requireSuperAdmin(AuthenticatedUser user) {
         requireRole(user, UserRole.SUPER_ADMIN);
     }

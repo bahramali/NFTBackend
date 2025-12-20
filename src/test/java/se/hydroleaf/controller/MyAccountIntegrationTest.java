@@ -80,36 +80,18 @@ class MyAccountIntegrationTest {
     }
 
     @Test
-    void customerSeesOnlyOwnDevices() throws Exception {
-        User owner = createCustomer("owner@example.com", "Owner");
-        User stranger = createCustomer("stranger@example.com", "Stranger");
-
-        Device owned = saveDevice("SYS-L1-D1", "SYS", "L1", "D1", owner.getId());
-        saveDevice("SYS-L1-D2", "SYS", "L1", "D2", stranger.getId());
-
+    void customerAccessingDeviceEndpointsIsForbidden() throws Exception {
+        User customer = createCustomer("owner@example.com", "Owner");
+        Device owned = saveDevice("SYS-L1-D1", "SYS", "L1", "D1", customer.getId());
         saveSensorSnapshot(owned, "temperature", 20.5, Instant.now());
 
-        String token = bearerToken(owner.getEmail(), "password123");
+        String token = bearerToken(customer.getEmail(), "password123");
 
         mockMvc.perform(get("/api/my/devices").header("Authorization", token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].deviceId").value("D1"))
-                .andExpect(jsonPath("$[0].online").value(true))
-                .andExpect(jsonPath("$[0].lastMetrics", hasSize(1)));
-    }
+                .andExpect(status().isForbidden());
 
-    @Test
-    void accessingDeviceNotOwnedReturns404() throws Exception {
-        User owner = createCustomer("owner2@example.com", "Owner Two");
-        User other = createCustomer("other@example.com", "Other");
-
-        saveDevice("SYS-L2-D3", "SYS", "L2", "D3", owner.getId());
-
-        String token = bearerToken(other.getEmail(), "password123");
-
-        mockMvc.perform(get("/api/my/devices/D3").header("Authorization", token))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/my/devices/D1").header("Authorization", token))
+                .andExpect(status().isForbidden());
     }
 
     @Test

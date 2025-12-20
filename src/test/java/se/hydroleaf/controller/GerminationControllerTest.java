@@ -13,16 +13,22 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.GerminationCycle;
+import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.TopicName;
+import se.hydroleaf.model.UserRole;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.GerminationCycleRepository;
+import se.hydroleaf.service.AuthenticatedUser;
+import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.GerminationService;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -47,10 +53,14 @@ class GerminationControllerTest {
     @MockBean
     private Clock clock;
 
+    @MockBean
+    private AuthorizationService authorizationService;
+
     @Autowired
     private GerminationService germinationService;
 
     private Device device;
+    private final AuthenticatedUser adminUser = new AuthenticatedUser(1L, UserRole.ADMIN, Set.<Permission>of());
 
     @BeforeEach
     void setup() {
@@ -70,6 +80,7 @@ class GerminationControllerTest {
         Mockito.reset(clock);
         Mockito.when(clock.getZone()).thenReturn(ZoneOffset.UTC);
         Mockito.when(clock.instant()).thenReturn(Instant.EPOCH);
+        Mockito.when(authorizationService.requireAdminOrOperator(anyString())).thenReturn(adminUser);
     }
 
     @Test
@@ -78,7 +89,8 @@ class GerminationControllerTest {
         Instant later = start.plusSeconds(60);
         Mockito.when(clock.instant()).thenReturn(start, later);
 
-        mockMvc.perform(post("/api/germination/start"))
+        mockMvc.perform(post("/api/germination/start")
+                        .header("Authorization", "Bearer admin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.compositeId").value("S01-L02-G03"))
                 .andExpect(jsonPath("$.startTime").value(start.toString()))
@@ -102,7 +114,8 @@ class GerminationControllerTest {
 
         mockMvc.perform(put("/api/germination")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
+                        .content(payload)
+                        .header("Authorization", "Bearer admin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.startTime").value(newStart.toString()))
                 .andExpect(jsonPath("$.elapsedSeconds").value(120));
@@ -121,7 +134,7 @@ class GerminationControllerTest {
 
         Mockito.when(clock.instant()).thenReturn(start.plusSeconds(3600));
 
-        mockMvc.perform(get("/api/germination"))
+        mockMvc.perform(get("/api/germination").header("Authorization", "Bearer admin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.startTime").value(start.toString()))
                 .andExpect(jsonPath("$.elapsedSeconds").value(3600));
@@ -129,8 +142,7 @@ class GerminationControllerTest {
 
     @Test
     void getStatusReturns404WhenMissing() throws Exception {
-        mockMvc.perform(get("/api/germination"))
+        mockMvc.perform(get("/api/germination").header("Authorization", "Bearer admin"))
                 .andExpect(status().isNotFound());
     }
 }
-

@@ -9,6 +9,7 @@ public class CorsProperties {
     private static final List<String> DEFAULT_ALLOWED_ORIGINS = List.of(
             "https://hydroleaf.se",
             "https://www.hydroleaf.se",
+            "https://app.hydroleaf.se",
             "http://localhost:5173"
     );
 

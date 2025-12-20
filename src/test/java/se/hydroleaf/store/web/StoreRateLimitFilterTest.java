@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import se.hydroleaf.config.CorsProperties;
 import se.hydroleaf.common.api.ApiError;
 import se.hydroleaf.store.config.StoreProperties;
 
@@ -22,6 +23,7 @@ class StoreRateLimitFilterTest {
     private StoreRateLimitFilter filter;
     private StoreProperties storeProperties;
     private ObjectMapper objectMapper;
+    private CorsProperties corsProperties;
 
     @BeforeEach
     void setUp() {
@@ -30,8 +32,9 @@ class StoreRateLimitFilterTest {
         storeProperties.getRateLimit().setCapacity(1);
         storeProperties.getRateLimit().setRefillTokens(1);
         storeProperties.getRateLimit().setRefillSeconds(60);
+        corsProperties = new CorsProperties();
 
-        filter = new StoreRateLimitFilter(storeProperties, objectMapper);
+        filter = new StoreRateLimitFilter(storeProperties, objectMapper, corsProperties);
     }
 
     @Test
@@ -53,6 +56,7 @@ class StoreRateLimitFilterTest {
         filter.doFilter(firstRequest, firstResponse, (req, res) -> {});
 
         MockHttpServletRequest limitedRequest = new MockHttpServletRequest("GET", "/api/store/products");
+        limitedRequest.addHeader(HttpHeaders.ORIGIN, "https://hydroleaf.se");
         MockHttpServletResponse limitedResponse = new MockHttpServletResponse();
         AtomicBoolean invoked = new AtomicBoolean(false);
 
@@ -62,6 +66,8 @@ class StoreRateLimitFilterTest {
         assertThat(limitedResponse.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.value());
         assertThat(limitedResponse.getContentType()).startsWith(MediaType.APPLICATION_JSON_VALUE);
         assertThat(limitedResponse.getHeader(HttpHeaders.RETRY_AFTER)).isEqualTo("60");
+        assertThat(limitedResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).isEqualTo("https://hydroleaf.se");
+        assertThat(limitedResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS)).isEqualTo("true");
 
         var error = objectMapper.readTree(limitedResponse.getContentAsByteArray());
         assertThat(error.get("code").asText()).isEqualTo("RATE_LIMITED");

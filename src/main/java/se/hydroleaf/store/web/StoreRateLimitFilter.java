@@ -27,6 +27,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import se.hydroleaf.common.api.ApiError;
 import se.hydroleaf.store.config.StoreProperties;
+import se.hydroleaf.config.CorsProperties;
 
 @Component
 @Profile("!test")
@@ -38,11 +39,16 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
 
     private final StoreProperties storeProperties;
     private final ObjectMapper objectMapper;
+    private final CorsProperties corsProperties;
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getRequestURI().startsWith("/api/store");
+        if (!request.getRequestURI().startsWith("/api/store")) {
+            return true;
+        }
+
+        return "OPTIONS".equalsIgnoreCase(request.getMethod());
     }
 
     @Override
@@ -60,7 +66,7 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
             return;
         }
         log.warn("Rate limit exceeded for {}", key);
-        handleRateLimitExceeded(response, rate);
+        handleRateLimitExceeded(request, response, rate);
     }
 
     private String resolveKey(HttpServletRequest request) {
@@ -96,7 +102,7 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
                 .build();
     }
 
-    private void handleRateLimitExceeded(HttpServletResponse response, StoreProperties.RateLimitProperties rate) throws IOException {
+    private void handleRateLimitExceeded(HttpServletRequest request, HttpServletResponse response, StoreProperties.RateLimitProperties rate) throws IOException {
         if (response.isCommitted()) {
             return;
         }
@@ -106,7 +112,23 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(rate.getRefillSeconds()));
 
+        applyCorsHeaders(request, response);
+
         ApiError apiError = new ApiError("RATE_LIMITED", "Too many requests, please slow down");
         response.getWriter().write(objectMapper.writeValueAsString(apiError));
+    }
+
+    private void applyCorsHeaders(HttpServletRequest request, HttpServletResponse response) {
+        String origin = request.getHeader(HttpHeaders.ORIGIN);
+        if (!StringUtils.hasText(origin)) {
+            return;
+        }
+
+        if (corsProperties.getAllowedOrigins().contains(origin)) {
+            response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+            response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
+            response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, String.join(",", "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+            response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, String.join(",", "Authorization", "Content-Type", "Accept", "Origin"));
+        }
     }
 }

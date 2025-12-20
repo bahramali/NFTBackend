@@ -38,7 +38,8 @@ import se.hydroleaf.store.config.StoreProperties;
 public class StoreRateLimitFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(StoreRateLimitFilter.class);
-    private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "DELETE", "OPTIONS");
+    private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
+    private static final List<String> ALLOWED_HEADERS = List.of("Content-Type", "Authorization", "X-Requested-With");
 
     private final StoreProperties storeProperties;
     private final ObjectMapper objectMapper;
@@ -52,7 +53,11 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
             return true;
         }
 
-        return HttpMethod.OPTIONS.matches(request.getMethod());
+        if (HttpMethod.OPTIONS.matches(request.getMethod())) {
+            return true;
+        }
+
+        return "/api/health".equals(uri);
     }
 
     @Override
@@ -131,7 +136,7 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
             response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
             response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
             response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, String.join(",", ALLOWED_METHODS));
-            response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, "*");
+            response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, String.join(",", ALLOWED_HEADERS));
             response.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.RETRY_AFTER);
         }
     }

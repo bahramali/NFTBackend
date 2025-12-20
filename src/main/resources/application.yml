@@ -42,6 +42,7 @@ app:
     allowed-origins:
       - https://hydroleaf.se
       - https://www.hydroleaf.se
+      - https://api.hydroleaf.se
       - http://localhost:5173
   invite-email:
     smtp-enabled: ${APP_INVITE_EMAIL_SMTP_ENABLED:${APP_INVITE_SMTP_ENABLED:false}}

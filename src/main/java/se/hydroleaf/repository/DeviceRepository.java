@@ -13,6 +13,10 @@ public interface DeviceRepository extends JpaRepository<Device, String> {
 
     List<Device> findBySystemAndLayer(String system, String layer);
 
+    List<Device> findByOwnerUserId(Long ownerUserId);
+
+    Optional<Device> findByOwnerUserIdAndDeviceId(Long ownerUserId, String deviceId);
+
     @Query("SELECT DISTINCT new se.hydroleaf.repository.dto.SystemLayer(d.system, d.layer) FROM Device d")
     List<SystemLayer> findDistinctSystemAndLayer();
 

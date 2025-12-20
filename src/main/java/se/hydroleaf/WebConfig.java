@@ -20,11 +20,11 @@ public class WebConfig implements WebMvcConfigurer {
                 .setStatusCode(HttpStatus.NO_CONTENT);
 
         // Single-segment paths without dots (e.g. /reports)
-        registry.addViewController("/{path:[^\\.]*}")
+        registry.addViewController("/{path:^(?!api$)[^\\.]*}")
                 .setViewName("forward:/index.html");
 
         // multi-segment paths without dots (e.g. /dashboard/layer/L01)
-        registry.addViewController("/{path:[^\\.]*}/**")
+        registry.addViewController("/{path:^(?!api$)[^\\.]*}/**")
                 .setViewName("forward:/index.html");
     }
 

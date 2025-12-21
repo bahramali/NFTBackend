@@ -68,6 +68,11 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
+        if (HttpMethod.OPTIONS.matches(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String key = resolveKey(request);
         Bucket bucket = buckets.computeIfAbsent(key, k -> newBucket(rate, k));
         if (bucket.tryConsume(1)) {
@@ -134,6 +139,7 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
 
         if (corsProperties.getAllowedOrigins().contains(origin)) {
             response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+            response.addHeader(HttpHeaders.VARY, HttpHeaders.ORIGIN);
             response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
             response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, String.join(",", ALLOWED_METHODS));
             response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, String.join(",", ALLOWED_HEADERS));

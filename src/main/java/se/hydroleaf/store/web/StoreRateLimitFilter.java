@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
+import io.github.bucket4j.Bucket4j;
 import io.github.bucket4j.Refill;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -68,6 +69,11 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
+        if (HttpMethod.OPTIONS.matches(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String key = resolveKey(request);
         Bucket bucket = buckets.computeIfAbsent(key, k -> newBucket(rate, k));
         if (bucket.tryConsume(1)) {
@@ -103,7 +109,7 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
                 key, capacity, refillTokens, refillSeconds
         );
 
-        return Bucket.builder()
+        return Bucket4j.builder()
                 .addLimit(limit)
                 .build();
     }
@@ -134,6 +140,7 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
 
         if (corsProperties.getAllowedOrigins().contains(origin)) {
             response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+            response.addHeader(HttpHeaders.VARY, HttpHeaders.ORIGIN);
             response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
             response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, String.join(",", ALLOWED_METHODS));
             response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, String.join(",", ALLOWED_HEADERS));

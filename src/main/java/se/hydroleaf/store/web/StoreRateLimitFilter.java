@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Bucket4j;
 import io.github.bucket4j.Refill;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -109,7 +108,7 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
                 key, capacity, refillTokens, refillSeconds
         );
 
-        return Bucket4j.builder()
+        return Bucket.builder()
                 .addLimit(limit)
                 .build();
     }

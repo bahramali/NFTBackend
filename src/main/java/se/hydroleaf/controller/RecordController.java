@@ -3,6 +3,8 @@ package se.hydroleaf.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +25,8 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping("/api/records")
 public class RecordController {
+
+    private static final Logger log = LoggerFactory.getLogger(RecordController.class);
 
     private static final long MAX_RANGE_DAYS = 31;
     private static final Pattern SENSOR_TYPE_PATTERN = Pattern.compile("[A-Za-z0-9_\\-]{1,32}");
@@ -50,6 +54,10 @@ public class RecordController {
             @RequestParam(name = "sensorOffset", required = false) Integer sensorOffset
     ) {
         authorizationService.requireAdminOrOperator(token);
+        if (log.isDebugEnabled()) {
+            log.debug("Aggregated history request: compositeId={} from={} to={} bucket={} sensorTypes={} bucketLimit={} bucketOffset={} sensorLimit={} sensorOffset={} tokenPresent={}",
+                    compositeId, from, to, bucket, sensorTypes, bucketLimit, bucketOffset, sensorLimit, sensorOffset, token != null);
+        }
         Instant fromInst = parseInstant(from);
         Instant toInst = parseInstant(to);
         if (fromInst == null || toInst == null) {
@@ -80,6 +88,9 @@ public class RecordController {
                     compositeId, fromInst, toInst, bucket, normalizedSensorTypes,
                     bucketLimit, bucketOffset, sensorLimit, sensorOffset);
         } catch (IllegalArgumentException iae) {
+            if (log.isDebugEnabled()) {
+                log.debug("Aggregated history validation error: {}", iae.getMessage());
+            }
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, iae.getMessage(), iae);
         }
     }

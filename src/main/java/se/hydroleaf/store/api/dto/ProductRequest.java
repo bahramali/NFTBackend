@@ -9,29 +9,31 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ProductRequest {
 
-    @NotBlank
+    @NotBlank(message = "SKU is required")
     private String sku;
 
-    @NotBlank
+    @NotBlank(message = "Name is required")
     private String name;
 
     private String description;
 
-    @Min(0)
+    @Min(value = 0, message = "Price must be zero or positive")
     private long priceCents;
 
-    @Size(min = 3, max = 3)
+    @Size(min = 3, max = 3, message = "Currency must be a 3-letter ISO code")
     private String currency;
 
     private boolean active = true;
 
-    @Min(0)
+    @Min(value = 0, message = "Inventory quantity must be zero or positive")
     private int inventoryQty;
 
     private String imageUrl;

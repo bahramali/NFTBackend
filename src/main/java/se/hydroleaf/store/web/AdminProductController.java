@@ -6,6 +6,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +28,8 @@ import se.hydroleaf.store.service.ProductService;
 @RequiredArgsConstructor
 public class AdminProductController {
 
+    private static final Logger log = LoggerFactory.getLogger(AdminProductController.class);
+
     private final AuthorizationService authorizationService;
     private final ProductService productService;
 
@@ -43,19 +47,25 @@ public class AdminProductController {
         return ResponseEntity.ok(productService.getProduct(id));
     }
 
-    @PostMapping
+    @PostMapping(consumes = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ProductResponse> create(@RequestHeader(name = "Authorization", required = false) String token,
                                                   @Valid @RequestBody ProductRequest request) {
         authorizationService.requireAdminOrOperator(token);
+        if (log.isDebugEnabled()) {
+            log.debug("Create product request: {}", request);
+        }
         ProductResponse response = productService.createProduct(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ProductResponse> update(@RequestHeader(name = "Authorization", required = false) String token,
                                                   @PathVariable UUID id,
                                                   @Valid @RequestBody ProductRequest request) {
         authorizationService.requireAdminOrOperator(token);
+        if (log.isDebugEnabled()) {
+            log.debug("Update product {} request: {}", id, request);
+        }
         return ResponseEntity.ok(productService.updateProduct(id, request));
     }
 

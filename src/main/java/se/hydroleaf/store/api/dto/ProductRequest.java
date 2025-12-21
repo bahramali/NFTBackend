@@ -1,13 +1,18 @@
 package se.hydroleaf.store.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProductRequest {
 
     @NotBlank
@@ -32,4 +37,18 @@ public class ProductRequest {
     private String imageUrl;
 
     private String category;
+
+    @JsonSetter("price")
+    void setDecimalPrice(BigDecimal price) {
+        if (price != null) {
+            this.priceCents = price.movePointRight(2).setScale(0, RoundingMode.HALF_UP).longValueExact();
+        }
+    }
+
+    @JsonSetter("stock")
+    void setStock(Integer stock) {
+        if (stock != null) {
+            this.inventoryQty = stock;
+        }
+    }
 }

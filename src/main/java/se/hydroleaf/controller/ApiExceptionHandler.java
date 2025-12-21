@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -21,6 +23,8 @@ import org.springframework.web.server.ResponseStatusException;
 @org.springframework.core.annotation.Order(org.springframework.core.Ordered.HIGHEST_PRECEDENCE)
 public class ApiExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
+
     public record FieldErrorResponse(String field, String message) {}
 
     public record ValidationErrorResponse(List<FieldErrorResponse> errors) {}
@@ -31,6 +35,9 @@ public class ApiExceptionHandler {
         List<FieldErrorResponse> errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> new FieldErrorResponse(error.getField(), error.getDefaultMessage()))
                 .toList();
+        if (log.isDebugEnabled()) {
+            log.debug("Validation failed: {}", errors);
+        }
         return new ValidationErrorResponse(errors);
     }
 
@@ -39,10 +46,19 @@ public class ApiExceptionHandler {
     public ValidationErrorResponse handleNotReadable(HttpMessageNotReadableException ex) {
         Throwable cause = ex.getMostSpecificCause();
         if (cause instanceof InvalidFormatException invalidFormat) {
+            if (log.isDebugEnabled()) {
+                log.debug("Invalid format in request body", invalidFormat);
+            }
             return invalidFormatResponse(invalidFormat);
         }
         if (cause instanceof UnrecognizedPropertyException unrecognizedProperty) {
+            if (log.isDebugEnabled()) {
+                log.debug("Unrecognized field in request body", unrecognizedProperty);
+            }
             return unrecognizedFieldResponse(unrecognizedProperty);
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Unreadable request body", ex);
         }
         return new ValidationErrorResponse(List.of(new FieldErrorResponse("", "Malformed JSON request")));
     }
@@ -56,7 +72,12 @@ public class ApiExceptionHandler {
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<ValidationErrorResponse> handleSecurity(SecurityException ex) {
         FieldErrorResponse error = new FieldErrorResponse("", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ValidationErrorResponse(List.of(error)));
+        if (log.isDebugEnabled()) {
+            log.debug("Authorization failed: {}", ex.getMessage());
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .header(org.springframework.http.HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+                .body(new ValidationErrorResponse(List.of(error)));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

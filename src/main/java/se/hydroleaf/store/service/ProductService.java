@@ -47,6 +47,7 @@ public class ProductService {
     public ProductResponse createProduct(ProductRequest request) {
         String normalizedSku = normalizeSku(request.getSku());
         ensureUniqueSku(normalizedSku, null);
+        validatePrice(request.getPriceCents());
 
         Product product = new Product();
         applyDetails(product, request, normalizedSku);
@@ -62,6 +63,7 @@ public class ProductService {
 
         String normalizedSku = normalizeSku(request.getSku());
         ensureUniqueSku(normalizedSku, productId);
+        validatePrice(request.getPriceCents());
         applyDetails(product, request, normalizedSku);
         product = productRepository.save(product);
         log.info("Updated product id={} sku={}", product.getId(), product.getSku());
@@ -123,6 +125,12 @@ public class ProductService {
             throw new BadRequestException("UNSUPPORTED_CURRENCY", "Currency must be " + storeProperties.getCurrency());
         }
         return resolved;
+    }
+
+    private void validatePrice(long priceCents) {
+        if (priceCents <= 0) {
+            throw new BadRequestException("INVALID_PRICE", "Price must be greater than zero");
+        }
     }
 
     private void validateCurrency(Product product) {

@@ -45,7 +45,7 @@ public class ProductService {
 
     @Transactional
     public ProductResponse createProduct(ProductRequest request) {
-        String normalizedSku = normalizeSku(request.getSku());
+        String normalizedSku = normalizeOrGenerateSku(request.getSku(), request.getName());
         ensureUniqueSku(normalizedSku, null);
         validatePrice(request.getPriceCents());
 
@@ -61,7 +61,7 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("PRODUCT_NOT_FOUND", "Product not found"));
 
-        String normalizedSku = normalizeSku(request.getSku());
+        String normalizedSku = normalizeOrGenerateSku(request.getSku(), request.getName());
         ensureUniqueSku(normalizedSku, productId);
         validatePrice(request.getPriceCents());
         applyDetails(product, request, normalizedSku);
@@ -113,8 +113,22 @@ public class ProductService {
         });
     }
 
+    private String normalizeOrGenerateSku(String sku, String name) {
+        if (sku == null || sku.isBlank()) {
+            return generateSku(name);
+        }
+        return normalizeSku(sku);
+    }
+
     private String normalizeSku(String sku) {
         return sku.trim().toUpperCase();
+    }
+
+    private String generateSku(String name) {
+        String base = name == null ? "" : name.replaceAll("[^A-Za-z0-9]", "");
+        base = base.isBlank() ? "SKU" : base.substring(0, Math.min(base.length(), 12));
+        String suffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+        return (base + "-" + suffix).toUpperCase();
     }
 
     private String resolveCurrency(String currency) {

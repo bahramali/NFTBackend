@@ -17,7 +17,7 @@ import lombok.ToString;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ProductRequest {
 
-    @NotBlank(message = "SKU is required")
+    @Size(max = 64, message = "SKU must be at most 64 characters")
     private String sku;
 
     @NotBlank(message = "Name is required")

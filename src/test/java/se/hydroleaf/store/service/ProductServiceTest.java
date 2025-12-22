@@ -51,4 +51,19 @@ class ProductServiceTest {
         assertThat(response.getId()).isNotNull();
         assertThat(productRepository.findById(response.getId())).isPresent();
     }
+
+    @Test
+    void createProduct_generatesSkuWhenMissing() {
+        ProductRequest request = new ProductRequest();
+        request.setName("Unnamed Product");
+        request.setPriceCents(500);
+        request.setCurrency("SEK");
+        request.setActive(true);
+        request.setInventoryQty(1);
+
+        ProductResponse response = productService.createProduct(request);
+
+        assertThat(response.getSku()).isNotBlank();
+        assertThat(response.getSku()).hasSizeBetween(7, 64);
+    }
 }

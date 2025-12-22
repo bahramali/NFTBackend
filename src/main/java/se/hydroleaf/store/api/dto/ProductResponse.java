@@ -1,5 +1,7 @@
 package se.hydroleaf.store.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Builder;
@@ -20,4 +22,14 @@ public class ProductResponse {
     String category;
     Instant createdAt;
     Instant updatedAt;
+
+    @JsonProperty("price")
+    public BigDecimal price() {
+        return BigDecimal.valueOf(priceCents, 2);
+    }
+
+    @JsonProperty("stock")
+    public int stock() {
+        return inventoryQty;
+    }
 }

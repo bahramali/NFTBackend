@@ -1,5 +1,6 @@
 package se.hydroleaf.store.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
@@ -11,8 +12,10 @@ import lombok.Setter;
 public class CartItemRequest {
 
     @NotNull
+    @JsonAlias("product_id")
     private UUID productId;
 
     @Min(1)
+    @JsonAlias("quantity")
     private Integer qty;
 }

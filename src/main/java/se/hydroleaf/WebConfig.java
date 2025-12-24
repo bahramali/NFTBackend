@@ -35,7 +35,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 .allowedOrigins(corsProperties.getAllowedOrigins().toArray(String[]::new))
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-                .allowedHeaders("Authorization", "Content-Type", "Accept", "Origin", "X-Cart-Id")
+                .allowedHeaders("Authorization", "Content-Type", "Accept", "Origin", "X-Cart-Id", "X-Session-Id")
                 .exposedHeaders("Location")
                 .allowCredentials(true)
                 .maxAge(3600);

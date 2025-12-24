@@ -14,5 +14,5 @@ public class CartItemRequest {
     private UUID productId;
 
     @Min(1)
-    private int qty;
+    private Integer qty;
 }

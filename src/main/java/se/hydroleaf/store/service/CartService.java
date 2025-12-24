@@ -68,6 +68,7 @@ public class CartService {
     public CartResponse addItem(UUID cartId, CartItemRequest request) {
         Cart cart = requireOpenCart(cartId);
         Product product = productService.requireActiveProduct(request.getProductId());
+        int qtyToAdd = Optional.ofNullable(request.getQty()).orElse(1);
 
         CartItem item = cart.getItems().stream()
                 .filter(i -> i.getProduct().getId().equals(product.getId()))
@@ -80,7 +81,7 @@ public class CartService {
                     return created;
                 });
 
-        int newQty = item.getId() == null ? request.getQty() : item.getQty() + request.getQty();
+        int newQty = item.getId() == null ? qtyToAdd : item.getQty() + qtyToAdd;
         applyQuantity(item, product, newQty);
         cartRepository.save(cart);
 

@@ -39,7 +39,12 @@ public class StoreRateLimitFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(StoreRateLimitFilter.class);
     private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
-    private static final List<String> ALLOWED_HEADERS = List.of("Content-Type", "Authorization", "X-Requested-With");
+    private static final List<String> ALLOWED_HEADERS = List.of(
+            "Content-Type",
+            "Authorization",
+            "X-Requested-With",
+            "X-Cart-Id"
+    );
 
     private final StoreProperties storeProperties;
     private final ObjectMapper objectMapper;

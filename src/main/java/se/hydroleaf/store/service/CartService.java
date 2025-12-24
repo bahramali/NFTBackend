@@ -138,8 +138,12 @@ public class CartService {
         if (qty < 1) {
             throw new BadRequestException("INVALID_QTY", "Quantity must be at least 1");
         }
-        if (qty > product.getInventoryQty()) {
-            throw new ConflictException("INSUFFICIENT_STOCK", "Requested quantity exceeds available inventory");
+        int availableQty = product.getInventoryQty();
+        if (availableQty < 1) {
+            throw new ConflictException("INSUFFICIENT_STOCK", "Product is out of stock");
+        }
+        if (qty > availableQty) {
+            qty = availableQty;
         }
         item.setProduct(product);
         item.setQty(qty);
@@ -160,8 +164,12 @@ public class CartService {
         long subtotal = 0L;
         for (CartItem item : cart.getItems()) {
             Product current = productService.requireActiveProduct(item.getProduct().getId());
-            if (item.getQty() > current.getInventoryQty()) {
+            int availableQty = current.getInventoryQty();
+            if (availableQty < 1) {
                 throw new ConflictException("INSUFFICIENT_STOCK", "Item " + current.getName() + " is out of stock");
+            }
+            if (item.getQty() > availableQty) {
+                item.setQty(availableQty);
             }
             item.setProduct(current);
             item.setUnitPriceCents(current.getPriceCents());

@@ -1,5 +1,7 @@
 package se.hydroleaf.store.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Value;
@@ -16,4 +18,14 @@ public class CartItemResponse {
     long lineTotalCents;
     String imageUrl;
     String currency;
+
+    @JsonProperty("price")
+    public BigDecimal price() {
+        return BigDecimal.valueOf(unitPriceCents, 2);
+    }
+
+    @JsonProperty("lineTotal")
+    public BigDecimal lineTotal() {
+        return BigDecimal.valueOf(lineTotalCents, 2);
+    }
 }

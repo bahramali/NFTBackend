@@ -7,5 +7,5 @@ import se.hydroleaf.store.model.Payment;
 
 public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
-    Optional<Payment> findByProviderRef(String providerRef);
+    Optional<Payment> findByProviderPaymentId(String providerPaymentId);
 }

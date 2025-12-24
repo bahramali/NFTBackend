@@ -59,11 +59,11 @@ public class StoreOrder {
     @Column(nullable = false)
     private long taxCents;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "total_amount_cents")
     private long totalCents;
 
     @Column(nullable = false, length = 3)
-    private String currency;
+    private String currency = "SEK";
 
     @Embedded
     private ShippingAddress shippingAddress;

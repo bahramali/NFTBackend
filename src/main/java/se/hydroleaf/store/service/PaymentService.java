@@ -24,7 +24,7 @@ public class PaymentService {
 
     @Transactional
     public void markPaid(String providerRef) {
-        Payment payment = paymentRepository.findByProviderRef(providerRef)
+        Payment payment = paymentRepository.findByProviderPaymentId(providerRef)
                 .orElseThrow(() -> new NotFoundException("PAYMENT_NOT_FOUND", "Payment not found"));
 
         if (payment.getStatus() == PaymentStatus.PAID) {

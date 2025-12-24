@@ -30,3 +30,15 @@ livefeed:
 server:
   ssl:
     enabled: false
+app:
+  store:
+    currency: SEK
+    shipping-flat-cents: 0
+    tax-rate-percent: 0
+    fallback-payment-url: https://hydroleaf.se/store/pay/{orderId}
+    nets-easy:
+      api-base-url: https://api.dibspayment.eu
+      secret-key: ${NETS_EASY_SECRET_KEY:}
+      webhook-secret: ${NETS_EASY_WEBHOOK_SECRET:}
+      success-url: https://hydroleaf.se/store/checkout/success?orderId={orderId}
+      cancel-url: https://hydroleaf.se/store/checkout/cancel?orderId={orderId}

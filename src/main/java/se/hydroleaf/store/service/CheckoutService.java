@@ -70,8 +70,10 @@ public class CheckoutService {
         Payment payment = Payment.builder()
                 .order(order)
                 .provider(PaymentProvider.STRIPE)
-                .status(PaymentStatus.PENDING)
-                .providerRef("PENDING")
+                .status(PaymentStatus.CREATED)
+                .amountCents(order.getTotalCents())
+                .currency(order.getCurrency())
+                .providerPaymentId("PENDING")
                 .build();
         paymentRepository.save(payment);
 
@@ -91,7 +93,7 @@ public class CheckoutService {
             throw ex;
         }
 
-        payment.setProviderRef(providerRef);
+        payment.setProviderPaymentId(providerRef);
 
         log.info("Checkout initiated cartId={} orderId={}", cart.getId(), order.getId());
         return CheckoutResponse.builder()

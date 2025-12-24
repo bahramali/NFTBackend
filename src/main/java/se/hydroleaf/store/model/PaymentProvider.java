@@ -1,5 +1,6 @@
 package se.hydroleaf.store.model;
 
 public enum PaymentProvider {
-    STRIPE
+    STRIPE,
+    NETS_EASY
 }

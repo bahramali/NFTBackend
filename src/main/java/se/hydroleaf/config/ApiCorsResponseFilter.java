@@ -26,7 +26,8 @@ public class ApiCorsResponseFilter extends OncePerRequestFilter {
             "Content-Type",
             "Authorization",
             "X-Requested-With",
-            "X-Cart-Id"
+            "X-Cart-Id",
+            "X-Session-Id"
     );
     private static final List<String> EXPOSED_HEADERS = List.of("Location", "Retry-After");
 

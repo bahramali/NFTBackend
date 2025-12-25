@@ -7,6 +7,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,7 +28,9 @@ class StaticResourceNotFoundIntegrationTest {
     @Test
     void getUnknownPhpReturnsNotFoundWithoutErrorLog(CapturedOutput output) throws Exception {
         mockMvc.perform(get("/a.php"))
+                .accept(MediaType.APPLICATION_JSON)
                 .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").isNotEmpty())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("Resource not found"));
 

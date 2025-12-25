@@ -32,9 +32,7 @@ public class NotFoundResponseFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(request, responseWrapper);
         } finally {
-            if (responseWrapper.getStatus() == HttpStatus.NOT_FOUND.value()
-                    && responseWrapper.getContentAsByteArray().length == 0
-                    && !responseWrapper.isCommitted()) {
+            if (shouldRewriteNotFound(responseWrapper)) {
                 log.debug("Responding with JSON 404 for {} {}", request.getMethod(), request.getRequestURI());
                 responseWrapper.resetBuffer();
                 responseWrapper.setStatus(HttpStatus.NOT_FOUND.value());
@@ -43,5 +41,21 @@ public class NotFoundResponseFilter extends OncePerRequestFilter {
             }
             responseWrapper.copyBodyToResponse();
         }
+    }
+
+    private boolean shouldRewriteNotFound(ContentCachingResponseWrapper responseWrapper) {
+        if (responseWrapper.getStatus() != HttpStatus.NOT_FOUND.value() || responseWrapper.isCommitted()) {
+            return false;
+        }
+        String contentType = responseWrapper.getContentType();
+        if (contentType != null && contentType.startsWith(MediaType.APPLICATION_JSON_VALUE)) {
+            byte[] body = responseWrapper.getContentAsByteArray();
+            if (body.length > 0) {
+                String payload = new String(body, java.nio.charset.StandardCharsets.UTF_8);
+                return !payload.contains("\"code\"");
+            }
+            return true;
+        }
+        return true;
     }
 }

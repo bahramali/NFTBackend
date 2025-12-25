@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.controller.dto.MyDeviceMetricResponse;
 import se.hydroleaf.controller.dto.MyDeviceResponse;
 import se.hydroleaf.controller.dto.MyOrderResponse;
+import se.hydroleaf.controller.dto.MyProfileRequest;
 import se.hydroleaf.controller.dto.MyProfileResponse;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.LatestSensorValue;
@@ -41,7 +42,29 @@ public class MyAccountService {
         AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
         User user = userRepository.findById(authenticatedUser.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return MyProfileResponse.from(user, authenticatedUser.permissions());
+        return MyProfileResponse.from(user);
+    }
+
+    public MyProfileResponse updateCurrentProfile(String token, MyProfileRequest request) {
+        AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
+        User user = userRepository.findById(authenticatedUser.userId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        if (request.fullName() != null) {
+            user.setDisplayName(request.fullName().trim());
+        }
+        if (request.phone() != null) {
+            user.setPhone(request.phone().trim());
+        }
+        if (request.notificationPreferences() != null) {
+            if (request.notificationPreferences().orderConfirmationEmails() != null) {
+                user.setOrderConfirmationEmails(request.notificationPreferences().orderConfirmationEmails());
+            }
+            if (request.notificationPreferences().pickupReadyNotification() != null) {
+                user.setPickupReadyNotification(request.notificationPreferences().pickupReadyNotification());
+            }
+        }
+        userRepository.save(user);
+        return MyProfileResponse.from(user);
     }
 
     public List<MyDeviceResponse> listMyDevices(String token) {

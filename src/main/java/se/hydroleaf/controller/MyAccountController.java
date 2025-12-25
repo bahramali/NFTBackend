@@ -5,13 +5,17 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.hydroleaf.controller.dto.MyDeviceResponse;
 import se.hydroleaf.controller.dto.MyOrderResponse;
+import se.hydroleaf.controller.dto.MyProfileRequest;
 import se.hydroleaf.controller.dto.MyProfileResponse;
 import se.hydroleaf.service.MyAccountService;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api")
@@ -23,6 +27,13 @@ public class MyAccountController {
     @GetMapping("/me")
     public MyProfileResponse me(@RequestHeader(name = "Authorization", required = false) String token) {
         return myAccountService.getCurrentProfile(token);
+    }
+
+    @PutMapping("/me")
+    public MyProfileResponse updateMe(
+            @RequestHeader(name = "Authorization", required = false) String token,
+            @Valid @RequestBody MyProfileRequest request) {
+        return myAccountService.updateCurrentProfile(token, request);
     }
 
     @GetMapping("/my/devices")

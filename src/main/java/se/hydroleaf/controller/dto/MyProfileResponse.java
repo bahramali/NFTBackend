@@ -1,30 +1,28 @@
 package se.hydroleaf.controller.dto;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.User;
 import se.hydroleaf.model.UserRole;
 
 public record MyProfileResponse(
         Long id,
         String email,
-        String displayName,
+        String fullName,
+        String phone,
         UserRole role,
-        List<String> permissions
+        NotificationPreferencesResponse notificationPreferences
 ) {
 
-    public static MyProfileResponse from(User user, Set<Permission> permissions) {
-        List<String> permissionNames = permissions == null
-                ? List.of()
-                : permissions.stream().map(Enum::name).collect(Collectors.toList());
+    public static MyProfileResponse from(User user) {
         return new MyProfileResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getDisplayName(),
+                user.getPhone(),
                 user.getRole(),
-                permissionNames
+                new NotificationPreferencesResponse(
+                        user.isOrderConfirmationEmails(),
+                        user.isPickupReadyNotification()
+                )
         );
     }
 }

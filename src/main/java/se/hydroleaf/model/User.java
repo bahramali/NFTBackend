@@ -57,6 +57,17 @@ public class User {
     @Column(name = "display_name", length = 128)
     private String displayName;
 
+    @Column(name = "phone", length = 32)
+    private String phone;
+
+    @Column(name = "order_confirmation_emails", nullable = false)
+    @Builder.Default
+    private boolean orderConfirmationEmails = false;
+
+    @Column(name = "pickup_ready_notification", nullable = false)
+    @Builder.Default
+    private boolean pickupReadyNotification = false;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", length = 32, nullable = false)
     private UserRole role;

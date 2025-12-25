@@ -32,7 +32,7 @@ public class PasswordResetService {
         Instant now = clock.instant();
         Instant lastRequest = lastResetRequests.get(user.getId());
         if (lastRequest != null && lastRequest.plus(RESET_COOLDOWN).isAfter(now)) {
-            return;
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Password reset already requested");
         }
         lastResetRequests.put(user.getId(), now);
         String resetToken = UUID.randomUUID().toString();

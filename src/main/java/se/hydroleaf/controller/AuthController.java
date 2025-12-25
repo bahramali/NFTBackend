@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -76,7 +77,7 @@ public class AuthController {
         return new InviteValidationResponse(validation.email(), validation.displayName(), validation.expiresAt());
     }
 
-    @PostMapping("/password-reset")
+    @PostMapping(value = "/password-reset", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public PasswordResetResponse passwordReset(@RequestHeader(name = "Authorization", required = false) String token) {
         passwordResetService.requestPasswordReset(token);

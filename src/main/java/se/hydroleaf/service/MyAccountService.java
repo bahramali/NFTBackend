@@ -63,6 +63,12 @@ public class MyAccountService {
                 user.setPickupReadyNotification(request.notificationPreferences().pickupReadyNotification());
             }
         }
+        if (request.orderConfirmationEmails() != null) {
+            user.setOrderConfirmationEmails(request.orderConfirmationEmails());
+        }
+        if (request.pickupReadyNotification() != null) {
+            user.setPickupReadyNotification(request.pickupReadyNotification());
+        }
         userRepository.save(user);
         return MyProfileResponse.from(user);
     }

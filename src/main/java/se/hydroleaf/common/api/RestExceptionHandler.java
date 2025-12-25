@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
@@ -56,20 +55,17 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public void handleNoResourceFound(NoResourceFoundException ex) {
-        if (log.isDebugEnabled()) {
-            log.debug("Static resource not found: {}", ex.getResourcePath());
-        }
+    public ResponseEntity<ApiError> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
+        log.debug("Static resource not found for {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getResourcePath());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiError("NOT_FOUND", "Resource not found"));
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<Map<String, String>> handleNoHandlerFound(NoHandlerFoundException ex, HttpServletRequest request) {
-        if (log.isDebugEnabled()) {
-            log.debug("No handler found for {} {}", request.getMethod(), request.getRequestURI());
-        }
+    public ResponseEntity<ApiError> handleNoHandlerFound(NoHandlerFoundException ex, HttpServletRequest request) {
+        log.debug("No handler found for {} {}", request.getMethod(), request.getRequestURI());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", "not_found"));
+                .body(new ApiError("NOT_FOUND", "Resource not found"));
     }
 
     @ExceptionHandler(Exception.class)

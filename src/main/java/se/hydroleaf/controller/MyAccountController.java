@@ -30,14 +30,14 @@ public class MyAccountController {
         return myAccountService.getCurrentProfile(token);
     }
 
-    @PutMapping("/me")
+    @PutMapping({"/me", "/me/profile"})
     public MyProfileResponse updateMe(
             @RequestHeader(name = "Authorization", required = false) String token,
             @Valid @RequestBody MyProfileRequest request) {
         return myAccountService.updateCurrentProfile(token, request);
     }
 
-    @PatchMapping("/me")
+    @PatchMapping({"/me", "/me/profile"})
     public MyProfileResponse patchMe(
             @RequestHeader(name = "Authorization", required = false) String token,
             @Valid @RequestBody MyProfileRequest request) {

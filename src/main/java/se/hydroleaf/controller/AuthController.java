@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,10 +18,12 @@ import se.hydroleaf.controller.dto.CustomerRegistrationRequest;
 import se.hydroleaf.controller.dto.InviteValidationResponse;
 import se.hydroleaf.controller.dto.LoginRequest;
 import se.hydroleaf.controller.dto.LoginResponse;
+import se.hydroleaf.controller.dto.PasswordResetResponse;
 import se.hydroleaf.model.User;
 import se.hydroleaf.service.AuthService;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AdminLifecycleService;
+import se.hydroleaf.service.PasswordResetService;
 import se.hydroleaf.service.UserService;
 
 @RestController
@@ -31,6 +34,7 @@ public class AuthController {
     private final AuthService authService;
     private final AdminLifecycleService adminLifecycleService;
     private final UserService userService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
@@ -70,5 +74,12 @@ public class AuthController {
     public InviteValidationResponse validateInvite(@PathVariable("token") String token) {
         AdminLifecycleService.InviteValidationResult validation = adminLifecycleService.validateInvite(token);
         return new InviteValidationResponse(validation.email(), validation.displayName(), validation.expiresAt());
+    }
+
+    @PostMapping("/password-reset")
+    @ResponseStatus(HttpStatus.OK)
+    public PasswordResetResponse passwordReset(@RequestHeader(name = "Authorization", required = false) String token) {
+        passwordResetService.requestPasswordReset(token);
+        return PasswordResetResponse.success();
     }
 }

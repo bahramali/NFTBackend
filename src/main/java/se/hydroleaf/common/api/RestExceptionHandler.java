@@ -55,21 +55,21 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ApiError> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
+    public ResponseEntity<Map<String, String>> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
         if (log.isDebugEnabled()) {
             log.debug("No static resource found for {} {}", request.getMethod(), request.getRequestURI());
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiError("NOT_FOUND", "Resource not found"));
+                .body(Map.of("error", "not_found"));
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<ApiError> handleNoHandlerFound(NoHandlerFoundException ex, HttpServletRequest request) {
+    public ResponseEntity<Map<String, String>> handleNoHandlerFound(NoHandlerFoundException ex, HttpServletRequest request) {
         if (log.isDebugEnabled()) {
             log.debug("No handler found for {} {}", request.getMethod(), request.getRequestURI());
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiError("NOT_FOUND", "Resource not found"));
+                .body(Map.of("error", "not_found"));
     }
 
     @ExceptionHandler(Exception.class)

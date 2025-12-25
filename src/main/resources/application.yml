@@ -101,6 +101,11 @@ logging:
       hydroleaf:
         scheduler: DEBUG
         mqtt: DEBUG
+    org:
+      springframework:
+        web:
+          servlet:
+            resource: WARN
 management:
   endpoints:
     web:

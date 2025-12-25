@@ -25,10 +25,17 @@ public class SuspiciousPathFilter extends OncePerRequestFilter {
         if (path == null) {
             return true;
         }
+        return !isSuspiciousPath(path);
+    }
+
+    boolean isSuspiciousPath(String path) {
         String normalized = path.toLowerCase();
-        return !(normalized.endsWith(".php")
-                || normalized.contains("wp-")
-                || normalized.contains("xmlrpc.php"));
+        return normalized.endsWith(".php")
+                || normalized.contains("/wp-")
+                || normalized.equals("/xmlrpc.php")
+                || normalized.contains("/.env")
+                || normalized.contains("/vendor/")
+                || normalized.contains("/cgi-bin/");
     }
 
     @Override

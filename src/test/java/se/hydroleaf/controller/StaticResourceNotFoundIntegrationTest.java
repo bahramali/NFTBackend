@@ -27,8 +27,7 @@ class StaticResourceNotFoundIntegrationTest {
 
     @Test
     void getUnknownPhpReturnsNotFoundWithoutErrorLog(CapturedOutput output) throws Exception {
-        mockMvc.perform(get("/a.php"))
-                .accept(MediaType.APPLICATION_JSON)
+        mockMvc.perform(get("/a.php").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").isNotEmpty())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"))

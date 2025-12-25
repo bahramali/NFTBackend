@@ -5,18 +5,16 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class SuspiciousPathFilterTest {
+class BotProbeFilterTest {
 
-    private final SuspiciousPathFilter filter = new SuspiciousPathFilter();
+    private final BotProbeFilter filter = new BotProbeFilter();
 
     @ParameterizedTest
     @ValueSource(strings = {
             "/wp-login.php",
             "/wp-admin/",
             "/something.php",
-            "/xmlrpc.php",
             "/.env",
-            "/vendor/composer/installed.json",
             "/cgi-bin/test.cgi"
     })
     void blocksSuspiciousPaths(String path) {

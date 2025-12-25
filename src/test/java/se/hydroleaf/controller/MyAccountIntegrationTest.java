@@ -3,6 +3,7 @@ package se.hydroleaf.controller;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import se.hydroleaf.controller.dto.UserCreateRequest;
@@ -77,6 +79,34 @@ class MyAccountIntegrationTest {
                 .andExpect(jsonPath("$.id").value(user.getId()))
                 .andExpect(jsonPath("$.email").value("me@example.com"))
                 .andExpect(jsonPath("$.role").value(UserRole.CUSTOMER.name()));
+    }
+
+    @Test
+    void customerCanPatchProfile() throws Exception {
+        User user = createCustomer("update@example.com", "Customer One");
+        String token = bearerToken(user.getEmail(), "password123");
+
+        mockMvc.perform(patch("/api/me")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "fullName": "Updated Name",
+                                  "phoneNumber": "+46 70 123 45 67",
+                                  "orderConfirmationEmails": false,
+                                  "pickupReadyNotification": true
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fullName").value("Updated Name"))
+                .andExpect(jsonPath("$.phone").value("+46 70 123 45 67"))
+                .andExpect(jsonPath("$.notificationPreferences.orderConfirmationEmails").value(false))
+                .andExpect(jsonPath("$.notificationPreferences.pickupReadyNotification").value(true));
+
+        mockMvc.perform(get("/api/me").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fullName").value("Updated Name"))
+                .andExpect(jsonPath("$.phone").value("+46 70 123 45 67"));
     }
 
     @Test

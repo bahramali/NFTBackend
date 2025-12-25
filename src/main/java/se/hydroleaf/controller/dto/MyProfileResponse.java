@@ -3,6 +3,7 @@ package se.hydroleaf.controller.dto;
 import se.hydroleaf.model.User;
 
 public record MyProfileResponse(
+        Long id,
         String email,
         String fullName,
         String phone,
@@ -11,6 +12,7 @@ public record MyProfileResponse(
 
     public static MyProfileResponse from(User user) {
         return new MyProfileResponse(
+                user.getId(),
                 user.getEmail(),
                 user.getDisplayName(),
                 user.getPhone(),

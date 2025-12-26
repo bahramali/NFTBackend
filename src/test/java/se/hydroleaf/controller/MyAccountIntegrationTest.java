@@ -3,7 +3,7 @@ package se.hydroleaf.controller;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -82,11 +82,11 @@ class MyAccountIntegrationTest {
     }
 
     @Test
-    void customerCanPatchProfile() throws Exception {
+    void customerCanUpdateProfileWithPut() throws Exception {
         User user = createCustomer("update@example.com", "Customer One");
         String token = bearerToken(user.getEmail(), "password123");
 
-        mockMvc.perform(patch("/api/me")
+        mockMvc.perform(put("/api/me")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

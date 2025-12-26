@@ -29,6 +29,7 @@ public class SmtpPasswordResetEmailService implements PasswordResetEmailService 
         if (toAddress.isBlank() || fromAddress.isBlank()) {
             throw new MailPreparationException("Password reset email requires valid to/from addresses");
         }
+        String resetLink = requireResetLink(token);
         log.debug("Preparing to send password reset email via SMTP to {}", toAddress);
         MimeMessage message = mailSender.createMimeMessage();
         try {
@@ -39,7 +40,7 @@ public class SmtpPasswordResetEmailService implements PasswordResetEmailService 
                 helper.setReplyTo(replyToAddress);
             }
             helper.setSubject(passwordResetEmailProperties.getSubject());
-            helper.setText(buildBody(token), false);
+            helper.setText(buildBody(resetLink), false);
         } catch (MessagingException ex) {
             log.error("Failed to prepare password reset email to {} via SMTP: {}", toAddress, ex.getMessage(), ex);
             throw new MailPreparationException("Failed to prepare password reset email", ex);
@@ -55,14 +56,30 @@ public class SmtpPasswordResetEmailService implements PasswordResetEmailService 
         }
     }
 
-    private String buildBody(String token) {
+    private String buildBody(String resetLink) {
         StringBuilder body = new StringBuilder("A password reset was requested for your Hydroleaf account.");
-        passwordResetEmailProperties.renderResetLink(token).ifPresent(link -> {
-            body.append("\n\nUse the link below to reset your password:\n");
-            body.append(link);
-        });
+        body.append("\n\nUse the link below to reset your password:\n");
+        body.append(resetLink);
         body.append("\n\nIf you did not request this, you can ignore this email.");
         return body.toString();
+    }
+
+    private String requireResetLink(String token) {
+        return passwordResetEmailProperties
+                .renderResetLink(token)
+                .map(link -> {
+                    log.info("Generated password reset URL: {}", renderSafeLink());
+                    return link;
+                })
+                .orElseThrow(() -> {
+                    log.error(
+                            "Password reset email reset link configuration is missing; set app.password-reset-email.reset-link-template or app.password-reset-email.public-base-url");
+                    return new MailPreparationException("Password reset link configuration is missing");
+                });
+    }
+
+    private String renderSafeLink() {
+        return passwordResetEmailProperties.renderResetLink("<token>").orElse("<missing-template>");
     }
 
     private String resolveFromAddress() {

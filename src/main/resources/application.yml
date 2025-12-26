@@ -58,3 +58,10 @@ app:
     reply-to: ${APP_INVITE_EMAIL_REPLY_TO:}
     subject: ${APP_INVITE_EMAIL_SUBJECT:You have been invited to HydroLeaf}
     invite-link-template: ${APP_INVITE_LINK_TEMPLATE:}
+  password-reset-email:
+    smtp-enabled: ${APP_PASSWORD_RESET_EMAIL_SMTP_ENABLED:false}
+    from: ${APP_PASSWORD_RESET_EMAIL_FROM:no-reply@hydroleaf.se}
+    reply-to: ${APP_PASSWORD_RESET_EMAIL_REPLY_TO:}
+    subject: ${APP_PASSWORD_RESET_EMAIL_SUBJECT:Reset your Hydroleaf password}
+    reset-link-template: ${APP_PASSWORD_RESET_LINK_TEMPLATE:}
+    public-base-url: ${APP_PASSWORD_RESET_PUBLIC_BASE_URL:${APP_PUBLIC_URL:https://hydroleaf.se}}

@@ -113,6 +113,27 @@ class MyAccountIntegrationTest {
     }
 
     @Test
+    void customerCanUpdateProfileWithTrailingSlash() throws Exception {
+        User user = createCustomer("update2@example.com", "Customer Two");
+        String token = bearerToken(user.getEmail(), "password123");
+
+        mockMvc.perform(put("/api/me/")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "fullName": "Trailing Slash",
+                                  "phoneNumber": "+46 70 999 11 22",
+                                  "orderConfirmationEmails": true,
+                                  "pickupReadyNotification": false
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fullName").value("Trailing Slash"))
+                .andExpect(jsonPath("$.phoneNumber").value("+46 70 999 11 22"));
+    }
+
+    @Test
     void customerAccessingDeviceEndpointsIsForbidden() throws Exception {
         User customer = createCustomer("owner@example.com", "Owner");
         Device owned = saveDevice("SYS-L1-D1", "SYS", "L1", "D1", customer.getId());

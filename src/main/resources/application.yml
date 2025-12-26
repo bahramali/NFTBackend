@@ -17,8 +17,6 @@ spring:
           auth: true
           starttls:
             enable: true
-  profiles:
-    active: prod
   application:
     name: NFTBackend
 app:
@@ -60,61 +58,3 @@ app:
     reply-to: ${APP_INVITE_EMAIL_REPLY_TO:}
     subject: ${APP_INVITE_EMAIL_SUBJECT:You have been invited to Hydroleaf}
     invite-link-template: ${APP_INVITE_LINK_TEMPLATE:}
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 20
-      connection-timeout: 30000
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-    open-in-view: false
-
-mqtt:
-  brokerUri: ${MQTT_BROKER:tcp://192.168.8.3:1883}
-  clientId: hydroleaf-backend
-  topics: growSensors/#, waterTank/#, germinationTopic/#, actuator/oxygenPump/#, water_flow
-  qos: 1
-  topicPrefix: ""
-  enabled: true
-  publishEnabled: true
-
-livefeed:
-  rate: 2000
-scheduler:
-  pool-size: 4
-server:
-  ssl:
-    enabled: ${SSL_ENABLED:false}
-    key-store: ${SSL_KEY_STORE:}
-    key-store-password: ${SSL_KEY_STORE_PASSWORD:}
-    key-store-type: ${SSL_KEY_STORE_TYPE:PKCS12}
-    key-alias: ${SSL_KEY_ALIAS:}
-logging:
-  level:
-    se:
-      hydroleaf:
-        scheduler: DEBUG
-        mqtt: DEBUG
-    org:
-      springframework:
-        web:
-          servlet:
-            resource: WARN
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-metrics:
-  connection-pool:
-    enabled: false

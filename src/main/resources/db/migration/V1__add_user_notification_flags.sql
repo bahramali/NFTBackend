@@ -1,7 +1,7 @@
 ALTER TABLE app_user
-    ADD COLUMN IF NOT EXISTS order_confirmation_emails boolean NOT NULL DEFAULT true;
+    ADD COLUMN order_confirmation_emails boolean NOT NULL DEFAULT true;
 ALTER TABLE app_user
-    ADD COLUMN IF NOT EXISTS pickup_ready_notification boolean NOT NULL DEFAULT true;
+    ADD COLUMN pickup_ready_notification boolean NOT NULL DEFAULT true;
 
 ALTER TABLE app_user
     ALTER COLUMN order_confirmation_emails DROP DEFAULT;

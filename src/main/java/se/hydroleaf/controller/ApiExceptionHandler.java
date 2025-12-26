@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 @org.springframework.core.annotation.Order(org.springframework.core.Ordered.HIGHEST_PRECEDENCE)
@@ -90,6 +91,15 @@ public class ApiExceptionHandler {
     public ResponseEntity<ValidationErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         FieldErrorResponse error = new FieldErrorResponse("", "Request method '" + ex.getMethod() + "' not supported");
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(new ValidationErrorResponse(List.of(error)));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ValidationErrorResponse> handleNoResourceFound(NoResourceFoundException ex) {
+        FieldErrorResponse error = new FieldErrorResponse("", "Resource not found");
+        if (log.isDebugEnabled()) {
+            log.debug("Resource not found: {}", ex.getResourcePath());
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ValidationErrorResponse(List.of(error)));
     }
 
     private ValidationErrorResponse invalidFormatResponse(InvalidFormatException ex) {

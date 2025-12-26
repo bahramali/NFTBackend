@@ -1,32 +1,37 @@
 package se.hydroleaf.migration;
 
-import java.util.Map;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import org.flywaydb.core.Flyway;
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(properties = {
-        "spring.jpa.hibernate.ddl-auto=none",
-        "spring.flyway.enabled=true",
-        "spring.flyway.locations=classpath:db/migration,classpath:db/test-migration"
-})
-@ActiveProfiles("test")
 class FlywayMigrationIntegrationTest {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
     @Test
-    void migrationBackfillsNotificationFlagsForExistingUsers() {
-        Map<String, Object> row = jdbcTemplate.queryForMap(
-                "select order_confirmation_emails, pickup_ready_notification from app_user where id = 1"
-        );
+    void migrationBackfillsNotificationFlagsForExistingUsers() throws Exception {
+        JdbcDataSource dataSource = new JdbcDataSource();
+        dataSource.setURL("jdbc:h2:mem:flywaytest;MODE=PostgreSQL;DB_CLOSE_DELAY=-1");
+        dataSource.setUser("sa");
+        dataSource.setPassword("");
 
-        assertThat(row.get("order_confirmation_emails")).isEqualTo(Boolean.TRUE);
-        assertThat(row.get("pickup_ready_notification")).isEqualTo(Boolean.TRUE);
+        Flyway.configure()
+                .dataSource(dataSource)
+                .locations("classpath:db/test-migration", "classpath:db/migration")
+                .load()
+                .migrate();
+
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(
+                     "select order_confirmation_emails, pickup_ready_notification from app_user where id = 1"
+             )) {
+            assertThat(resultSet.next()).isTrue();
+            assertThat(resultSet.getBoolean("order_confirmation_emails")).isTrue();
+            assertThat(resultSet.getBoolean("pickup_ready_notification")).isTrue();
+        }
     }
 }

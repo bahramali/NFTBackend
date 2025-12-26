@@ -5,8 +5,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.util.pattern.PathPatternParser;
 import se.hydroleaf.config.CorsProperties;
 
 @Configuration
@@ -15,6 +17,13 @@ import se.hydroleaf.config.CorsProperties;
 public class WebConfig implements WebMvcConfigurer {
 
     private final CorsProperties corsProperties;
+
+    @Override
+    public void configurePathMatch(PathMatchConfigurer configurer) {
+        PathPatternParser parser = new PathPatternParser();
+        parser.setMatchOptionalTrailingSeparator(true);
+        configurer.setPatternParser(parser);
+    }
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {

@@ -10,6 +10,7 @@
 - `POST /api/auth/register` — ثبت‌نام مشتری و ورود.
 - `POST /api/auth/accept-invite` — پذیرش دعوت‌نامه ادمین (توکن + رمز) و ورود.
 - `GET /api/auth/accept-invite/{token}` — اعتبارسنجی توکن دعوت و مشاهده اطلاعات.
+- `POST /api/auth/password-reset` — درخواست بازنشانی رمز (در صورت وجود از توکن `Authorization` استفاده می‌کند).
 
 ## کاربران (ادمین یا مجوز TEAM)
 - `GET /api/users` — فهرست کاربران (نیازمند مجوز `TEAM`).
@@ -39,6 +40,10 @@
 
 ## حساب من (Authenticated)
 - `GET /api/me` — پروفایل فعلی.
+- `PUT /api/me` — به‌روزرسانی پروفایل.
+- `PATCH /api/me` — به‌روزرسانی بخشی پروفایل.
+- `PUT /api/me/profile` — به‌روزرسانی پروفایل.
+- `PATCH /api/me/profile` — به‌روزرسانی بخشی پروفایل.
 - `GET /api/my/devices` — فهرست دستگاه‌های کاربر.
 - `GET /api/my/devices/{deviceId}` — جزئیات یک دستگاه.
 - `GET /api/store/orders/my` — فهرست سفارش‌های فروشگاه برای کاربر فعلی.
@@ -53,7 +58,7 @@
 ## وضعیت و تاریخچه (ادمین/اپراتور)
 - `GET /api/status/{system}/{layer}/{sensorType}/average` — میانگین خوانش‌ها.
 - `GET /api/status/{system}/{layer}/all/average` — میانگین همه سنسورها.
-- `GET /api/records/history/aggregated` — تاریخچه تجمیعی (پارامترها: `compositeId`, `from`, `to`, `bucket`, `sensorType` و صفحه‌بندی).
+- `GET /api/records/history/aggregated` — تاریخچه تجمیعی (پارامترها: `compositeId`, `from`, `to`, `bucket`, `sensorType`, `bucketLimit`, `bucketOffset`, `sensorLimit`, `sensorOffset`).
 - `POST /api/records/history/aggregated` — همان تاریخچه تجمیعی با POST.
 - `GET /api/topics/sensors` — گروه‌بندی سنسورها بر اساس موضوع.
 

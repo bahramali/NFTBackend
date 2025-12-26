@@ -5,7 +5,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,13 +31,6 @@ public class MyAccountController {
 
     @PutMapping({"/me", "/me/profile"})
     public MyProfileResponse updateMe(
-            @RequestHeader(name = "Authorization", required = false) String token,
-            @Valid @RequestBody MyProfileRequest request) {
-        return myAccountService.updateCurrentProfile(token, request);
-    }
-
-    @PatchMapping({"/me", "/me/profile"})
-    public MyProfileResponse patchMe(
             @RequestHeader(name = "Authorization", required = false) String token,
             @Valid @RequestBody MyProfileRequest request) {
         return myAccountService.updateCurrentProfile(token, request);

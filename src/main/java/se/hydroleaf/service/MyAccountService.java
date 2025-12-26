@@ -52,8 +52,8 @@ public class MyAccountService {
         if (request.fullName() != null) {
             user.setDisplayName(request.fullName().trim());
         }
-        if (request.phone() != null) {
-            user.setPhone(request.phone().trim());
+        if (request.phoneNumber() != null) {
+            user.setPhone(request.phoneNumber().trim());
         }
         if (request.notificationPreferences() != null) {
             if (request.notificationPreferences().orderConfirmationEmails() != null) {

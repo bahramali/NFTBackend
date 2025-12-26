@@ -1,4 +1,7 @@
 spring:
+  config:
+    activate:
+      on-profile: prod
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -7,6 +10,9 @@ spring:
     hikari:
       maximum-pool-size: 20
       connection-timeout: 30000
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
   jpa:
     hibernate:
       ddl-auto: validate

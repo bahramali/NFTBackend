@@ -16,13 +16,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(properties = {
-        "mqtt.enabled=false",
-        "mqtt.publishEnabled=false",
-        "spring.flyway.enabled=true",
-        "spring.jpa.hibernate.ddl-auto=validate"
-})
-@ActiveProfiles("test")
+@SpringBootTest
+@ActiveProfiles("flyway-it")
 @Testcontainers
 class FlywayMigrationIntegrationTest {
 

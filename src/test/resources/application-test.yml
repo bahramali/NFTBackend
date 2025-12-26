@@ -14,9 +14,13 @@ spring:
     show-sql: true
   flyway:
     enabled: false
+  mail:
+    host: localhost
+    port: 2525
   sql:
     init:
       mode: always
 mqtt:
   broker: test-broker
   enabled: false
+  publishEnabled: false

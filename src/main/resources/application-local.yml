@@ -1,23 +1,20 @@
 spring:
-  config:
-    activate:
-      on-profile: local
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/nft}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    url: jdbc:postgresql://localhost:5432/nft
+    username: postgres
+    password: postgres
     driver-class-name: org.postgresql.Driver
-
-  flyway:
-    enabled: ${SPRING_FLYWAY_ENABLED:true}
-    baseline-on-migrate: true
-    baseline-version: 0
 
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
     open-in-view: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
 
   sql:
     init:
@@ -32,26 +29,14 @@ mqtt:
     - germinationTopic/#
     - actuator/oxygenPump/#
     - water_flow
-  qos: ${MQTT_QOS:1}
-  topicPrefix: ${MQTT_TOPIC_PREFIX:""}
-  enabled: ${MQTT_ENABLED:true}
-  publishEnabled: ${MQTT_PUBLISH_ENABLED:false}
+  qos: 1
+  topicPrefix: ""
+  enabled: true
+  publishEnabled: false
 
 livefeed:
-  rate: ${LIVEFEED_RATE:2000}
+  rate: 2000
 
 server:
   ssl:
     enabled: false
-app:
-  store:
-    currency: SEK
-    shipping-flat-cents: 0
-    tax-rate-percent: 0
-    fallback-payment-url: ${STORE_FALLBACK_PAYMENT_URL:https://hydroleaf.se/store/pay/{orderId}}
-    nets-easy:
-      api-base-url: ${NETS_EASY_API_BASE_URL:https://api.dibspayment.eu}
-      secret-key: ${NETS_EASY_SECRET_KEY:}
-      webhook-secret: ${NETS_EASY_WEBHOOK_SECRET:}
-      success-url: ${NETS_EASY_SUCCESS_URL:https://hydroleaf.se/store/checkout/success?orderId={orderId}}
-      cancel-url: ${NETS_EASY_CANCEL_URL:https://hydroleaf.se/store/checkout/cancel?orderId={orderId}}

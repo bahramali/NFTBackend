@@ -11,6 +11,7 @@ spring:
       maximum-pool-size: 20
       connection-timeout: 30000
   flyway:
+    enabled: true
     baseline-on-migrate: true
     baseline-version: 0
   jpa:
@@ -19,19 +20,31 @@ spring:
     show-sql: false
     open-in-view: false
 
+  sql:
+    init:
+      mode: never
+
 mqtt:
-  brokerUri: ${MQTT_BROKER:tcp://192.168.8.3:1883}
-  clientId: hydroleaf-backend
-  topics: growSensors/#, waterTank/#, germinationTopic/#, actuator/oxygenPump/#, water_flow
-  qos: 1
-  topicPrefix: ""
-  enabled: true
-  publishEnabled: true
+  # IMPORTANT: match your docker-compose/.env naming
+  brokerUri: ${MQTT_BROKER_URI:tcp://192.168.8.3:1883}
+  clientId: ${MQTT_CLIENT_ID:hydroleaf-backend}
+  topics:
+    - growSensors/#
+    - waterTank/#
+    - germinationTopic/#
+    - actuator/oxygenPump/#
+    - water_flow
+  qos: ${MQTT_QOS:1}
+  topicPrefix: ${MQTT_TOPIC_PREFIX:""}
+  enabled: ${MQTT_ENABLED:true}
+  publishEnabled: ${MQTT_PUBLISH_ENABLED:true}
 
 livefeed:
-  rate: 2000
+  rate: ${LIVEFEED_RATE:2000}
+
 scheduler:
-  pool-size: 4
+  pool-size: ${SCHEDULER_POOL_SIZE:4}
+
 server:
   ssl:
     enabled: ${SSL_ENABLED:false}
@@ -43,8 +56,8 @@ logging:
   level:
     se:
       hydroleaf:
-        scheduler: DEBUG
-        mqtt: DEBUG
+        scheduler: ${LOG_LEVEL_SCHEDULER:DEBUG}
+        mqtt: ${LOG_LEVEL_MQTT:DEBUG}
     org:
       springframework:
         web:

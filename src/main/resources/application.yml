@@ -2,6 +2,10 @@ spring:
   jackson:
     deserialization:
       fail-on-unknown-properties: true
+
+  application:
+    name: NFTBackend
+
   mail:
     host: ${SPRING_MAIL_HOST:mailcluster.loopia.se}
     port: ${SPRING_MAIL_PORT:587}
@@ -10,14 +14,13 @@ spring:
     properties:
       mail:
         smtp:
-          auth: true
+          auth: ${SPRING_MAIL_SMTP_AUTH:true}
           starttls:
-            enable: true
-  application:
-    name: NFTBackend
+            enable: ${SPRING_MAIL_SMTP_STARTTLS_ENABLE:true}
+
 app:
   demo-seed:
-    enabled: false
+    enabled: ${APP_DEMO_SEED_ENABLED:false}
 
   store:
     currency: SEK
@@ -49,8 +52,9 @@ app:
       - https://api.hydroleaf.se
       - http://localhost:5173
   invite-email:
-    smtp-enabled: ${APP_INVITE_EMAIL_SMTP_ENABLED:${APP_INVITE_SMTP_ENABLED:false}}
+    # single source of truth:
+    smtp-enabled: ${APP_INVITE_EMAIL_SMTP_ENABLED:false}
     from: ${APP_INVITE_EMAIL_FROM:no-reply@hydroleaf.se}
     reply-to: ${APP_INVITE_EMAIL_REPLY_TO:}
-    subject: ${APP_INVITE_EMAIL_SUBJECT:You have been invited to Hydroleaf}
+    subject: ${APP_INVITE_EMAIL_SUBJECT:You have been invited to HydroLeaf}
     invite-link-template: ${APP_INVITE_LINK_TEMPLATE:}

@@ -1,0 +1,73 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      connection-timeout: 30000
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
+  sql:
+    init:
+      mode: never
+
+mqtt:
+  # IMPORTANT: match your docker-compose/.env naming
+  brokerUri: ${MQTT_BROKER_URI:tcp://192.168.8.3:1883}
+  clientId: ${MQTT_CLIENT_ID:hydroleaf-backend}
+  topics:
+    - growSensors/#
+    - waterTank/#
+    - germinationTopic/#
+    - actuator/oxygenPump/#
+    - water_flow
+  qos: ${MQTT_QOS:1}
+  topicPrefix: ${MQTT_TOPIC_PREFIX:""}
+  enabled: ${MQTT_ENABLED:true}
+  publishEnabled: ${MQTT_PUBLISH_ENABLED:true}
+
+livefeed:
+  rate: ${LIVEFEED_RATE:2000}
+
+scheduler:
+  pool-size: ${SCHEDULER_POOL_SIZE:4}
+
+server:
+  ssl:
+    enabled: ${SSL_ENABLED:false}
+    key-store: ${SSL_KEY_STORE:}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD:}
+    key-store-type: ${SSL_KEY_STORE_TYPE:PKCS12}
+    key-alias: ${SSL_KEY_ALIAS:}
+logging:
+  level:
+    se:
+      hydroleaf:
+        scheduler: ${LOG_LEVEL_SCHEDULER:DEBUG}
+        mqtt: ${LOG_LEVEL_MQTT:DEBUG}
+    org:
+      springframework:
+        web:
+          servlet:
+            resource: WARN
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+metrics:
+  connection-pool:
+    enabled: false

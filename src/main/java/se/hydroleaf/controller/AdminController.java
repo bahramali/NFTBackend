@@ -1,8 +1,10 @@
 package se.hydroleaf.controller;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -38,12 +40,21 @@ public class AdminController {
     public Map<String, Object> permissionsCatalog(@RequestHeader(name = "Authorization", required = false) String token) {
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         authorizationService.requirePermission(user, Permission.ADMIN_INVITE);
-        List<PermissionCatalogItem> permissions = Arrays.stream(Permission.values())
+        Map<String, List<PermissionCatalogItem>> permissions = Arrays.stream(Permission.values())
                 .map(permission -> new PermissionCatalogItem(
                         permission.name(),
                         permission.label(),
                         permission.group()))
-                .toList();
-        return Map.of("permissions", permissions);
+                .collect(Collectors.groupingBy(
+                        PermissionCatalogItem::group,
+                        LinkedHashMap::new,
+                        Collectors.toList()));
+        Map<String, List<String>> presets = Arrays.stream(se.hydroleaf.model.AdminPreset.values())
+                .collect(Collectors.toMap(
+                        Enum::name,
+                        preset -> preset.permissions().stream().map(Enum::name).toList(),
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new));
+        return Map.of("permissions", permissions, "presets", presets);
     }
 }

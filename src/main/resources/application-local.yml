@@ -1,0 +1,42 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/nft
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+
+  sql:
+    init:
+      mode: never
+
+mqtt:
+  brokerUri: ${MQTT_BROKER_URI:tcp://127.0.0.1:1883}
+  clientId: ${MQTT_CLIENT_ID:hydroleaf-backend-local}
+  topics:
+    - growSensors/#
+    - waterTank/#
+    - germinationTopic/#
+    - actuator/oxygenPump/#
+    - water_flow
+  qos: 1
+  topicPrefix: ""
+  enabled: true
+  publishEnabled: false
+
+livefeed:
+  rate: 2000
+
+server:
+  ssl:
+    enabled: false

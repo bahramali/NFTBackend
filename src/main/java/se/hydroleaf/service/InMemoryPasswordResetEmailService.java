@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@Profile({"dev", "test", "local"})
+@Profile("!prod")
 @ConditionalOnProperty(prefix = "app.password-reset-email", name = "smtp-enabled", havingValue = "false", matchIfMissing = true)
 public class InMemoryPasswordResetEmailService implements PasswordResetEmailService {
 

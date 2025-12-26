@@ -53,7 +53,7 @@ public class RecordController {
             @RequestParam(name = "sensorLimit", required = false) Integer sensorLimit,
             @RequestParam(name = "sensorOffset", required = false) Integer sensorOffset
     ) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringView(token);
         if (log.isDebugEnabled()) {
             log.debug("Aggregated history request: compositeId={} from={} to={} bucket={} sensorTypes={} bucketLimit={} bucketOffset={} sensorLimit={} sensorOffset={} tokenPresent={}",
                     compositeId, from, to, bucket, sensorTypes, bucketLimit, bucketOffset, sensorLimit, sensorOffset, token != null);
@@ -108,7 +108,7 @@ public class RecordController {
             @RequestParam(name = "sensorLimit", required = false) Integer sensorLimit,
             @RequestParam(name = "sensorOffset", required = false) Integer sensorOffset
     ) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringView(token);
         return getHistoryAggregated(
                 token,
                 compositeId,

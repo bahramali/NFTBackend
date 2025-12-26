@@ -28,7 +28,7 @@ public class StatusController {
             @PathVariable String system,
             @PathVariable String layer,
             @PathVariable String sensorType) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringView(token);
         return statusService.getAverage(system, layer, sensorType);
     }
 
@@ -37,7 +37,7 @@ public class StatusController {
             @RequestHeader(name = "Authorization", required = false) String token,
             @PathVariable String system,
             @PathVariable String layer) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringView(token);
         return statusService.getAllAverages(system, layer);
     }
 

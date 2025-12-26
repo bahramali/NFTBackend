@@ -19,6 +19,7 @@ import se.hydroleaf.controller.dto.AdminPermissionsUpdateRequest;
 import se.hydroleaf.controller.dto.AdminResponse;
 import se.hydroleaf.controller.dto.AdminStatusUpdateRequest;
 import se.hydroleaf.controller.dto.ResendInviteRequest;
+import se.hydroleaf.model.Permission;
 import se.hydroleaf.service.AdminLifecycleService;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
@@ -31,14 +32,14 @@ public class SuperAdminController {
     private final AuthorizationService authorizationService;
     private final AdminLifecycleService adminLifecycleService;
 
-    private void requireSuperAdmin(String token) {
-        AuthenticatedUser user = authorizationService.requireAuthenticated(token);
-        authorizationService.requireSuperAdmin(user);
+    private AuthenticatedUser requireAuthenticated(String token) {
+        return authorizationService.requireAuthenticated(token);
     }
 
     @GetMapping("/admins")
     public List<AdminResponse> listAdmins(@RequestHeader(name = "Authorization", required = false) String token) {
-        requireSuperAdmin(token);
+        AuthenticatedUser user = requireAuthenticated(token);
+        authorizationService.requirePermission(user, Permission.ADMIN_OVERVIEW_VIEW);
         return adminLifecycleService.listAdmins().stream()
                 .map(AdminResponse::from)
                 .toList();
@@ -49,9 +50,16 @@ public class SuperAdminController {
     public AdminResponse inviteAdmin(
             @RequestHeader(name = "Authorization", required = false) String token,
             @Valid @RequestBody AdminInviteRequest request) {
-        requireSuperAdmin(token);
+        AuthenticatedUser user = requireAuthenticated(token);
+        authorizationService.requirePermission(user, Permission.ADMIN_INVITE);
         AdminLifecycleService.InviteResult result = adminLifecycleService.inviteAdmin(
-                request.email(), request.displayName(), request.permissions(), request.expiresInHours(), request.expiresAt());
+                user,
+                request.email(),
+                request.displayName(),
+                request.preset(),
+                request.permissions(),
+                request.expiresInHours(),
+                request.expiresAt());
         return AdminResponse.from(result.user());
     }
 
@@ -60,8 +68,9 @@ public class SuperAdminController {
             @RequestHeader(name = "Authorization", required = false) String token,
             @PathVariable Long id,
             @Valid @RequestBody AdminPermissionsUpdateRequest request) {
-        requireSuperAdmin(token);
-        return AdminResponse.from(adminLifecycleService.updatePermissions(id, request.permissions()));
+        AuthenticatedUser user = requireAuthenticated(token);
+        authorizationService.requirePermission(user, Permission.ADMIN_PERMISSIONS_MANAGE);
+        return AdminResponse.from(adminLifecycleService.updatePermissions(user, id, request.permissions()));
     }
 
     @PutMapping("/admins/{id}/status")
@@ -69,7 +78,8 @@ public class SuperAdminController {
             @RequestHeader(name = "Authorization", required = false) String token,
             @PathVariable Long id,
             @Valid @RequestBody AdminStatusUpdateRequest request) {
-        requireSuperAdmin(token);
+        AuthenticatedUser user = requireAuthenticated(token);
+        authorizationService.requirePermission(user, Permission.ADMIN_DISABLE);
         return AdminResponse.from(adminLifecycleService.updateStatus(id, request.status(), request.active()));
     }
 
@@ -77,7 +87,8 @@ public class SuperAdminController {
     public AdminResponse deleteAdmin(
             @RequestHeader(name = "Authorization", required = false) String token,
             @PathVariable String idOrEmail) {
-        requireSuperAdmin(token);
+        AuthenticatedUser user = requireAuthenticated(token);
+        authorizationService.requirePermission(user, Permission.ADMIN_DISABLE);
         return AdminResponse.from(adminLifecycleService.deleteAdmin(idOrEmail));
     }
 
@@ -86,7 +97,8 @@ public class SuperAdminController {
             @RequestHeader(name = "Authorization", required = false) String token,
             @PathVariable Long id,
             @Valid @RequestBody(required = false) ResendInviteRequest request) {
-        requireSuperAdmin(token);
+        AuthenticatedUser user = requireAuthenticated(token);
+        authorizationService.requirePermission(user, Permission.ADMIN_INVITE);
         Integer expiry = request != null ? request.expiresInHours() : null;
         AdminLifecycleService.InviteResult result = adminLifecycleService.resendInvite(id, expiry);
         return AdminResponse.from(result.user());

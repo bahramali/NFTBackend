@@ -23,7 +23,7 @@ public class TopicController {
     @GetMapping("/sensors")
     public TopicSensorsResponse getSensorTypesByTopic(
             @RequestHeader(name = "Authorization", required = false) String token) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringView(token);
         return topicService.getSensorTypesByTopic();
     }
 }

@@ -32,7 +32,7 @@ public class GerminationController {
     @GetMapping
     public GerminationStatusResponse getStatus(
             @RequestHeader(name = "Authorization", required = false) String token) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringView(token);
         return germinationService.getStatus()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Germination start time not found"));
@@ -41,7 +41,7 @@ public class GerminationController {
     @PostMapping("/start")
     public GerminationStatusResponse triggerStart(
             @RequestHeader(name = "Authorization", required = false) String token) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringConfig(token);
         return germinationService.triggerStart();
     }
 
@@ -50,7 +50,7 @@ public class GerminationController {
     public GerminationStatusResponse updateStart(
             @RequestHeader(name = "Authorization", required = false) String token,
             @Valid @RequestBody GerminationStartRequest request) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringConfig(token);
         return germinationService.updateStart(request.startTime());
     }
 }

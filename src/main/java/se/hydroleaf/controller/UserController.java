@@ -35,7 +35,7 @@ public class UserController {
 
     private AuthenticatedUser requireManageUsers(String token) {
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
-        authorizationService.requirePermission(user, Permission.TEAM);
+        authorizationService.requirePermission(user, Permission.ADMIN_PERMISSIONS_MANAGE);
         return user;
     }
 

@@ -60,11 +60,11 @@ public class User {
     @Column(name = "phone", length = 32)
     private String phone;
 
-    @Column(name = "order_confirmation_emails", nullable = false)
+    @Column(name = "order_confirmation_emails", nullable = false, columnDefinition = "boolean default true not null")
     @Builder.Default
     private boolean orderConfirmationEmails = true;
 
-    @Column(name = "pickup_ready_notification", nullable = false)
+    @Column(name = "pickup_ready_notification", nullable = false, columnDefinition = "boolean default true not null")
     @Builder.Default
     private boolean pickupReadyNotification = true;
 

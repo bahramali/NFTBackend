@@ -10,6 +10,7 @@ This page enumerates every HTTP endpoint exposed by the backend. Unless noted, e
 - `POST /api/auth/register` — customer self-registration and login.
 - `POST /api/auth/accept-invite` — accept an admin invite (token + password) and login.
 - `GET /api/auth/accept-invite/{token}` — validate invite token and read metadata.
+- `POST /api/auth/password-reset` — request a password reset (uses `Authorization` token if available).
 
 ## Users (admin or TEAM permission)
 - `GET /api/users` — list users (requires `TEAM` permission).
@@ -39,6 +40,10 @@ This page enumerates every HTTP endpoint exposed by the backend. Unless noted, e
 
 ## My account (authenticated)
 - `GET /api/me` — current profile.
+- `PUT /api/me` — update profile.
+- `PATCH /api/me` — patch profile fields.
+- `PUT /api/me/profile` — update profile.
+- `PATCH /api/me/profile` — patch profile fields.
 - `GET /api/my/devices` — list devices tied to the current user.
 - `GET /api/my/devices/{deviceId}` — fetch a specific device.
 - `GET /api/store/orders/my` — list store orders for the current user.
@@ -53,7 +58,7 @@ This page enumerates every HTTP endpoint exposed by the backend. Unless noted, e
 ## Status & history (admin/operator)
 - `GET /api/status/{system}/{layer}/{sensorType}/average` — average reading.
 - `GET /api/status/{system}/{layer}/all/average` — averages for all sensor types.
-- `GET /api/records/history/aggregated` — aggregated history (query params: `compositeId`, `from`, `to`, `bucket`, `sensorType`, paging).
+- `GET /api/records/history/aggregated` — aggregated history (query params: `compositeId`, `from`, `to`, `bucket`, `sensorType`, `bucketLimit`, `bucketOffset`, `sensorLimit`, `sensorOffset`).
 - `POST /api/records/history/aggregated` — same as above via POST.
 - `GET /api/topics/sensors` — sensor types grouped by topic.
 

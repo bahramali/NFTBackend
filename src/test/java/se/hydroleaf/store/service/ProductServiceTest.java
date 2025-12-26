@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ActiveProfiles;
 import se.hydroleaf.store.api.dto.ProductRequest;
 import se.hydroleaf.store.api.dto.ProductResponse;
 import se.hydroleaf.store.config.StoreProperties;
@@ -14,6 +15,7 @@ import se.hydroleaf.store.repository.OrderRepository;
 import se.hydroleaf.store.repository.ProductRepository;
 
 @DataJpaTest
+@ActiveProfiles("test")
 class ProductServiceTest {
 
     @Autowired

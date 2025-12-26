@@ -49,6 +49,9 @@ public class ApiErrorController implements ErrorController {
         if (statusCode instanceof Integer code) {
             return HttpStatus.valueOf(code);
         }
+        if (statusCode instanceof String code) {
+            return HttpStatus.valueOf(Integer.parseInt(code));
+        }
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 }

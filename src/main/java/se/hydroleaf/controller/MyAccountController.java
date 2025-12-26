@@ -18,6 +18,7 @@ import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.MyAccountService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
@@ -34,12 +35,19 @@ public class MyAccountController {
         return myAccountService.getCurrentProfile(token);
     }
 
-    @PutMapping({"/me", "/me/profile"})
+    @PutMapping({"/me", "/me/", "/me/profile"})
     public MyProfileResponse updateMe(
             @RequestHeader(name = "Authorization", required = false) String token,
-            @Valid @RequestBody UpdateMyProfileRequest request) {
+            @Valid @RequestBody UpdateMyProfileRequest request,
+            HttpServletRequest httpRequest) {
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
-        log.info("PUT /api/me called for principal={}", user.userId());
+        long bodySize = httpRequest.getContentLengthLong();
+        log.info(
+                "MyAccountController.updateMe received method={} uri={} principal={} bodySize={}",
+                httpRequest.getMethod(),
+                httpRequest.getRequestURI(),
+                user.userId(),
+                bodySize);
         return myAccountService.updateCurrentProfile(user, request);
     }
 

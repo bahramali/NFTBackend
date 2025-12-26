@@ -1,0 +1,15 @@
+spring:
+  flyway:
+    enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+  sql:
+    init:
+      mode: never
+
+mqtt:
+  enabled: false
+  publishEnabled: false

@@ -19,6 +19,7 @@ import se.hydroleaf.repository.UserRepository;
 import se.hydroleaf.service.AuthService;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -57,7 +58,7 @@ class SuperAdminSecurityIntegrationTest {
 
     @Test
     void adminCannotCreateSuperAdmin() throws Exception {
-        createUser("admin@example.com", "password123", UserRole.ADMIN, Set.of(Permission.TEAM));
+        createUser("admin@example.com", "password123", UserRole.ADMIN, Set.of(Permission.ADMIN_PERMISSIONS_MANAGE));
 
         mockMvc.perform(post("/api/users")
                         .header("Authorization", bearerToken("admin@example.com", "password123"))
@@ -70,7 +71,7 @@ class SuperAdminSecurityIntegrationTest {
 
     @Test
     void adminCannotPromoteUserToSuperAdmin() throws Exception {
-        createUser("admin@example.com", "password123", UserRole.ADMIN, Set.of(Permission.TEAM));
+        createUser("admin@example.com", "password123", UserRole.ADMIN, Set.of(Permission.ADMIN_PERMISSIONS_MANAGE));
         User worker = createUser("worker@example.com", "password123", UserRole.WORKER, Set.of());
 
         mockMvc.perform(put("/api/users/" + worker.getId())
@@ -84,7 +85,7 @@ class SuperAdminSecurityIntegrationTest {
 
     @Test
     void superAdminManagesAdminsThroughDedicatedEndpoints() throws Exception {
-        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of());
         String token = bearerToken("super@example.com", "password123");
 
         mockMvc.perform(post("/api/super-admin/admins/invite")
@@ -106,7 +107,7 @@ class SuperAdminSecurityIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatePermissionsRequestJson()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.permissions[0]").value("TEAM"));
+                .andExpect(jsonPath("$.permissions").value(hasItem("STORE_VIEW")));
 
         mockMvc.perform(put("/api/super-admin/admins/" + createdAdmin.getId() + "/status")
                         .header("Authorization", token)
@@ -127,7 +128,7 @@ class SuperAdminSecurityIntegrationTest {
     @Test
     void unauthorizedRolesCannotUseSuperAdminEndpoints() throws Exception {
         createUser("worker@example.com", "password123", UserRole.WORKER, Set.of());
-        createUser("admin@example.com", "password123", UserRole.ADMIN, Set.of(Permission.TEAM));
+        createUser("admin@example.com", "password123", UserRole.ADMIN, Set.of(Permission.STORE_VIEW));
 
         mockMvc.perform(get("/api/super-admin/admins"))
                 .andExpect(status().isUnauthorized());
@@ -166,11 +167,11 @@ class SuperAdminSecurityIntegrationTest {
     }
 
     private String createAdminInviteRequest(String email) throws Exception {
-        return objectMapper.writeValueAsString(new AdminInvitePayload(email, Set.of(Permission.ADMIN_DASHBOARD)));
+        return objectMapper.writeValueAsString(new AdminInvitePayload(email, Set.of(Permission.STORE_VIEW)));
     }
 
     private String updatePermissionsRequestJson() throws Exception {
-        return objectMapper.writeValueAsString(new PermissionPayload(Set.of("TEAM")));
+        return objectMapper.writeValueAsString(new PermissionPayload(Set.of("STORE_VIEW")));
     }
 
     private String statusUpdateJson(boolean active) throws Exception {

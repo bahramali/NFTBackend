@@ -48,6 +48,20 @@ public class AuthorizationService {
         }
     }
 
+    public void requireAnyPermission(AuthenticatedUser user, Permission... requiredPermissions) {
+        if (user.role() == UserRole.SUPER_ADMIN) {
+            return;
+        }
+        if (user.role() != UserRole.ADMIN) {
+            throw forbidden();
+        }
+        Set<Permission> userPermissions = new HashSet<>(user.permissions());
+        boolean hasAnyPermission = Arrays.stream(requiredPermissions).anyMatch(userPermissions::contains);
+        if (!hasAnyPermission) {
+            throw forbidden();
+        }
+    }
+
     public void requireSelfAccess(AuthenticatedUser user, Long resourceOwnerId) {
         if (!user.userId().equals(resourceOwnerId)) {
             throw forbidden();
@@ -61,6 +75,45 @@ public class AuthorizationService {
     public AuthenticatedUser requireAdminOrOperator(String token) {
         AuthenticatedUser authenticatedUser = requireAuthenticated(token);
         requireAdminOrOperator(authenticatedUser);
+        return authenticatedUser;
+    }
+
+    public void requireMonitoringView(AuthenticatedUser user) {
+        if (user.role() == UserRole.SUPER_ADMIN || user.role() == UserRole.WORKER) {
+            return;
+        }
+        requirePermission(user, Permission.MONITORING_VIEW);
+    }
+
+    public AuthenticatedUser requireMonitoringView(String token) {
+        AuthenticatedUser authenticatedUser = requireAuthenticated(token);
+        requireMonitoringView(authenticatedUser);
+        return authenticatedUser;
+    }
+
+    public void requireMonitoringControl(AuthenticatedUser user) {
+        if (user.role() == UserRole.SUPER_ADMIN || user.role() == UserRole.WORKER) {
+            return;
+        }
+        requirePermission(user, Permission.MONITORING_CONTROL);
+    }
+
+    public AuthenticatedUser requireMonitoringControl(String token) {
+        AuthenticatedUser authenticatedUser = requireAuthenticated(token);
+        requireMonitoringControl(authenticatedUser);
+        return authenticatedUser;
+    }
+
+    public void requireMonitoringConfig(AuthenticatedUser user) {
+        if (user.role() == UserRole.SUPER_ADMIN || user.role() == UserRole.WORKER) {
+            return;
+        }
+        requirePermission(user, Permission.MONITORING_CONFIG);
+    }
+
+    public AuthenticatedUser requireMonitoringConfig(String token) {
+        AuthenticatedUser authenticatedUser = requireAuthenticated(token);
+        requireMonitoringConfig(authenticatedUser);
         return authenticatedUser;
     }
 

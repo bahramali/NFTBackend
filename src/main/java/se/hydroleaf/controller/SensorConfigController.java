@@ -7,11 +7,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import jakarta.validation.Valid;
 import se.hydroleaf.model.SensorConfig;
+import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.SensorConfigService;
 
 import java.util.List;
@@ -21,18 +23,23 @@ import java.util.List;
 public class SensorConfigController {
 
     private final SensorConfigService service;
+    private final AuthorizationService authorizationService;
 
-    public SensorConfigController(SensorConfigService service) {
+    public SensorConfigController(SensorConfigService service, AuthorizationService authorizationService) {
         this.service = service;
+        this.authorizationService = authorizationService;
     }
 
     @GetMapping
-    public List<SensorConfig> getAll() {
+    public List<SensorConfig> getAll(@RequestHeader(name = "Authorization", required = false) String token) {
+        authorizationService.requireMonitoringConfig(token);
         return service.getAll();
     }
 
     @GetMapping("/{sensorType}")
-    public SensorConfig get(@PathVariable String sensorType) {
+    public SensorConfig get(@RequestHeader(name = "Authorization", required = false) String token,
+                            @PathVariable String sensorType) {
+        authorizationService.requireMonitoringConfig(token);
         try {
             return service.get(sensorType);
         } catch (IllegalArgumentException iae) {
@@ -41,7 +48,9 @@ public class SensorConfigController {
     }
 
     @PostMapping
-    public SensorConfig create(@Valid @RequestBody SensorConfig config) {
+    public SensorConfig create(@RequestHeader(name = "Authorization", required = false) String token,
+                               @Valid @RequestBody SensorConfig config) {
+        authorizationService.requireMonitoringConfig(token);
         config.setSensorType(config.getSensorType());
         try {
             return service.create(config);
@@ -51,7 +60,10 @@ public class SensorConfigController {
     }
 
     @PostMapping("/{sensorType}")
-    public SensorConfig create(@PathVariable String sensorType, @Valid @RequestBody SensorConfig config) {
+    public SensorConfig create(@RequestHeader(name = "Authorization", required = false) String token,
+                               @PathVariable String sensorType,
+                               @Valid @RequestBody SensorConfig config) {
+        authorizationService.requireMonitoringConfig(token);
         config.setSensorType(sensorType);
         try {
             return service.create(config);
@@ -61,7 +73,10 @@ public class SensorConfigController {
     }
 
     @PutMapping("/{sensorType}")
-    public SensorConfig update(@PathVariable String sensorType, @Valid @RequestBody SensorConfig config) {
+    public SensorConfig update(@RequestHeader(name = "Authorization", required = false) String token,
+                               @PathVariable String sensorType,
+                               @Valid @RequestBody SensorConfig config) {
+        authorizationService.requireMonitoringConfig(token);
         try {
             return service.update(sensorType, config);
         } catch (IllegalArgumentException iae) {
@@ -70,7 +85,9 @@ public class SensorConfigController {
     }
 
     @DeleteMapping("/{sensorType}")
-    public void delete(@PathVariable String sensorType) {
+    public void delete(@RequestHeader(name = "Authorization", required = false) String token,
+                       @PathVariable String sensorType) {
+        authorizationService.requireMonitoringConfig(token);
         try {
             service.delete(sensorType);
         } catch (IllegalArgumentException iae) {
@@ -78,4 +95,3 @@ public class SensorConfigController {
         }
     }
 }
-

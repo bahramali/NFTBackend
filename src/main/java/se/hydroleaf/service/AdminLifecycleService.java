@@ -11,10 +11,12 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import se.hydroleaf.model.AdminPreset;
 import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.User;
 import se.hydroleaf.model.UserRole;
@@ -23,6 +25,7 @@ import se.hydroleaf.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdminLifecycleService {
 
     private static final int DEFAULT_EXPIRY_HOURS = 48;
@@ -44,8 +47,10 @@ public class AdminLifecycleService {
 
     @Transactional
     public InviteResult inviteAdmin(
+            AuthenticatedUser inviter,
             String email,
             String displayName,
+            AdminPreset preset,
             Set<Permission> permissions,
             Integer expiresInHours,
             java.time.OffsetDateTime expiresAt) {
@@ -53,6 +58,8 @@ public class AdminLifecycleService {
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         }
+        Set<Permission> resolvedPermissions = resolveInvitePermissions(preset, permissions);
+        validateInvitePermissions(inviter, preset, resolvedPermissions);
         String token = generateToken();
         String tokenHash = hashToken(token);
         LocalDateTime resolvedExpiresAt = resolveExpiry(expiresInHours, expiresAt);
@@ -63,7 +70,7 @@ public class AdminLifecycleService {
                 .password(randomPassword())
                 .displayName(displayName)
                 .role(UserRole.ADMIN)
-                .permissions(resolvePermissions(permissions))
+                .permissions(resolvePermissions(resolvedPermissions))
                 .status(UserStatus.INVITED)
                 .invited(true)
                 .invitedAt(invitedAt)
@@ -78,6 +85,12 @@ public class AdminLifecycleService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists", e);
         }
         inviteEmailService.sendInviteEmail(admin.getEmail(), token, resolvedExpiresAt);
+        log.info(
+                "Admin invite issued by userId={} email={} preset={} permissions={}",
+                inviter.userId(),
+                normalizedEmail,
+                preset,
+                resolvedPermissions);
         return new InviteResult(admin, token);
     }
 
@@ -117,9 +130,11 @@ public class AdminLifecycleService {
     }
 
     @Transactional
-    public User updatePermissions(Long adminId, Set<Permission> permissions) {
+    public User updatePermissions(AuthenticatedUser actor, Long adminId, Set<Permission> permissions) {
         User admin = requireAdmin(adminId);
-        admin.setPermissions(resolvePermissions(permissions));
+        Set<Permission> resolvedPermissions = resolvePermissions(permissions);
+        validateInvitePermissions(actor, null, resolvedPermissions);
+        admin.setPermissions(resolvedPermissions);
         return userRepository.save(admin);
     }
 
@@ -255,6 +270,45 @@ public class AdminLifecycleService {
             return EnumSet.noneOf(Permission.class);
         }
         return EnumSet.copyOf(permissions);
+    }
+
+    private Set<Permission> resolveInvitePermissions(AdminPreset preset, Set<Permission> permissions) {
+        boolean hasPreset = preset != null;
+        boolean hasPermissions = permissions != null && !permissions.isEmpty();
+        if (hasPreset && hasPermissions) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Provide either preset or permissions, not both");
+        }
+        if (!hasPreset && !hasPermissions) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Either preset or permissions must be provided");
+        }
+        if (hasPreset) {
+            return preset.permissions();
+        }
+        return EnumSet.copyOf(permissions);
+    }
+
+    private void validateInvitePermissions(AuthenticatedUser inviter, AdminPreset preset, Set<Permission> permissions) {
+        if (inviter == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Inviter is required");
+        }
+        if (inviter.role() == UserRole.SUPER_ADMIN) {
+            return;
+        }
+        if (inviter.role() != UserRole.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admins can invite admins");
+        }
+        if (preset == AdminPreset.SUPER_ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only SUPER_ADMIN can grant the SUPER_ADMIN preset");
+        }
+        Set<Permission> inviterPermissions = EnumSet.copyOf(inviter.permissions());
+        if (!inviterPermissions.containsAll(permissions)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot grant permissions you do not have");
+        }
+        if (permissions.contains(Permission.ADMIN_PERMISSIONS_MANAGE)
+                || permissions.contains(Permission.ADMIN_DISABLE)
+                || permissions.contains(Permission.ADMIN_INVITE)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Restricted admin permissions require SUPER_ADMIN");
+        }
     }
 
     private String normalizeEmail(String email) {

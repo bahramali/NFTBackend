@@ -60,7 +60,7 @@ class AdminInviteIntegrationTest {
 
     @Test
     void inviteAcceptAndLoginFlow() throws Exception {
-        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of());
         String token = bearerToken("super@example.com", "password123");
 
         mockMvc.perform(post("/api/super-admin/admins/invite")
@@ -87,7 +87,7 @@ class AdminInviteIntegrationTest {
 
     @Test
     void resendInviteGeneratesNewToken() throws Exception {
-        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of());
         String token = bearerToken("super@example.com", "password123");
 
         mockMvc.perform(post("/api/super-admin/admins/invite")
@@ -115,7 +115,7 @@ class AdminInviteIntegrationTest {
 
     @Test
     void invalidPermissionReturnsReadableError() throws Exception {
-        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of());
         String token = bearerToken("super@example.com", "password123");
 
         mockMvc.perform(post("/api/super-admin/admins/invite")
@@ -130,10 +130,10 @@ class AdminInviteIntegrationTest {
 
     @Test
     void unknownFieldIsRejected() throws Exception {
-        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of());
         String token = bearerToken("super@example.com", "password123");
 
-        String body = "{\"email\":\"invited@example.com\",\"permissions\":[\"ADMIN_DASHBOARD\"],\"unexpected\":true}";
+        String body = "{\"email\":\"invited@example.com\",\"permissions\":[\"ADMIN_OVERVIEW_VIEW\"],\"unexpected\":true}";
 
         mockMvc.perform(post("/api/super-admin/admins/invite")
                         .header("Authorization", token)
@@ -146,7 +146,7 @@ class AdminInviteIntegrationTest {
 
     @Test
     void validateInviteEndpointReturnsMetadata() throws Exception {
-        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of());
         String token = bearerToken("super@example.com", "password123");
 
         mockMvc.perform(post("/api/super-admin/admins/invite")
@@ -166,7 +166,7 @@ class AdminInviteIntegrationTest {
 
     @Test
     void validateInviteRejectsExpiredToken() throws Exception {
-        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of(Permission.TEAM));
+        createUser("super@example.com", "password123", UserRole.SUPER_ADMIN, Set.of());
         String token = bearerToken("super@example.com", "password123");
 
         mockMvc.perform(post("/api/super-admin/admins/invite")
@@ -207,7 +207,7 @@ class AdminInviteIntegrationTest {
     }
 
     private String inviteRequestJson(String email, String displayName) throws Exception {
-        return objectMapper.writeValueAsString(new InvitePayload(email, displayName, Set.of(Permission.ADMIN_DASHBOARD)));
+        return objectMapper.writeValueAsString(new InvitePayload(email, displayName, Set.of(Permission.STORE_VIEW)));
     }
 
     private record InvitePayload(String email, String displayName, Set<Permission> permissions) {}

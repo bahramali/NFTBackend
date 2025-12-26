@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import se.hydroleaf.model.Permission;
+import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.store.api.dto.ProductRequest;
 import se.hydroleaf.store.api.dto.ProductResponse;
@@ -33,24 +35,34 @@ public class AdminProductController {
     private final AuthorizationService authorizationService;
     private final ProductService productService;
 
+    private void requireStoreView(String token) {
+        AuthenticatedUser user = authorizationService.requireAuthenticated(token);
+        authorizationService.requirePermission(user, Permission.STORE_VIEW);
+    }
+
+    private void requireProductsManage(String token) {
+        AuthenticatedUser user = authorizationService.requireAuthenticated(token);
+        authorizationService.requirePermission(user, Permission.PRODUCTS_MANAGE);
+    }
+
     @GetMapping
     public ResponseEntity<List<ProductResponse>> list(@RequestHeader(name = "Authorization", required = false) String token,
                                                       @RequestParam(value = "active", required = false) Boolean active) {
-        authorizationService.requireAdminOrOperator(token);
+        requireStoreView(token);
         return ResponseEntity.ok(productService.listProducts(active));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> get(@RequestHeader(name = "Authorization", required = false) String token,
                                                @PathVariable UUID id) {
-        authorizationService.requireAdminOrOperator(token);
+        requireStoreView(token);
         return ResponseEntity.ok(productService.getProduct(id));
     }
 
     @PostMapping(consumes = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ProductResponse> create(@RequestHeader(name = "Authorization", required = false) String token,
                                                   @Valid @RequestBody ProductRequest request) {
-        authorizationService.requireAdminOrOperator(token);
+        requireProductsManage(token);
         if (log.isDebugEnabled()) {
             log.debug("Create product request: {}", request);
         }
@@ -62,7 +74,7 @@ public class AdminProductController {
     public ResponseEntity<ProductResponse> update(@RequestHeader(name = "Authorization", required = false) String token,
                                                   @PathVariable UUID id,
                                                   @Valid @RequestBody ProductRequest request) {
-        authorizationService.requireAdminOrOperator(token);
+        requireProductsManage(token);
         if (log.isDebugEnabled()) {
             log.debug("Update product {} request: {}", id, request);
         }
@@ -72,7 +84,7 @@ public class AdminProductController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@RequestHeader(name = "Authorization", required = false) String token,
                                        @PathVariable UUID id) {
-        authorizationService.requireAdminOrOperator(token);
+        requireProductsManage(token);
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }

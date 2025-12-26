@@ -34,7 +34,7 @@ public class ActuatorController {
     public LedCommandResponse sendLedCommand(
             @RequestHeader(name = "Authorization", required = false) String token,
             @Valid @RequestBody LedCommandRequest request) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringControl(token);
         return actuatorCommandService.publishLedCommand(request);
     }
 
@@ -43,7 +43,7 @@ public class ActuatorController {
     public LedCommandResponse setLedSchedule(
             @RequestHeader(name = "Authorization", required = false) String token,
             @Valid @RequestBody LedScheduleRequest request) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringControl(token);
         return actuatorCommandService.publishLedSchedule(request);
     }
 }

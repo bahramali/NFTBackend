@@ -29,7 +29,7 @@ public class DeviceController {
     @GetMapping
     public List<DeviceResponse> getAllDevices(
             @RequestHeader(name = "Authorization", required = false) String token) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringView(token);
         return deviceService.getAllDevices();
     }
 
@@ -38,14 +38,14 @@ public class DeviceController {
                                         @RequestParam String system,
                                         @RequestParam String layer,
                                         @RequestParam(required = false) String deviceId) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringView(token);
         return deviceService.getCompositeIds(system, layer, deviceId);
     }
 
     @GetMapping("/all")
     public DeviceSensorsResponse getAllDevicesWithSensors(
             @RequestHeader(name = "Authorization", required = false) String token) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringView(token);
         return deviceService.getAllDevicesWithSensors();
     }
 
@@ -53,7 +53,7 @@ public class DeviceController {
     public DeviceSensorsResponse getSensorsForDevices(
             @RequestHeader(name = "Authorization", required = false) String token,
             @RequestParam List<String> compositeIds) {
-        authorizationService.requireAdminOrOperator(token);
+        authorizationService.requireMonitoringView(token);
         try {
             return deviceService.getSensorsForDevices(compositeIds);
         } catch (IllegalArgumentException iae) {

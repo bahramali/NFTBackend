@@ -128,7 +128,7 @@ class SuperAdminSecurityIntegrationTest {
     @Test
     void unauthorizedRolesCannotUseSuperAdminEndpoints() throws Exception {
         createUser("worker@example.com", "password123", UserRole.WORKER, Set.of());
-        createUser("admin@example.com", "password123", UserRole.ADMIN, Set.of(Permission.ADMIN_OVERVIEW_VIEW));
+        createUser("admin@example.com", "password123", UserRole.ADMIN, Set.of(Permission.STORE_VIEW));
 
         mockMvc.perform(get("/api/super-admin/admins"))
                 .andExpect(status().isUnauthorized());

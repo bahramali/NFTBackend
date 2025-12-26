@@ -87,3 +87,4 @@ metrics:
 app:
   password-reset-email:
     smtp-enabled: true
+    reset-link-template: ${APP_PASSWORD_RESET_LINK_TEMPLATE:}

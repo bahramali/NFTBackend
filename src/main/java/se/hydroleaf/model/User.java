@@ -25,7 +25,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.ColumnDefault;
 import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.UserStatus;
 
@@ -61,13 +60,19 @@ public class User {
     @Column(name = "phone", length = 32)
     private String phone;
 
-    @Column(name = "order_confirmation_emails", nullable = false)
-    @ColumnDefault("true")
+    @Column(
+            name = "order_confirmation_emails",
+            nullable = false,
+            columnDefinition = "boolean default true not null"
+    )
     @Builder.Default
     private boolean orderConfirmationEmails = true;
 
-    @Column(name = "pickup_ready_notification", nullable = false)
-    @ColumnDefault("true")
+    @Column(
+            name = "pickup_ready_notification",
+            nullable = false,
+            columnDefinition = "boolean default true not null"
+    )
     @Builder.Default
     private boolean pickupReadyNotification = true;
 

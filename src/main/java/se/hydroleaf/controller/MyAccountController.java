@@ -3,6 +3,7 @@ package se.hydroleaf.controller;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -13,6 +14,8 @@ import se.hydroleaf.controller.dto.MyDeviceResponse;
 import se.hydroleaf.controller.dto.MyOrderResponse;
 import se.hydroleaf.controller.dto.MyProfileResponse;
 import se.hydroleaf.controller.dto.UpdateMyProfileRequest;
+import se.hydroleaf.service.AuthenticatedUser;
+import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.MyAccountService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,9 +23,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@Slf4j
 public class MyAccountController {
 
     private final MyAccountService myAccountService;
+    private final AuthorizationService authorizationService;
 
     @GetMapping("/me")
     public MyProfileResponse me(@RequestHeader(name = "Authorization", required = false) String token) {
@@ -33,7 +38,9 @@ public class MyAccountController {
     public MyProfileResponse updateMe(
             @RequestHeader(name = "Authorization", required = false) String token,
             @Valid @RequestBody UpdateMyProfileRequest request) {
-        return myAccountService.updateCurrentProfile(token, request);
+        AuthenticatedUser user = authorizationService.requireAuthenticated(token);
+        log.info("PUT /api/me called for principal={}", user.userId());
+        return myAccountService.updateCurrentProfile(user, request);
     }
 
     @GetMapping("/my/devices")

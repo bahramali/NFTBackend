@@ -45,8 +45,7 @@ public class MyAccountService {
         return MyProfileResponse.from(user);
     }
 
-    public MyProfileResponse updateCurrentProfile(String token, UpdateMyProfileRequest request) {
-        AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
+    public MyProfileResponse updateCurrentProfile(AuthenticatedUser authenticatedUser, UpdateMyProfileRequest request) {
         User user = userRepository.findById(authenticatedUser.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         if (request.fullName() != null) {

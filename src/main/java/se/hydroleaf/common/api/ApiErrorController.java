@@ -30,7 +30,7 @@ public class ApiErrorController implements ErrorController {
     public ResponseEntity<?> handleError(HttpServletRequest request) {
         HttpStatus status = statusFrom(request);
         if (status == HttpStatus.NOT_FOUND) {
-            String method = (String) request.getAttribute(RequestDispatcher.ERROR_METHOD);
+            String method = request.getMethod();
             String path = (String) request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI);
             if (log.isDebugEnabled()) {
                 log.debug("Request not found on {} {}", method, path);

@@ -8,7 +8,10 @@ public record MyProfileResponse(
         String email,
         String fullName,
         String phone,
+        String phoneNumber,
         UserRole role,
+        boolean orderConfirmationEmails,
+        boolean pickupReadyNotification,
         NotificationPreferencesResponse notificationPreferences
 ) {
 
@@ -18,7 +21,10 @@ public record MyProfileResponse(
                 user.getEmail(),
                 user.getDisplayName(),
                 user.getPhone(),
+                user.getPhone(),
                 user.getRole(),
+                user.isOrderConfirmationEmails(),
+                user.isPickupReadyNotification(),
                 new NotificationPreferencesResponse(
                         user.isOrderConfirmationEmails(),
                         user.isPickupReadyNotification()

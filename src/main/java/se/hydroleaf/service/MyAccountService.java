@@ -14,8 +14,8 @@ import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.controller.dto.MyDeviceMetricResponse;
 import se.hydroleaf.controller.dto.MyDeviceResponse;
 import se.hydroleaf.controller.dto.MyOrderResponse;
-import se.hydroleaf.controller.dto.MyProfileRequest;
 import se.hydroleaf.controller.dto.MyProfileResponse;
+import se.hydroleaf.controller.dto.UpdateMyProfileRequest;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.LatestSensorValue;
 import se.hydroleaf.model.User;
@@ -45,7 +45,7 @@ public class MyAccountService {
         return MyProfileResponse.from(user);
     }
 
-    public MyProfileResponse updateCurrentProfile(String token, MyProfileRequest request) {
+    public MyProfileResponse updateCurrentProfile(String token, UpdateMyProfileRequest request) {
         AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
         User user = userRepository.findById(authenticatedUser.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -54,14 +54,6 @@ public class MyAccountService {
         }
         if (request.phoneNumber() != null) {
             user.setPhone(request.phoneNumber().trim());
-        }
-        if (request.notificationPreferences() != null) {
-            if (request.notificationPreferences().orderConfirmationEmails() != null) {
-                user.setOrderConfirmationEmails(request.notificationPreferences().orderConfirmationEmails());
-            }
-            if (request.notificationPreferences().pickupReadyNotification() != null) {
-                user.setPickupReadyNotification(request.notificationPreferences().pickupReadyNotification());
-            }
         }
         if (request.orderConfirmationEmails() != null) {
             user.setOrderConfirmationEmails(request.orderConfirmationEmails());

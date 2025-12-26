@@ -62,11 +62,11 @@ public class User {
 
     @Column(name = "order_confirmation_emails", nullable = false)
     @Builder.Default
-    private boolean orderConfirmationEmails = false;
+    private boolean orderConfirmationEmails = true;
 
     @Column(name = "pickup_ready_notification", nullable = false)
     @Builder.Default
-    private boolean pickupReadyNotification = false;
+    private boolean pickupReadyNotification = true;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", length = 32, nullable = false)

@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.hydroleaf.controller.dto.MyDeviceResponse;
 import se.hydroleaf.controller.dto.MyOrderResponse;
-import se.hydroleaf.controller.dto.MyProfileRequest;
 import se.hydroleaf.controller.dto.MyProfileResponse;
+import se.hydroleaf.controller.dto.UpdateMyProfileRequest;
 import se.hydroleaf.service.MyAccountService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,7 +32,7 @@ public class MyAccountController {
     @PutMapping({"/me", "/me/profile"})
     public MyProfileResponse updateMe(
             @RequestHeader(name = "Authorization", required = false) String token,
-            @Valid @RequestBody MyProfileRequest request) {
+            @Valid @RequestBody UpdateMyProfileRequest request) {
         return myAccountService.updateCurrentProfile(token, request);
     }
 

@@ -100,6 +100,9 @@ class MyAccountIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.fullName").value("Updated Name"))
                 .andExpect(jsonPath("$.phone").value("+46 70 123 45 67"))
+                .andExpect(jsonPath("$.phoneNumber").value("+46 70 123 45 67"))
+                .andExpect(jsonPath("$.orderConfirmationEmails").value(false))
+                .andExpect(jsonPath("$.pickupReadyNotification").value(true))
                 .andExpect(jsonPath("$.notificationPreferences.orderConfirmationEmails").value(false))
                 .andExpect(jsonPath("$.notificationPreferences.pickupReadyNotification").value(true));
 

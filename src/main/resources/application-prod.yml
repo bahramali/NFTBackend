@@ -88,3 +88,4 @@ app:
   password-reset-email:
     smtp-enabled: true
     reset-link-template: ${APP_PASSWORD_RESET_LINK_TEMPLATE:}
+    public-base-url: ${APP_PASSWORD_RESET_PUBLIC_BASE_URL:${APP_PUBLIC_URL:https://hydroleaf.se}}

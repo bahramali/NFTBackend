@@ -73,8 +73,8 @@ public class SmtpPasswordResetEmailService implements PasswordResetEmailService 
                 })
                 .orElseThrow(() -> {
                     log.error(
-                            "Password reset email reset link template is missing; configure app.password-reset-email.reset-link-template");
-                    return new MailPreparationException("Password reset link template is missing");
+                            "Password reset email reset link configuration is missing; set app.password-reset-email.reset-link-template or app.password-reset-email.public-base-url");
+                    return new MailPreparationException("Password reset link configuration is missing");
                 });
     }
 

@@ -11,6 +11,7 @@ public class PasswordResetEmailProperties {
     private String replyTo = "";
     private String subject = "Reset your Hydroleaf password";
     private String resetLinkTemplate = "";
+    private String publicBaseUrl = "";
 
     public boolean isSmtpEnabled() {
         return smtpEnabled;
@@ -52,9 +53,21 @@ public class PasswordResetEmailProperties {
         this.resetLinkTemplate = resetLinkTemplate;
     }
 
+    public String getPublicBaseUrl() {
+        return publicBaseUrl;
+    }
+
+    public void setPublicBaseUrl(String publicBaseUrl) {
+        this.publicBaseUrl = publicBaseUrl;
+    }
+
     public Optional<String> renderResetLink(String token) {
         if (resetLinkTemplate == null || resetLinkTemplate.isBlank()) {
-            return Optional.empty();
+            String baseUrl = normalize(publicBaseUrl);
+            if (baseUrl == null) {
+                return Optional.empty();
+            }
+            return Optional.of(baseUrl + "/reset-password?token=" + token);
         }
         String trimmed = resetLinkTemplate.trim();
         if (trimmed.contains("{token}")) {
@@ -64,5 +77,13 @@ public class PasswordResetEmailProperties {
             return Optional.of(trimmed + token);
         }
         return Optional.of(trimmed + token);
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

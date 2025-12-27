@@ -7,6 +7,11 @@ import lombok.Value;
 @Value
 @Builder
 public class CustomerDetailsResponse {
+    String id;
+    String name;
+    String email;
+    String customerType;
+    String status;
     Profile profile;
     List<CustomerOrderSummaryResponse> orders;
 

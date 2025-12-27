@@ -46,9 +46,10 @@ public class CustomerService {
                 .sorted(resolveSort(sort))
                 .toList();
         int safeSize = size > 0 ? size : 20;
-        int safePage = Math.max(page, 0);
+        int safePage = Math.max(page, 1);
+        int pageIndex = safePage - 1;
         int totalItems = filtered.size();
-        int fromIndex = Math.min(safePage * safeSize, totalItems);
+        int fromIndex = Math.min(pageIndex * safeSize, totalItems);
         int toIndex = Math.min(fromIndex + safeSize, totalItems);
         List<CustomerResponse> pageItems = filtered.subList(fromIndex, toIndex);
         return CustomerListResponse.builder()

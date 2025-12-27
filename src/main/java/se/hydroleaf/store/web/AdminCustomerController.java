@@ -32,12 +32,12 @@ public class AdminCustomerController {
     @GetMapping
     public ResponseEntity<CustomerListResponse> list(
             @RequestHeader(name = "Authorization", required = false) String token,
+            @RequestParam(name = "sort", defaultValue = "last_order_desc") String sort,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "q", required = false) String query,
             @RequestParam(name = "status", required = false) String status,
-            @RequestParam(name = "type", required = false) String type,
-            @RequestParam(name = "sort", required = false) String sort,
-            @RequestParam(name = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(name = "size", required = false, defaultValue = "20") int size) {
+            @RequestParam(name = "type", required = false) String type) {
         requireCustomersView(token);
         return ResponseEntity.ok(customerService.listCustomers(query, status, type, sort, page, size));
     }

@@ -1,8 +1,8 @@
 package se.hydroleaf.store.api.dto;
 
-import java.time.LocalDate;
 import lombok.Builder;
 import lombok.Value;
+import java.time.Instant;
 
 @Value
 @Builder
@@ -13,6 +13,7 @@ public class CustomerResponse {
     String customerType;
     int ordersCount;
     long totalSpent;
-    LocalDate lastOrderAt;
+    String currency;
+    Instant lastOrderAt;
     String status;
 }

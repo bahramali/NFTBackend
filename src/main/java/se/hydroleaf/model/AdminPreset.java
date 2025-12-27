@@ -10,6 +10,7 @@ public enum AdminPreset {
             Permission.STORE_VIEW,
             Permission.PRODUCTS_MANAGE,
             Permission.ORDERS_MANAGE,
+            Permission.CUSTOMERS_VIEW,
             Permission.ADMIN_OVERVIEW_VIEW
     )),
     OPERATOR(EnumSet.of(
@@ -19,7 +20,8 @@ public enum AdminPreset {
     ADMIN_STORE_ONLY(EnumSet.of(
             Permission.STORE_VIEW,
             Permission.PRODUCTS_MANAGE,
-            Permission.ORDERS_MANAGE
+            Permission.ORDERS_MANAGE,
+            Permission.CUSTOMERS_VIEW
     )),
     ADMIN_MONITORING_ONLY(EnumSet.of(
             Permission.MONITORING_VIEW,

@@ -5,12 +5,14 @@ public enum Permission {
     MONITORING_CONTROL("Monitoring", "Control monitoring systems"),
     MONITORING_CONFIG("Monitoring", "Configure monitoring systems"),
     STORE_VIEW("Store", "View store data"),
+    CUSTOMERS_VIEW("Store", "View customers"),
     PRODUCTS_MANAGE("Store", "Manage products"),
     ORDERS_MANAGE("Store", "Manage orders"),
-    ADMIN_OVERVIEW_VIEW("Admin", "View admin overview"),
-    ADMIN_INVITE("Admin", "Invite admins"),
-    ADMIN_PERMISSIONS_MANAGE("Admin", "Manage admin permissions"),
-    ADMIN_DISABLE("Admin", "Disable admins");
+    ADMIN_OVERVIEW_VIEW("Admin / Access", "View admin overview"),
+    ADMIN_INVITE("Admin / Access", "Invite admins"),
+    ADMIN_PERMISSIONS_MANAGE("Admin / Access", "Manage admin permissions"),
+    ADMIN_DISABLE("Admin / Access", "Disable admins"),
+    AUDIT_VIEW("Admin / Access", "View audit logs");
 
     private final String group;
     private final String label;

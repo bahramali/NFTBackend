@@ -63,6 +63,7 @@ public class StoreOrder {
     private long totalCents;
 
     @Column(nullable = false, length = 3)
+    @Builder.Default
     private String currency = "SEK";
 
     @Embedded

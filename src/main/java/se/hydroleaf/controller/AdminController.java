@@ -40,21 +40,24 @@ public class AdminController {
     public Map<String, Object> permissionsCatalog(@RequestHeader(name = "Authorization", required = false) String token) {
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         authorizationService.requirePermission(user, Permission.ADMIN_INVITE);
-        Map<String, List<PermissionCatalogItem>> permissions = Arrays.stream(Permission.values())
+        List<PermissionCatalogItem> availablePermissions = Arrays.stream(Permission.values())
                 .map(permission -> new PermissionCatalogItem(
                         permission.name(),
                         permission.label(),
                         permission.group()))
-                .collect(Collectors.groupingBy(
-                        PermissionCatalogItem::group,
-                        LinkedHashMap::new,
-                        Collectors.toList()));
+                .toList();
+        List<String> grantedPermissions = user.permissions().stream()
+                .map(Enum::name)
+                .toList();
         Map<String, List<String>> presets = Arrays.stream(se.hydroleaf.model.AdminPreset.values())
                 .collect(Collectors.toMap(
                         Enum::name,
                         preset -> preset.permissions().stream().map(Enum::name).toList(),
                         (existing, replacement) -> existing,
                         LinkedHashMap::new));
-        return Map.of("permissions", permissions, "presets", presets);
+        return Map.of(
+                "available", availablePermissions,
+                "granted", grantedPermissions,
+                "presets", presets);
     }
 }

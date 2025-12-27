@@ -1,7 +1,7 @@
 package se.hydroleaf.model;
 
 public enum Permission {
-    MONITORING_VIEW("Monitoring", "View monitoring data"),
+    MONITORING_VIEW("Monitoring", "View monitoring dashboards"),
     MONITORING_CONTROL("Monitoring", "Control monitoring systems"),
     MONITORING_CONFIG("Monitoring", "Configure monitoring systems"),
     STORE_VIEW("Store", "View store data"),

@@ -62,6 +62,20 @@ public class AuthorizationService {
         }
     }
 
+    public void requireRoleOrPermission(AuthenticatedUser user, Permission permission, UserRole... allowedRoles) {
+        if (user.role() == UserRole.SUPER_ADMIN) {
+            return;
+        }
+        boolean allowedRole = Arrays.stream(allowedRoles).anyMatch(role -> role == user.role());
+        if (allowedRole) {
+            return;
+        }
+        if (user.permissions().contains(permission)) {
+            return;
+        }
+        throw forbidden();
+    }
+
     public void requireSelfAccess(AuthenticatedUser user, Long resourceOwnerId) {
         if (!user.userId().equals(resourceOwnerId)) {
             throw forbidden();

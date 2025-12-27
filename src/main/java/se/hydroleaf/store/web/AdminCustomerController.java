@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.hydroleaf.model.Permission;
+import se.hydroleaf.model.UserRole;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.store.api.dto.CustomerDetailsResponse;
@@ -25,7 +26,7 @@ public class AdminCustomerController {
 
     private void requireCustomersView(String token) {
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
-        authorizationService.requirePermission(user, Permission.CUSTOMERS_VIEW);
+        authorizationService.requireRoleOrPermission(user, Permission.CUSTOMERS_VIEW, UserRole.ADMIN);
     }
 
     @GetMapping

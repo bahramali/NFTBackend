@@ -56,6 +56,7 @@ public class Payment {
     private long amountCents;
 
     @Column(nullable = false, length = 3)
+    @Builder.Default
     private String currency = "SEK";
 
     @Enumerated(EnumType.STRING)

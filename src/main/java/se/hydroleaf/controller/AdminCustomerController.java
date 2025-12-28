@@ -47,26 +47,11 @@ public class AdminCustomerController {
 
     @GetMapping
     public CustomersPageResponse list(
-            HttpServletRequest request,
             @RequestHeader(name = "Authorization", required = false) String token,
             @RequestParam(defaultValue = "last_order_desc") String sort,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        String requestId = UUID.randomUUID().toString().substring(0, 8);
-        String query = request.getQueryString();
-        String fullPath = request.getRequestURL().toString();
-        if (query != null && !query.isBlank()) {
-            fullPath = fullPath + "?" + query;
-        }
-        log.info("AdminCustomerController request start requestId={} method={} path={} sort={} page={} size={}",
-                requestId,
-                request.getMethod(),
-                fullPath,
-                sort,
-                page,
-                size);
-
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         authorizationService.requireRoleOrPermission(
                 user,
@@ -74,27 +59,6 @@ public class AdminCustomerController {
                 UserRole.ADMIN
         );
 
-        CustomersPageResponse response = adminCustomerService.list(sort, page, size);
-        log.info("AdminCustomerController request complete requestId={} status=200 method={} path={} sort={} page={} size={} totalItems={}",
-                requestId,
-                request.getMethod(),
-                fullPath,
-                sort,
-                page,
-                size,
-                response.getTotalItems());
-        return response;
-    }
-
-    private String resolveBuildInfo() {
-        GitProperties gitProperties = gitPropertiesProvider.getIfAvailable();
-        if (gitProperties != null && gitProperties.getShortCommitId() != null) {
-            return "git:" + gitProperties.getShortCommitId();
-        }
-        BuildProperties buildProperties = buildPropertiesProvider.getIfAvailable();
-        if (buildProperties != null && buildProperties.getVersion() != null) {
-            return "version:" + buildProperties.getVersion();
-        }
-        return null;
+        return adminCustomerService.list(sort, page, size);
     }
 }

@@ -75,8 +75,13 @@ public class AdminCustomerController {
         );
 
         CustomersPageResponse response = adminCustomerService.list(sort, page, size);
-        log.info("AdminCustomerController request complete requestId={} status=200 totalItems={}",
+        log.info("AdminCustomerController request complete requestId={} status=200 method={} path={} sort={} page={} size={} totalItems={}",
                 requestId,
+                request.getMethod(),
+                fullPath,
+                sort,
+                page,
+                size,
                 response.getTotalItems());
         return response;
     }

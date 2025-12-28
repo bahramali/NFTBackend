@@ -114,7 +114,7 @@ No `ADMIN`, `WORKER`, or `CUSTOMER` accounts are auto-created; they must be prov
 
 ## Debugging admin customer routes
 
-To temporarily enable the admin customer route debug endpoint, either set the `DEBUG_ROUTES=true` environment variable or start the app with the `debug` Spring profile.
+To temporarily enable the admin customer route debug endpoint, set `debug.routes.enabled=true` (for example via environment variable or profile-specific config). The endpoint also checks `DEBUG_ROUTES=true` or the `debug` Spring profile at runtime before returning data.
 
 Example curl checks:
 

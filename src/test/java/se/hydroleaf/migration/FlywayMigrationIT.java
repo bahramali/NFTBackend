@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @SpringBootTest
 @ActiveProfiles("flyway-it")
 @Testcontainers
-class FlywayMigrationIntegrationTest {
+class FlywayMigrationIT {
 
     @Container
     static final PostgreSQLContainer<?> postgres =

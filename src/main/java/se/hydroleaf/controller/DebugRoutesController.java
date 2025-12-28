@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.http.ResponseEntity;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +21,7 @@ import se.hydroleaf.store.web.AdminCustomerController;
 
 @RestController
 @RequestMapping("/api/_debug/routes")
+@Profile("!test")
 @RequiredArgsConstructor
 public class DebugRoutesController {
 

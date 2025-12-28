@@ -112,6 +112,18 @@ No `ADMIN`, `WORKER`, or `CUSTOMER` accounts are auto-created; they must be prov
 
 * `GET /api/records/history/aggregated` - groups values by sensor and lists timestamp/value pairs. Results are automatically downsampled to roughly 300 points based on the requested time range, discarding zero values when possible. An optional `sensorType` parameter filters the data before aggregation, and bucketing uses TimescaleDB's `time_bucket` for efficiency.
 
+## Debugging admin customer routes
+
+To temporarily enable the admin customer route debug endpoint, either set the `DEBUG_ROUTES=true` environment variable or start the app with the `debug` Spring profile.
+
+Example curl checks:
+
+```bash
+curl -i https://api.hydroleaf.se/api/health
+curl -i https://api.hydroleaf.se/api/_debug/routes/admin-customers
+curl -i "https://api.hydroleaf.se/api/admin/customers?sort=last_order_desc&page=1&size=6"
+```
+
 ## Public store APIs
 
 A minimal e-commerce backend powers the public Hydroleaf store (`/api/store`). Products, carts, checkout, and Stripe webhook handling are documented in [`docs/wiki/store-public-api.md`](docs/wiki/store-public-api.md), and ready-to-use Bruno/Postman requests live in [`postman/nft-backend.bru`](postman/nft-backend.bru).

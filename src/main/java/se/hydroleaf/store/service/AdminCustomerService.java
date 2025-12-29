@@ -12,8 +12,8 @@ public class AdminCustomerService {
 
     private final CustomerService customerService;
 
-    public CustomersPageResponse list(String sort, int page, int size) {
-        CustomerListResponse response = customerService.listCustomers(null, null, null, sort, page, size);
+    public CustomersPageResponse list(String q, String status, String type, String sort, int page, int size) {
+        CustomerListResponse response = customerService.listCustomers(q, status, type, sort, page, size);
         return CustomersPageResponse.builder()
                 .items(response.getItems())
                 .page(response.getPage())

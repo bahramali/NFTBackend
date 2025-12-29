@@ -60,6 +60,9 @@ public class AdminCustomerController {
     public CustomersPageResponse list(
             HttpServletRequest request,
             @RequestHeader(name = "Authorization", required = false) String token,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "last_order_desc") String sort,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size
@@ -70,10 +73,13 @@ public class AdminCustomerController {
         if (query != null && !query.isBlank()) {
             fullPath = fullPath + "?" + query;
         }
-        log.info("AdminCustomerController request start requestId={} method={} path={} sort={} page={} size={}",
+        log.info("AdminCustomerController request start requestId={} method={} path={} q={} status={} type={} sort={} page={} size={}",
                 requestId,
                 request.getMethod(),
                 fullPath,
+                q,
+                status,
+                type,
                 sort,
                 page,
                 size);
@@ -99,11 +105,14 @@ public class AdminCustomerController {
             throw ex;
         }
 
-        CustomersPageResponse response = adminCustomerService.list(sort, page, size);
-        log.info("AdminCustomerController request complete requestId={} status=200 method={} path={} sort={} page={} size={} totalItems={}",
+        CustomersPageResponse response = adminCustomerService.list(q, status, type, sort, page, size);
+        log.info("AdminCustomerController request complete requestId={} status=200 method={} path={} q={} status={} type={} sort={} page={} size={} totalItems={}",
                 requestId,
                 request.getMethod(),
                 fullPath,
+                q,
+                status,
+                type,
                 sort,
                 page,
                 size,

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import se.hydroleaf.service.InvalidPermissionException;
 
 @RestControllerAdvice
 @org.springframework.core.annotation.Order(org.springframework.core.Ordered.HIGHEST_PRECEDENCE)
@@ -29,6 +30,8 @@ public class ApiExceptionHandler {
     public record FieldErrorResponse(String field, String message) {}
 
     public record ValidationErrorResponse(List<FieldErrorResponse> errors) {}
+
+    public record InvalidPermissionsResponse(List<FieldErrorResponse> errors, List<String> invalidPermissions) {}
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -68,6 +71,13 @@ public class ApiExceptionHandler {
     public ResponseEntity<ValidationErrorResponse> handleResponseStatus(ResponseStatusException ex) {
         FieldErrorResponse error = new FieldErrorResponse("", Objects.requireNonNullElse(ex.getReason(), ""));
         return ResponseEntity.status(ex.getStatusCode()).body(new ValidationErrorResponse(List.of(error)));
+    }
+
+    @ExceptionHandler(InvalidPermissionException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public InvalidPermissionsResponse handleInvalidPermissions(InvalidPermissionException ex) {
+        FieldErrorResponse error = new FieldErrorResponse("permissions", ex.getMessage());
+        return new InvalidPermissionsResponse(List.of(error), ex.invalidPermissions());
     }
 
     @ExceptionHandler(SecurityException.class)

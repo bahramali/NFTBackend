@@ -21,7 +21,6 @@ import se.hydroleaf.service.AuthService;
 import se.hydroleaf.service.InviteEmailService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -124,8 +123,9 @@ class AdminInviteIntegrationTest {
                         .content(objectMapper.writeValueAsString(new InvalidPermissionInvitePayload(
                                 "invited@example.com", Set.of("INVALID_PERMISSION")))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].field").value("permissions[0]"))
-                .andExpect(jsonPath("$.errors[0].message", containsString("Allowed values")));
+                .andExpect(jsonPath("$.errors[0].field").value("permissions"))
+                .andExpect(jsonPath("$.errors[0].message").value("Invalid permissions provided"))
+                .andExpect(jsonPath("$.invalidPermissions[0]").value("INVALID_PERMISSION"));
     }
 
     @Test
@@ -207,10 +207,10 @@ class AdminInviteIntegrationTest {
     }
 
     private String inviteRequestJson(String email, String displayName) throws Exception {
-        return objectMapper.writeValueAsString(new InvitePayload(email, displayName, Set.of(Permission.STORE_VIEW)));
+        return objectMapper.writeValueAsString(new InvitePayload(email, displayName, Set.of("STORE_VIEW")));
     }
 
-    private record InvitePayload(String email, String displayName, Set<Permission> permissions) {}
+    private record InvitePayload(String email, String displayName, Set<String> permissions) {}
 
     private record InvalidPermissionInvitePayload(String email, Set<String> permissions) {}
 

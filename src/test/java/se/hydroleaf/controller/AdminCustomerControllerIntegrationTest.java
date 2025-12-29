@@ -115,6 +115,77 @@ class AdminCustomerControllerIntegrationTest {
     }
 
     @Test
+    void listWithQueryFiltersCustomers() throws Exception {
+        String password = "Password12345!";
+        createAdmin("permission@example.com", password, Set.of(Permission.CUSTOMERS_VIEW));
+        createCustomer("alpha@example.com", "Alpha Customer", LocalDateTime.now());
+        createCustomer("beta@example.com", "Beta Customer", LocalDateTime.now().minusDays(120));
+        createOrder("guest@example.com", 1000);
+        String token = authService.login("permission@example.com", password).token();
+
+        mockMvc.perform(get("/api/admin/customers")
+                        .param("q", "alpha")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].email").value("alpha@example.com"));
+    }
+
+    @Test
+    void listWithStatusAndTypeFiltersCustomers() throws Exception {
+        String password = "Password12345!";
+        createAdmin("permission@example.com", password, Set.of(Permission.CUSTOMERS_VIEW));
+        createCustomer("active@example.com", "Active Customer", LocalDateTime.now());
+        createCustomer("inactive@example.com", "Inactive Customer", LocalDateTime.now().minusDays(120));
+        createOrder("guest@example.com", 1000);
+        String token = authService.login("permission@example.com", password).token();
+
+        mockMvc.perform(get("/api/admin/customers")
+                        .param("status", "ACTIVE")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalItems").value(2));
+
+        mockMvc.perform(get("/api/admin/customers")
+                        .param("type", "GUEST")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].email").value("guest@example.com"));
+    }
+
+    @Test
+    void listWithCombinedFiltersAndPagination() throws Exception {
+        String password = "Password12345!";
+        createAdmin("permission@example.com", password, Set.of(Permission.CUSTOMERS_VIEW));
+        createCustomer("alpha.one@example.com", "Alpha One", LocalDateTime.now());
+        createCustomer("alpha.two@example.com", "Alpha Two", LocalDateTime.now());
+        createOrder("guest.one@example.com", 2000);
+        createOrder("guest.two@example.com", 1000);
+        String token = authService.login("permission@example.com", password).token();
+
+        mockMvc.perform(get("/api/admin/customers")
+                        .param("q", "alpha")
+                        .param("status", "ACTIVE")
+                        .param("type", "REGISTERED")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalItems").value(2));
+
+        mockMvc.perform(get("/api/admin/customers")
+                        .param("type", "GUEST")
+                        .param("sort", "total_spent_desc")
+                        .param("page", "2")
+                        .param("size", "1")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").value(2))
+                .andExpect(jsonPath("$.size").value(1))
+                .andExpect(jsonPath("$.totalItems").value(2))
+                .andExpect(jsonPath("$.items[0].email").value("guest.two@example.com"));
+    }
+
+    @Test
     void detailsUnknownCustomerReturnsNotFound() throws Exception {
         String password = "Password12345!";
         createAdmin("permission@example.com", password, Set.of(Permission.CUSTOMERS_VIEW));
@@ -140,28 +211,32 @@ class AdminCustomerControllerIntegrationTest {
     }
 
     private User createCustomer(String email) {
+        return createCustomer(email, "Customer", LocalDateTime.now());
+    }
+
+    private User createCustomer(String email, String displayName, LocalDateTime createdAt) {
         User user = User.builder()
                 .email(email)
                 .password(passwordEncoder.encode("Password12345!"))
-                .displayName("Customer")
+                .displayName(displayName)
                 .role(UserRole.CUSTOMER)
                 .permissions(Set.of())
                 .active(true)
                 .status(UserStatus.ACTIVE)
-                .createdAt(LocalDateTime.now())
+                .createdAt(createdAt)
                 .build();
         return userRepository.save(user);
     }
 
-    private StoreOrder createOrder(String email) {
+    private StoreOrder createOrder(String email, long totalCents) {
         StoreOrder order = StoreOrder.builder()
                 .orderNumber("ORDER-" + UUID.randomUUID())
                 .email(email)
                 .status(OrderStatus.PAID)
-                .subtotalCents(1000)
+                .subtotalCents(totalCents)
                 .shippingCents(0)
                 .taxCents(0)
-                .totalCents(1000)
+                .totalCents(totalCents)
                 .currency("SEK")
                 .shippingAddress(ShippingAddress.builder()
                         .name("Customer")
@@ -175,11 +250,15 @@ class AdminCustomerControllerIntegrationTest {
         OrderItem item = OrderItem.builder()
                 .order(order)
                 .nameSnapshot("Sample item")
-                .unitPriceCents(1000)
+                .unitPriceCents(totalCents)
                 .qty(1)
-                .lineTotalCents(1000)
+                .lineTotalCents(totalCents)
                 .build();
         order.setItems(java.util.List.of(item));
         return orderRepository.save(order);
+    }
+
+    private StoreOrder createOrder(String email) {
+        return createOrder(email, 1000);
     }
 }

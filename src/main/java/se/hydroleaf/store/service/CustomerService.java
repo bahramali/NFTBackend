@@ -311,12 +311,12 @@ public class CustomerService {
                     return false;
                 }
             }
-            if (normalizedStatus != null && !normalizedStatus.isBlank()) {
+            if (normalizedStatus != null && !normalizedStatus.isBlank() && !"ALL".equalsIgnoreCase(normalizedStatus)) {
                 if (!normalizedStatus.equalsIgnoreCase(response.getStatus())) {
                     return false;
                 }
             }
-            if (normalizedType != null && !normalizedType.isBlank()) {
+            if (normalizedType != null && !normalizedType.isBlank() && !"ALL".equalsIgnoreCase(normalizedType)) {
                 if (!normalizedType.equalsIgnoreCase(response.getCustomerType())) {
                     return false;
                 }

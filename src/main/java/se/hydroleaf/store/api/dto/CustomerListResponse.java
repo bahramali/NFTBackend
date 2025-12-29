@@ -11,4 +11,6 @@ public class CustomerListResponse {
     int page;
     int size;
     long totalItems;
+    long totalElements;
+    int totalPages;
 }

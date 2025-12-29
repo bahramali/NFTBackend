@@ -25,6 +25,7 @@ import se.hydroleaf.repository.UserRepository;
 import se.hydroleaf.service.AuthService;
 import se.hydroleaf.store.model.OrderItem;
 import se.hydroleaf.store.model.OrderStatus;
+import se.hydroleaf.store.model.ShippingAddress;
 import se.hydroleaf.store.model.StoreOrder;
 import se.hydroleaf.store.repository.OrderRepository;
 
@@ -162,6 +163,14 @@ class AdminCustomerControllerIntegrationTest {
                 .taxCents(0)
                 .totalCents(1000)
                 .currency("SEK")
+                .shippingAddress(ShippingAddress.builder()
+                        .name("Customer")
+                        .line1("Main Street 1")
+                        .city("Stockholm")
+                        .postalCode("11111")
+                        .country("SE")
+                        .phone("0700000000")
+                        .build())
                 .build();
         OrderItem item = OrderItem.builder()
                 .order(order)

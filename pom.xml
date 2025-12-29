@@ -145,6 +145,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <excludedGroups>integration</excludedGroups>
                     <systemPropertyVariables>
                         <spring.profiles.active>test</spring.profiles.active>
                     </systemPropertyVariables>
@@ -154,9 +155,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
-                    <includes>
-                        <include>**/*IT.java</include>
-                    </includes>
+                    <groups>integration</groups>
                 </configuration>
                 <executions>
                     <execution>

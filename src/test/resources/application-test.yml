@@ -1,37 +1,16 @@
 spring:
-  jackson:
-    deserialization:
-      fail-on-unknown-properties: true
-
   datasource:
-    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:nftbackend;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
     username: sa
     password:
-
+    driver-class-name: org.h2.Driver
   jpa:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
     open-in-view: false
-
   flyway:
     enabled: false
-
   sql:
     init:
       mode: never
-
-  mail:
-    host: localhost
-    port: 2525
-
-mqtt:
-  enabled: false
-  publishEnabled: false
-
-app:
-  demo-seed:
-    enabled: false
-  invite-email:
-    smtp-enabled: false

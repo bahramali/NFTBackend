@@ -8,6 +8,8 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.EnumSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +53,7 @@ public class AdminLifecycleService {
             String email,
             String displayName,
             AdminPreset preset,
-            Set<Permission> permissions,
+            Set<String> permissions,
             Integer expiresInHours,
             java.time.OffsetDateTime expiresAt) {
         String normalizedEmail = normalizeEmail(email);
@@ -272,7 +274,7 @@ public class AdminLifecycleService {
         return EnumSet.copyOf(permissions);
     }
 
-    private Set<Permission> resolveInvitePermissions(AdminPreset preset, Set<Permission> permissions) {
+    private Set<Permission> resolveInvitePermissions(AdminPreset preset, Set<String> permissions) {
         boolean hasPreset = preset != null;
         boolean hasPermissions = permissions != null && !permissions.isEmpty();
         if (hasPreset && hasPermissions) {
@@ -284,7 +286,28 @@ public class AdminLifecycleService {
         if (hasPreset) {
             return preset.permissions();
         }
-        return EnumSet.copyOf(permissions);
+        return parsePermissions(permissions);
+    }
+
+    private Set<Permission> parsePermissions(Set<String> permissions) {
+        List<String> invalidPermissions = new ArrayList<>();
+        EnumSet<Permission> resolved = EnumSet.noneOf(Permission.class);
+        for (String permission : permissions) {
+            if (permission == null || permission.isBlank()) {
+                invalidPermissions.add(permission == null ? "null" : permission);
+                continue;
+            }
+            String normalized = permission.trim();
+            try {
+                resolved.add(Permission.valueOf(normalized));
+            } catch (IllegalArgumentException ex) {
+                invalidPermissions.add(normalized);
+            }
+        }
+        if (!invalidPermissions.isEmpty()) {
+            throw new InvalidPermissionException(invalidPermissions);
+        }
+        return resolved;
     }
 
     private void validateInvitePermissions(AuthenticatedUser inviter, AdminPreset preset, Set<Permission> permissions) {

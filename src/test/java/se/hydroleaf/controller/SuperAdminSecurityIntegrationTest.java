@@ -167,7 +167,7 @@ class SuperAdminSecurityIntegrationTest {
     }
 
     private String createAdminInviteRequest(String email) throws Exception {
-        return objectMapper.writeValueAsString(new AdminInvitePayload(email, Set.of(Permission.STORE_VIEW)));
+        return objectMapper.writeValueAsString(new AdminInvitePayload(email, Set.of("STORE_VIEW")));
     }
 
     private String updatePermissionsRequestJson() throws Exception {
@@ -182,7 +182,7 @@ class SuperAdminSecurityIntegrationTest {
 
     private record UserUpdatePayload(String role) {}
 
-    private record AdminInvitePayload(String email, Set<Permission> permissions) {}
+    private record AdminInvitePayload(String email, Set<String> permissions) {}
 
     private record PermissionPayload(Set<String> permissions) {}
 

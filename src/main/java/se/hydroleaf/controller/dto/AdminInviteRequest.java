@@ -8,13 +8,12 @@ import jakarta.validation.constraints.Size;
 import java.time.OffsetDateTime;
 import java.util.Set;
 import se.hydroleaf.model.AdminPreset;
-import se.hydroleaf.model.Permission;
 
 public record AdminInviteRequest(
         @NotBlank @Email @Size(max = 128) String email,
         @Size(max = 128) String displayName,
         AdminPreset preset,
-        Set<Permission> permissions,
+        Set<String> permissions,
         @Positive Integer expiresInHours,
         @Future OffsetDateTime expiresAt
 ) {

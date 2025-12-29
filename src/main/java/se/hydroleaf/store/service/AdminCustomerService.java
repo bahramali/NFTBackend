@@ -19,6 +19,8 @@ public class AdminCustomerService {
                 .page(response.getPage())
                 .size(response.getSize())
                 .totalItems(response.getTotalItems())
+                .totalElements(response.getTotalElements())
+                .totalPages(response.getTotalPages())
                 .build();
     }
 

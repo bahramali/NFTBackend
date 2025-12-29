@@ -53,11 +53,14 @@ public class CustomerService {
         int fromIndex = Math.min(pageIndex * safeSize, totalItems);
         int toIndex = Math.min(fromIndex + safeSize, totalItems);
         List<CustomerResponse> pageItems = filtered.subList(fromIndex, toIndex);
+        int totalPages = safeSize > 0 ? (int) Math.ceil((double) totalItems / safeSize) : 0;
         return CustomerListResponse.builder()
                 .items(pageItems)
                 .page(safePage)
                 .size(safeSize)
                 .totalItems(totalItems)
+                .totalElements(totalItems)
+                .totalPages(totalPages)
                 .build();
     }
 
@@ -331,9 +334,9 @@ public class CustomerService {
             case "TOTAL_SPENT_DESC" -> Comparator.comparingLong(CustomerResponse::getTotalSpent).reversed();
             case "ORDERS_COUNT_DESC" -> Comparator.comparingInt(CustomerResponse::getOrdersCount).reversed();
             case "LAST_ORDER_DESC" -> Comparator.comparing(CustomerResponse::getLastOrderAt,
-                    Comparator.nullsLast(Comparator.naturalOrder())).reversed();
+                    Comparator.nullsLast(Comparator.reverseOrder()));
             default -> Comparator.comparing(CustomerResponse::getLastOrderAt,
-                    Comparator.nullsLast(Comparator.naturalOrder())).reversed();
+                    Comparator.nullsLast(Comparator.reverseOrder()));
         };
     }
 

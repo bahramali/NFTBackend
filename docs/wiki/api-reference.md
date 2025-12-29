@@ -31,6 +31,9 @@ This page enumerates every HTTP endpoint exposed by the backend. Unless noted, e
 - `GET /api/admin/orders` — order management summary (`REPORTS`).
 - `GET /api/admin/permissions` — show available and granted permissions.
 
+## Admin customers (ADMIN or `CUSTOMERS_VIEW`)
+- `GET /api/admin/customers` — list store customers (query params: `sort`, `page`, `size`).
+
 ## Worker
 - `GET /api/worker/dashboard` — worker dashboard (role `WORKER`).
 
@@ -41,9 +44,7 @@ This page enumerates every HTTP endpoint exposed by the backend. Unless noted, e
 ## My account (authenticated)
 - `GET /api/me` — current profile.
 - `PUT /api/me` — update profile.
-- `PATCH /api/me` — patch profile fields.
 - `PUT /api/me/profile` — update profile.
-- `PATCH /api/me/profile` — patch profile fields.
 - `GET /api/my/devices` — list devices tied to the current user.
 - `GET /api/my/devices/{deviceId}` — fetch a specific device.
 - `GET /api/store/orders/my` — list store orders for the current user.
@@ -123,3 +124,6 @@ This page enumerates every HTTP endpoint exposed by the backend. Unless noted, e
 - `POST /api/shelly/automation` — create automation.
 - `GET /api/shelly/automation` — list automations.
 - `DELETE /api/shelly/automation/{automationId}` — delete automation.
+
+## Debug (enabled only with `debug.routes.enabled=true` or `debug` profile)
+- `GET /api/_debug/routes/admin-customers` — list registered admin-customer routes and active profiles.

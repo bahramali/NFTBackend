@@ -622,6 +622,420 @@ folder "Products" {
   }
 }
 
+folder "My Account" {
+  req "Get My Profile" {
+    method: "GET"
+    url: "{{baseUrl}}/api/me"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "Update My Profile" {
+    method: "PUT"
+    url: "{{baseUrl}}/api/me"
+    headers {
+      "Authorization": "{{authToken}}"
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "fullName": "Alex Example",
+        "phoneNumber": "+46 70 123 45 67",
+        "orderConfirmationEmails": true,
+        "pickupReadyNotification": false
+      }
+      """
+    }
+  }
+
+  req "List My Devices" {
+    method: "GET"
+    url: "{{baseUrl}}/api/my/devices"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "Get My Device" {
+    method: "GET"
+    url: "{{baseUrl}}/api/my/devices/device-123"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "List My Store Orders" {
+    method: "GET"
+    url: "{{baseUrl}}/api/store/orders/my"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "Get My Store Order" {
+    method: "GET"
+    url: "{{baseUrl}}/api/store/orders/11111111-1111-1111-1111-111111111111"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+}
+
+folder "Store" {
+  req "List Store Products" {
+    method: "GET"
+    url: "{{baseUrl}}/api/store/products?active=true"
+  }
+
+  req "Get Store Product" {
+    method: "GET"
+    url: "{{baseUrl}}/api/store/products/11111111-1111-1111-1111-111111111111"
+  }
+
+  req "Create Cart" {
+    method: "POST"
+    url: "{{baseUrl}}/api/store/cart"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "sessionId": "web-session-123"
+      }
+      """
+    }
+  }
+
+  req "Get Cart" {
+    method: "GET"
+    url: "{{baseUrl}}/api/store/cart/11111111-1111-1111-1111-111111111111"
+  }
+
+  req "Add Cart Item" {
+    method: "POST"
+    url: "{{baseUrl}}/api/store/cart/11111111-1111-1111-1111-111111111111/items"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "productId": "22222222-2222-2222-2222-222222222222",
+        "qty": 1
+      }
+      """
+    }
+  }
+
+  req "Update Cart Item" {
+    method: "PATCH"
+    url: "{{baseUrl}}/api/store/cart/11111111-1111-1111-1111-111111111111/items/33333333-3333-3333-3333-333333333333"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "qty": 2
+      }
+      """
+    }
+  }
+
+  req "Delete Cart Item" {
+    method: "DELETE"
+    url: "{{baseUrl}}/api/store/cart/11111111-1111-1111-1111-111111111111/items/33333333-3333-3333-3333-333333333333"
+  }
+
+  req "Checkout Cart" {
+    method: "POST"
+    url: "{{baseUrl}}/api/store/checkout"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "cartId": "11111111-1111-1111-1111-111111111111",
+        "email": "customer@example.com",
+        "shippingAddress": {
+          "name": "Hydroleaf Customer",
+          "line1": "Main Street 1",
+          "city": "Stockholm",
+          "postalCode": "11122",
+          "country": "SE"
+        }
+      }
+      """
+    }
+  }
+
+  req "Public Order Status" {
+    method: "GET"
+    url: "{{baseUrl}}/api/orders/11111111-1111-1111-1111-111111111111"
+  }
+
+  req "Create Checkout Session" {
+    method: "POST"
+    url: "{{baseUrl}}/api/checkout/sessions"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "orderId": "11111111-1111-1111-1111-111111111111"
+      }
+      """
+    }
+  }
+
+  req "Stripe Webhook" {
+    method: "POST"
+    url: "{{baseUrl}}/api/store/webhook/stripe"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "type": "checkout.session.completed",
+        "data": {
+          "object": {
+            "id": "cs_test_example"
+          }
+        }
+      }
+      """
+    }
+  }
+
+  req "Nets Webhook" {
+    method: "POST"
+    url: "{{baseUrl}}/api/payments/webhook/nets"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "event": "payment.charge.created"
+      }
+      """
+    }
+  }
+}
+
+folder "Store Admin" {
+  req "List Store Products (Admin)" {
+    method: "GET"
+    url: "{{baseUrl}}/api/admin/products?active=true"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "Get Store Product (Admin)" {
+    method: "GET"
+    url: "{{baseUrl}}/api/admin/products/11111111-1111-1111-1111-111111111111"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "Create Store Product (Admin)" {
+    method: "POST"
+    url: "{{baseUrl}}/api/admin/products"
+    headers {
+      "Authorization": "{{authToken}}"
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "sku": "HL-STARTER",
+        "name": "Hydroleaf Starter Kit",
+        "description": "Starter kit",
+        "priceCents": 19900,
+        "currency": "SEK",
+        "active": true,
+        "inventoryQty": 50,
+        "imageUrl": "https://cdn.example.com/kit.jpg",
+        "category": "kits"
+      }
+      """
+    }
+  }
+
+  req "Update Store Product (Admin)" {
+    method: "PUT"
+    url: "{{baseUrl}}/api/admin/products/11111111-1111-1111-1111-111111111111"
+    headers {
+      "Authorization": "{{authToken}}"
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "sku": "HL-STARTER",
+        "name": "Hydroleaf Starter Kit",
+        "description": "Starter kit",
+        "priceCents": 19900,
+        "currency": "SEK",
+        "active": true,
+        "inventoryQty": 50,
+        "imageUrl": "https://cdn.example.com/kit.jpg",
+        "category": "kits"
+      }
+      """
+    }
+  }
+
+  req "Delete Store Product (Admin)" {
+    method: "DELETE"
+    url: "{{baseUrl}}/api/admin/products/11111111-1111-1111-1111-111111111111"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+}
+
+folder "Admin Customers" {
+  req "List Admin Customers" {
+    method: "GET"
+    url: "{{baseUrl}}/api/admin/customers?sort=last_order_desc&page=1&size=20"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+}
+
+folder "Shelly" {
+  req "List Rooms" {
+    method: "GET"
+    url: "{{baseUrl}}/api/shelly/rooms"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "List Racks" {
+    method: "GET"
+    url: "{{baseUrl}}/api/shelly/rooms/room-1/racks"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "List Sockets" {
+    method: "GET"
+    url: "{{baseUrl}}/api/shelly/racks/rack-1/sockets"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "Socket Status" {
+    method: "GET"
+    url: "{{baseUrl}}/api/shelly/sockets/socket-1/status"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "Socket On" {
+    method: "POST"
+    url: "{{baseUrl}}/api/shelly/sockets/socket-1/on"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "Socket Off" {
+    method: "POST"
+    url: "{{baseUrl}}/api/shelly/sockets/socket-1/off"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "Socket Toggle" {
+    method: "POST"
+    url: "{{baseUrl}}/api/shelly/sockets/socket-1/toggle"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "All Socket Status" {
+    method: "GET"
+    url: "{{baseUrl}}/api/shelly/status"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "Create Automation" {
+    method: "POST"
+    url: "{{baseUrl}}/api/shelly/automation"
+    headers {
+      "Authorization": "{{authToken}}"
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "type": "TIME_RANGE",
+        "socketId": "socket-1",
+        "onTime": "08:00",
+        "offTime": "20:00",
+        "daysOfWeek": [
+          "MONDAY",
+          "WEDNESDAY"
+        ]
+      }
+      """
+    }
+  }
+
+  req "List Automations" {
+    method: "GET"
+    url: "{{baseUrl}}/api/shelly/automation"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+
+  req "Delete Automation" {
+    method: "DELETE"
+    url: "{{baseUrl}}/api/shelly/automation/automation-1"
+    headers {
+      "Authorization": "{{authToken}}"
+    }
+  }
+}
+
+folder "Debug" {
+  req "Admin Customer Routes" {
+    method: "GET"
+    url: "{{baseUrl}}/api/_debug/routes/admin-customers"
+  }
+}
+
 folder "Health" {
   req "Health Check" {
     method: "GET"

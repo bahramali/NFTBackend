@@ -67,6 +67,16 @@ public class SmtpInviteEmailService implements InviteEmailService {
             mailSender.send(message);
             log.info("Sent admin invite email to {}", toAddress);
         } catch (MailException ex) {
+            log.error("SMTP send failed for {} with message {}", toAddress, ex.getMessage());
+            if (mailSender instanceof JavaMailSenderImpl impl) {
+                log.error(
+                        "SMTP transport details host={} port={} username={} auth={} starttls={}",
+                        impl.getHost(),
+                        impl.getPort(),
+                        impl.getUsername(),
+                        impl.getJavaMailProperties().getProperty("mail.smtp.auth"),
+                        impl.getJavaMailProperties().getProperty("mail.smtp.starttls.enable"));
+            }
             log.error("Failed to send admin invite email to {} via SMTP: {}", toAddress, ex.getMessage(), ex);
             throw ex;
         }

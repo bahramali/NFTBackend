@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.common.api.NotFoundException;
 import se.hydroleaf.model.User;
 import se.hydroleaf.model.UserRole;
@@ -60,14 +61,33 @@ public class CustomerService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public CustomerDetailsResponse getCustomerDetails(String customerId) {
-        CustomerIdentity identity = parseIdentity(customerId);
-        if (identity.userId().isPresent()) {
-            User user = userRepository.findById(identity.userId().get())
-                    .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found"));
+        if (customerId == null || customerId.isBlank()) {
+            throw new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found");
+        }
+        if (customerId.startsWith(USER_PREFIX) || customerId.startsWith(GUEST_PREFIX)) {
+            CustomerIdentity identity = parseIdentity(customerId);
+            if (identity.userId().isPresent()) {
+                User user = userRepository.findById(identity.userId().get())
+                        .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found"));
+                return buildCustomerDetails(user.getEmail(), user);
+            }
+            return buildCustomerDetails(identity.email(), null);
+        }
+        Optional<User> userById = resolveUserById(customerId);
+        if (userById.isPresent()) {
+            User user = userById.get();
             return buildCustomerDetails(user.getEmail(), user);
         }
-        return buildCustomerDetails(identity.email(), null);
+        Optional<String> emailFromOrder = resolveEmailFromOrderId(customerId);
+        if (emailFromOrder.isPresent()) {
+            return buildCustomerDetails(emailFromOrder.get(), null);
+        }
+        if (customerId.contains("@")) {
+            return buildCustomerDetails(customerId, null);
+        }
+        throw new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found");
     }
 
     private CustomerDetailsResponse buildCustomerDetails(String email, User user) {
@@ -88,6 +108,15 @@ public class CustomerService {
                 .email(normalizedEmail)
                 .phone(phone)
                 .build();
+        long totalSpent = orders.stream()
+                .filter(order -> order.getStatus() == OrderStatus.PAID)
+                .mapToLong(StoreOrder::getTotalCents)
+                .sum();
+        Instant lastOrderAt = latestOrder != null ? latestOrder.getCreatedAt() : null;
+        String currency = latestOrder != null ? latestOrder.getCurrency() : null;
+        Instant createdAt = user != null ? toInstant(user.getCreatedAt()) : null;
+        Instant lastLoginAt = user != null ? toInstant(user.getLastLoginAt()) : null;
+        Instant lastSeenAt = resolveLastSeen(createdAt, lastLoginAt, lastOrderAt);
         List<CustomerOrderSummaryResponse> summaries = orders.stream()
                 .sorted(Comparator.comparing(StoreOrder::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
                         .reversed())
@@ -97,6 +126,10 @@ public class CustomerService {
                         .total(order.getTotalCents())
                         .currency(order.getCurrency())
                         .status(order.getStatus().name())
+                        .itemsCount(order.getItems() != null ? order.getItems().size() : 0)
+                        .itemsQuantity(order.getItems() != null
+                                ? order.getItems().stream().mapToInt(item -> item.getQty()).sum()
+                                : 0)
                         .build())
                 .toList();
         String customerType = user != null ? "REGISTERED" : "GUEST";
@@ -107,6 +140,12 @@ public class CustomerService {
                 .email(normalizedEmail)
                 .customerType(customerType)
                 .status(resolvedStatus)
+                .createdAt(createdAt)
+                .lastLoginAt(lastLoginAt)
+                .lastSeenAt(lastSeenAt)
+                .totalSpent(totalSpent)
+                .currency(currency)
+                .lastOrderAt(lastOrderAt)
                 .profile(profile)
                 .orders(summaries)
                 .build();
@@ -200,6 +239,36 @@ public class CustomerService {
 
     private String normalizeEmail(String email) {
         return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private Optional<User> resolveUserById(String customerId) {
+        try {
+            long id = Long.parseLong(customerId);
+            return userRepository.findById(id);
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
+    }
+
+    private Optional<String> resolveEmailFromOrderId(String customerId) {
+        try {
+            java.util.UUID orderId = java.util.UUID.fromString(customerId);
+            return orderRepository.findById(orderId)
+                    .map(StoreOrder::getEmail);
+        } catch (IllegalArgumentException ex) {
+            return Optional.empty();
+        }
+    }
+
+    private Instant resolveLastSeen(Instant createdAt, Instant lastLoginAt, Instant lastOrderAt) {
+        Instant lastSeen = createdAt;
+        if (lastLoginAt != null && (lastSeen == null || lastLoginAt.isAfter(lastSeen))) {
+            lastSeen = lastLoginAt;
+        }
+        if (lastOrderAt != null && (lastSeen == null || lastOrderAt.isAfter(lastSeen))) {
+            lastSeen = lastOrderAt;
+        }
+        return lastSeen;
     }
 
     private List<CustomerAggregate> loadAggregates() {

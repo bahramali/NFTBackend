@@ -2,6 +2,7 @@ package se.hydroleaf.store.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import se.hydroleaf.store.api.dto.CustomerDetailsResponse;
 import se.hydroleaf.store.api.dto.CustomerListResponse;
 import se.hydroleaf.store.api.dto.CustomersPageResponse;
 
@@ -19,5 +20,9 @@ public class AdminCustomerService {
                 .size(response.getSize())
                 .totalItems(response.getTotalItems())
                 .build();
+    }
+
+    public CustomerDetailsResponse getCustomerDetails(String customerId) {
+        return customerService.getCustomerDetails(customerId);
     }
 }

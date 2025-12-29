@@ -13,4 +13,6 @@ public class CustomerOrderSummaryResponse {
     long total;
     String currency;
     String status;
+    int itemsCount;
+    int itemsQuantity;
 }

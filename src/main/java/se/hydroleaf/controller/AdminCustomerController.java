@@ -10,6 +10,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,6 +19,7 @@ import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.UserRole;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
+import se.hydroleaf.store.api.dto.CustomerDetailsResponse;
 import se.hydroleaf.store.api.dto.CustomersPageResponse;
 import se.hydroleaf.store.service.AdminCustomerService;
 
@@ -106,6 +108,50 @@ public class AdminCustomerController {
                 page,
                 size,
                 response.getTotalItems());
+        return response;
+    }
+
+    @GetMapping("/{customerId}")
+    public CustomerDetailsResponse details(
+            HttpServletRequest request,
+            @RequestHeader(name = "Authorization", required = false) String token,
+            @PathVariable String customerId
+    ) {
+        String requestId = UUID.randomUUID().toString().substring(0, 8);
+        String fullPath = request.getRequestURL().toString();
+        log.info("AdminCustomerController request start requestId={} method={} path={} customerId={}",
+                requestId,
+                request.getMethod(),
+                fullPath,
+                customerId);
+
+        AuthenticatedUser user = null;
+        try {
+            user = authorizationService.requireAuthenticated(token);
+            authorizationService.requirePermission(user, Permission.CUSTOMERS_VIEW);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            if (ex.getStatusCode() == org.springframework.http.HttpStatus.UNAUTHORIZED
+                    || ex.getStatusCode() == org.springframework.http.HttpStatus.FORBIDDEN) {
+                log.warn(
+                        "AdminCustomerController access denied requestId={} status={} method={} path={} userId={} role={} requiredRole={} requiredPermission={}",
+                        requestId,
+                        ex.getStatusCode().value(),
+                        request.getMethod(),
+                        fullPath,
+                        user != null ? user.userId() : null,
+                        user != null ? user.role() : null,
+                        UserRole.ADMIN,
+                        Permission.CUSTOMERS_VIEW);
+            }
+            throw ex;
+        }
+
+        CustomerDetailsResponse response = adminCustomerService.getCustomerDetails(customerId);
+        log.info("AdminCustomerController request complete requestId={} status=200 method={} path={} customerId={}",
+                requestId,
+                request.getMethod(),
+                fullPath,
+                customerId);
         return response;
     }
 

@@ -76,12 +76,26 @@ public class AdminCustomerController {
                 page,
                 size);
 
-        AuthenticatedUser user = authorizationService.requireAuthenticated(token);
-        authorizationService.requireRoleOrPermission(
-                user,
-                Permission.CUSTOMERS_VIEW,
-                UserRole.ADMIN
-        );
+        AuthenticatedUser user = null;
+        try {
+            user = authorizationService.requireAuthenticated(token);
+            authorizationService.requirePermission(user, Permission.CUSTOMERS_VIEW);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            if (ex.getStatusCode() == org.springframework.http.HttpStatus.UNAUTHORIZED
+                    || ex.getStatusCode() == org.springframework.http.HttpStatus.FORBIDDEN) {
+                log.warn(
+                        "AdminCustomerController access denied requestId={} status={} method={} path={} userId={} role={} requiredRole={} requiredPermission={}",
+                        requestId,
+                        ex.getStatusCode().value(),
+                        request.getMethod(),
+                        fullPath,
+                        user != null ? user.userId() : null,
+                        user != null ? user.role() : null,
+                        UserRole.ADMIN,
+                        Permission.CUSTOMERS_VIEW);
+            }
+            throw ex;
+        }
 
         CustomersPageResponse response = adminCustomerService.list(sort, page, size);
         log.info("AdminCustomerController request complete requestId={} status=200 method={} path={} sort={} page={} size={} totalItems={}",

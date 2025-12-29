@@ -31,6 +31,9 @@
 - `GET /api/admin/orders` — خلاصه مدیریت سفارش‌ها (`REPORTS`).
 - `GET /api/admin/permissions` — مشاهده مجوزهای موجود و اعطا‌شده.
 
+## مشتریان ادمین (ADMIN یا `CUSTOMERS_VIEW`)
+- `GET /api/admin/customers` — فهرست مشتریان فروشگاه (پارامترها: `sort`, `page`, `size`).
+
 ## کاربر عملیاتی (Worker)
 - `GET /api/worker/dashboard` — داشبورد Worker (نقش `WORKER`).
 
@@ -41,9 +44,7 @@
 ## حساب من (Authenticated)
 - `GET /api/me` — پروفایل فعلی.
 - `PUT /api/me` — به‌روزرسانی پروفایل.
-- `PATCH /api/me` — به‌روزرسانی بخشی پروفایل.
 - `PUT /api/me/profile` — به‌روزرسانی پروفایل.
-- `PATCH /api/me/profile` — به‌روزرسانی بخشی پروفایل.
 - `GET /api/my/devices` — فهرست دستگاه‌های کاربر.
 - `GET /api/my/devices/{deviceId}` — جزئیات یک دستگاه.
 - `GET /api/store/orders/my` — فهرست سفارش‌های فروشگاه برای کاربر فعلی.
@@ -123,3 +124,6 @@
 - `POST /api/shelly/automation` — ایجاد اتوماسیون.
 - `GET /api/shelly/automation` — فهرست اتوماسیون‌ها.
 - `DELETE /api/shelly/automation/{automationId}` — حذف اتوماسیون.
+
+## دیباگ (فقط با `debug.routes.enabled=true` یا پروفایل `debug`)
+- `GET /api/_debug/routes/admin-customers` — فهرست مسیرهای admin-customer و پروفایل‌های فعال.

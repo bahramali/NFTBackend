@@ -1334,6 +1334,1046 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "My Account",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "me"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Alex Example\",\n  \"phoneNumber\": \"+46 70 123 45 67\",\n  \"orderConfirmationEmails\": true,\n  \"pickupReadyNotification\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List My Devices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/my/devices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "my",
+                "devices"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Device",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/my/devices/device-123",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "my",
+                "devices",
+                "device-123"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List My Store Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/store/orders/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "store",
+                "orders",
+                "my"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Store Order",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/store/orders/11111111-1111-1111-1111-111111111111",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "store",
+                "orders",
+                "11111111-1111-1111-1111-111111111111"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Store",
+      "item": [
+        {
+          "name": "List Store Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/store/products?active=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "store",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true",
+                  "description": "Filter by active products"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Store Product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/store/products/11111111-1111-1111-1111-111111111111",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "store",
+                "products",
+                "11111111-1111-1111-1111-111111111111"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/store/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "store",
+                "cart"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"web-session-123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/store/cart/11111111-1111-1111-1111-111111111111",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "store",
+                "cart",
+                "11111111-1111-1111-1111-111111111111"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Cart Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/store/cart/11111111-1111-1111-1111-111111111111/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "store",
+                "cart",
+                "11111111-1111-1111-1111-111111111111",
+                "items"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"22222222-2222-2222-2222-222222222222\",\n  \"qty\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Cart Item",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/store/cart/11111111-1111-1111-1111-111111111111/items/33333333-3333-3333-3333-333333333333",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "store",
+                "cart",
+                "11111111-1111-1111-1111-111111111111",
+                "items",
+                "33333333-3333-3333-3333-333333333333"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qty\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Cart Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/store/cart/11111111-1111-1111-1111-111111111111/items/33333333-3333-3333-3333-333333333333",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "store",
+                "cart",
+                "11111111-1111-1111-1111-111111111111",
+                "items",
+                "33333333-3333-3333-3333-333333333333"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Checkout Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/store/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "store",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cartId\": \"11111111-1111-1111-1111-111111111111\",\n  \"email\": \"customer@example.com\",\n  \"shippingAddress\": {\n    \"name\": \"Hydroleaf Customer\",\n    \"line1\": \"Main Street 1\",\n    \"city\": \"Stockholm\",\n    \"postalCode\": \"11122\",\n    \"country\": \"SE\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Public Order Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/11111111-1111-1111-1111-111111111111",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "11111111-1111-1111-1111-111111111111"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Checkout Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/checkout/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkout",
+                "sessions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"11111111-1111-1111-1111-111111111111\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Stripe Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/store/webhook/stripe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "store",
+                "webhook",
+                "stripe"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"checkout.session.completed\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"cs_test_example\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Nets Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/webhook/nets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "webhook",
+                "nets"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"payment.charge.created\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Store Admin",
+      "item": [
+        {
+          "name": "List Store Products (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products?active=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true",
+                  "description": "Filter by active products"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Store Product (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/11111111-1111-1111-1111-111111111111",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "11111111-1111-1111-1111-111111111111"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Store Product (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"HL-STARTER\",\n  \"name\": \"Hydroleaf Starter Kit\",\n  \"description\": \"Starter kit\",\n  \"priceCents\": 19900,\n  \"currency\": \"SEK\",\n  \"active\": true,\n  \"inventoryQty\": 50,\n  \"imageUrl\": \"https://cdn.example.com/kit.jpg\",\n  \"category\": \"kits\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Store Product (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/11111111-1111-1111-1111-111111111111",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "11111111-1111-1111-1111-111111111111"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"HL-STARTER\",\n  \"name\": \"Hydroleaf Starter Kit\",\n  \"description\": \"Starter kit\",\n  \"priceCents\": 19900,\n  \"currency\": \"SEK\",\n  \"active\": true,\n  \"inventoryQty\": 50,\n  \"imageUrl\": \"https://cdn.example.com/kit.jpg\",\n  \"category\": \"kits\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Store Product (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/11111111-1111-1111-1111-111111111111",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "11111111-1111-1111-1111-111111111111"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin Customers",
+      "item": [
+        {
+          "name": "List Admin Customers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/customers?sort=last_order_desc&page=1&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "customers"
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "last_order_desc",
+                  "description": "Sort order"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Page size"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Shelly",
+      "item": [
+        {
+          "name": "List Rooms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shelly/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shelly",
+                "rooms"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Racks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shelly/rooms/room-1/racks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shelly",
+                "rooms",
+                "room-1",
+                "racks"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Sockets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shelly/racks/rack-1/sockets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shelly",
+                "racks",
+                "rack-1",
+                "sockets"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Socket Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shelly/sockets/socket-1/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shelly",
+                "sockets",
+                "socket-1",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Socket On",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shelly/sockets/socket-1/on",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shelly",
+                "sockets",
+                "socket-1",
+                "on"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Socket Off",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shelly/sockets/socket-1/off",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shelly",
+                "sockets",
+                "socket-1",
+                "off"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Socket Toggle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shelly/sockets/socket-1/toggle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shelly",
+                "sockets",
+                "socket-1",
+                "toggle"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "All Socket Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shelly/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shelly",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Automation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shelly/automation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shelly",
+                "automation"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"TIME_RANGE\",\n  \"socketId\": \"socket-1\",\n  \"onTime\": \"08:00\",\n  \"offTime\": \"20:00\",\n  \"daysOfWeek\": [\"MONDAY\", \"WEDNESDAY\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Automations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shelly/automation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shelly",
+                "automation"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Automation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shelly/automation/automation-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shelly",
+                "automation",
+                "automation-1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Debug",
+      "item": [
+        {
+          "name": "Admin Customer Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/_debug/routes/admin-customers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "_debug",
+                "routes",
+                "admin-customers"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "variable": [

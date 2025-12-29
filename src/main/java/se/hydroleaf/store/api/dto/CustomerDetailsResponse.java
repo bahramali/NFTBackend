@@ -1,5 +1,6 @@
 package se.hydroleaf.store.api.dto;
 
+import java.time.Instant;
 import java.util.List;
 import lombok.Builder;
 import lombok.Value;
@@ -12,6 +13,12 @@ public class CustomerDetailsResponse {
     String email;
     String customerType;
     String status;
+    Instant createdAt;
+    Instant lastLoginAt;
+    Instant lastSeenAt;
+    long totalSpent;
+    String currency;
+    Instant lastOrderAt;
     Profile profile;
     List<CustomerOrderSummaryResponse> orders;
 

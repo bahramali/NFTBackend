@@ -17,6 +17,9 @@ CREATE TABLE app_user (
     invite_token_hash VARCHAR(128),
     invite_expires_at TIMESTAMP,
     invite_used_at TIMESTAMP,
+    password_reset_token_hash VARCHAR(255),
+    password_reset_expires_at TIMESTAMP,
+    password_reset_used_at TIMESTAMP,
     last_login_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL
 );

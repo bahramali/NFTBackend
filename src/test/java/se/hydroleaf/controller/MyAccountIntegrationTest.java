@@ -198,7 +198,15 @@ class MyAccountIntegrationTest {
 
         mockMvc.perform(post("/api/me/addresses")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+                        .content("""
+                                {
+                                  "fullName": "Ada Lovelace",
+                                  "street1": "Street 1",
+                                  "postalCode": "12345",
+                                  "city": "Stockholm",
+                                  "countryCode": "SE"
+                                }
+                                """))
                 .andExpect(status().isUnauthorized());
     }
 

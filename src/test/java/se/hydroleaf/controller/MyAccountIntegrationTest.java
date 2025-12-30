@@ -200,6 +200,7 @@ class MyAccountIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
+                                  "label": "Home",
                                   "fullName": "Ada Lovelace",
                                   "street1": "Street 1",
                                   "postalCode": "12345",
@@ -220,6 +221,7 @@ class MyAccountIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
+                                  "label": "Home",
                                   "fullName": "Ada Lovelace",
                                   "street1": "Street 1",
                                   "postalCode": "12345",
@@ -229,6 +231,7 @@ class MyAccountIntegrationTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isDefault").value(true))
+                .andExpect(jsonPath("$.label").value("Home"))
                 .andExpect(jsonPath("$.street1").value("Street 1"));
 
         String secondResponse = mockMvc.perform(post("/api/me/addresses")
@@ -236,6 +239,7 @@ class MyAccountIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
+                                  "label": "Office",
                                   "fullName": "Second Address",
                                   "street1": "Street 2",
                                   "postalCode": "98765",
@@ -254,7 +258,9 @@ class MyAccountIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[1].isDefault").value(true))
-                .andExpect(jsonPath("$[0].isDefault").value(false));
+                .andExpect(jsonPath("$[0].isDefault").value(false))
+                .andExpect(jsonPath("$[0].label").value("Office"))
+                .andExpect(jsonPath("$[1].label").value("Home"));
 
         mockMvc.perform(put("/api/me/addresses/" + secondId + "/default")
                         .header("Authorization", token))
@@ -271,6 +277,7 @@ class MyAccountIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
+                                  "label": "Billing",
                                   "fullName": "Updated Name",
                                   "street1": "Street 2",
                                   "street2": "Unit 5",
@@ -282,6 +289,7 @@ class MyAccountIntegrationTest {
                                 }
                                 """))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.label").value("Billing"))
                 .andExpect(jsonPath("$.fullName").value("Updated Name"))
                 .andExpect(jsonPath("$.street2").value("Unit 5"))
                 .andExpect(jsonPath("$.phoneNumber").value("+46 70 100 10 10"))
@@ -293,7 +301,8 @@ class MyAccountIntegrationTest {
         mockMvc.perform(get("/api/me/addresses").header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].isDefault").value(true));
+                .andExpect(jsonPath("$[0].isDefault").value(true))
+                .andExpect(jsonPath("$[0].label").value("Home"));
     }
 
     @Test
@@ -308,6 +317,7 @@ class MyAccountIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
+                                  "label": "Home",
                                   "fullName": "Owner Address",
                                   "street1": "Street 1",
                                   "postalCode": "11111",
@@ -327,6 +337,7 @@ class MyAccountIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
+                                  "label": "Other",
                                   "fullName": "Other",
                                   "street1": "Street 2",
                                   "postalCode": "22222",

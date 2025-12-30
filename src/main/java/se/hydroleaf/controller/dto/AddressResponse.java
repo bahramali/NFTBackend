@@ -5,6 +5,7 @@ import se.hydroleaf.model.CustomerAddress;
 
 public record AddressResponse(
         Long id,
+        String label,
         String fullName,
         String street1,
         String street2,
@@ -20,6 +21,7 @@ public record AddressResponse(
     public static AddressResponse from(CustomerAddress address) {
         return new AddressResponse(
                 address.getId(),
+                address.getLabel(),
                 address.getFullName(),
                 address.getStreet1(),
                 address.getStreet2(),

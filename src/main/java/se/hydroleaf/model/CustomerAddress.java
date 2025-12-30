@@ -38,6 +38,9 @@ public class CustomerAddress {
     @Column(name = "full_name", length = 128)
     private String fullName;
 
+    @Column(name = "label", length = 64)
+    private String label;
+
     @Column(name = "street1", length = 128, nullable = false)
     private String street1;
 

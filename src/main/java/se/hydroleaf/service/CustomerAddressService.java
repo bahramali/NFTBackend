@@ -39,6 +39,7 @@ public class CustomerAddressService {
                 || customerAddressRepository.countByUserId(user.userId()) == 0;
         CustomerAddress address = CustomerAddress.builder()
                 .user(owner)
+                .label(trimOrNull(request.label()))
                 .fullName(trimOrNull(request.fullName()))
                 .street1(trimRequired(request.street1()))
                 .street2(trimOrNull(request.street2()))
@@ -61,6 +62,7 @@ public class CustomerAddressService {
     public AddressResponse updateAddress(AuthenticatedUser user, Long addressId, AddressRequest request) {
         CustomerAddress address = customerAddressRepository.findByIdAndUserId(addressId, user.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Address not found"));
+        address.setLabel(trimOrNull(request.label()));
         address.setFullName(trimOrNull(request.fullName()));
         address.setStreet1(trimRequired(request.street1()));
         address.setStreet2(trimOrNull(request.street2()));

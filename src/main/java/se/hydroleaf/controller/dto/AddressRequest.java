@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record AddressRequest(
+        @Size(max = 64) String label,
         @Size(max = 128) String fullName,
         @NotBlank @Size(max = 128) String street1,
         @Size(max = 128) String street2,

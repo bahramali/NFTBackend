@@ -2,7 +2,9 @@ package se.hydroleaf.controller;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -25,6 +27,7 @@ import se.hydroleaf.model.LatestSensorValue;
 import se.hydroleaf.model.TopicName;
 import se.hydroleaf.model.User;
 import se.hydroleaf.model.UserRole;
+import se.hydroleaf.repository.CustomerAddressRepository;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.LatestSensorValueRepository;
 import se.hydroleaf.repository.UserRepository;
@@ -59,6 +62,9 @@ class MyAccountIntegrationTest {
     private OrderRepository orderRepository;
 
     @Autowired
+    private CustomerAddressRepository customerAddressRepository;
+
+    @Autowired
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -66,6 +72,7 @@ class MyAccountIntegrationTest {
         latestSensorValueRepository.deleteAll();
         deviceRepository.deleteAll();
         orderRepository.deleteAll();
+        customerAddressRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -184,6 +191,152 @@ class MyAccountIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void addressEndpointsRequireAuthentication() throws Exception {
+        mockMvc.perform(get("/api/me/addresses"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/api/me/addresses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void customerCanManageAddressesAndDefaults() throws Exception {
+        User user = createCustomer("addr@example.com", "Address Owner");
+        String token = bearerToken(user.getEmail(), "password123");
+
+        mockMvc.perform(post("/api/me/addresses")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "fullName": "Ada Lovelace",
+                                  "street1": "Street 1",
+                                  "postalCode": "12345",
+                                  "city": "Stockholm",
+                                  "countryCode": "SE"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isDefault").value(true))
+                .andExpect(jsonPath("$.street1").value("Street 1"));
+
+        String secondResponse = mockMvc.perform(post("/api/me/addresses")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "fullName": "Second Address",
+                                  "street1": "Street 2",
+                                  "postalCode": "98765",
+                                  "city": "Gothenburg",
+                                  "countryCode": "SE"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String secondId = extractId(secondResponse);
+
+        mockMvc.perform(get("/api/me/addresses").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[1].isDefault").value(true))
+                .andExpect(jsonPath("$[0].isDefault").value(false));
+
+        mockMvc.perform(put("/api/me/addresses/" + secondId + "/default")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isDefault").value(true));
+
+        mockMvc.perform(get("/api/me/addresses").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].isDefault").value(true))
+                .andExpect(jsonPath("$[1].isDefault").value(false));
+
+        mockMvc.perform(put("/api/me/addresses/" + secondId)
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "fullName": "Updated Name",
+                                  "street1": "Street 2",
+                                  "street2": "Unit 5",
+                                  "postalCode": "98765",
+                                  "city": "Gothenburg",
+                                  "countryCode": "SE",
+                                  "phoneNumber": "+46 70 100 10 10",
+                                  "isDefault": true
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fullName").value("Updated Name"))
+                .andExpect(jsonPath("$.street2").value("Unit 5"))
+                .andExpect(jsonPath("$.phoneNumber").value("+46 70 100 10 10"))
+                .andExpect(jsonPath("$.isDefault").value(true));
+
+        mockMvc.perform(delete("/api/me/addresses/" + secondId).header("Authorization", token))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/me/addresses").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].isDefault").value(true));
+    }
+
+    @Test
+    void customerCannotAccessOthersAddresses() throws Exception {
+        User owner = createCustomer("owner-address@example.com", "Owner");
+        User other = createCustomer("other-address@example.com", "Other");
+        String ownerToken = bearerToken(owner.getEmail(), "password123");
+        String otherToken = bearerToken(other.getEmail(), "password123");
+
+        String response = mockMvc.perform(post("/api/me/addresses")
+                        .header("Authorization", ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "fullName": "Owner Address",
+                                  "street1": "Street 1",
+                                  "postalCode": "11111",
+                                  "city": "Stockholm",
+                                  "countryCode": "SE"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String addressId = extractId(response);
+
+        mockMvc.perform(put("/api/me/addresses/" + addressId)
+                        .header("Authorization", otherToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "fullName": "Other",
+                                  "street1": "Street 2",
+                                  "postalCode": "22222",
+                                  "city": "Gothenburg",
+                                  "countryCode": "SE"
+                                }
+                                """))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(delete("/api/me/addresses/" + addressId)
+                        .header("Authorization", otherToken))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(put("/api/me/addresses/" + addressId + "/default")
+                        .header("Authorization", otherToken))
+                .andExpect(status().isNotFound());
+    }
+
     private User createCustomer(String email, String displayName) {
         return userService.create(new UserCreateRequest(
                 email,
@@ -236,6 +389,13 @@ class MyAccountIntegrationTest {
                         .build())
                 .build();
         return orderRepository.save(order);
+    }
+
+    private String extractId(String responseBody) {
+        int idIndex = responseBody.indexOf("\"id\":");
+        int start = responseBody.indexOf(':', idIndex) + 1;
+        int end = responseBody.indexOf(',', start);
+        return responseBody.substring(start, end).trim();
     }
 
     private String bearerToken(String email, String password) {

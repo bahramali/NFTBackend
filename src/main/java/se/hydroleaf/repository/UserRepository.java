@@ -18,5 +18,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByInviteTokenHash(String inviteTokenHash);
 
+    Optional<User> findByPasswordResetTokenHash(String passwordResetTokenHash);
+
     List<User> findAllByRole(UserRole role);
 }

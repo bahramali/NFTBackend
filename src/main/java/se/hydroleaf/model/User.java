@@ -112,6 +112,15 @@ public class User {
     @Column(name = "invite_used_at")
     private LocalDateTime inviteUsedAt;
 
+    @Column(name = "password_reset_token_hash", length = 255)
+    private String passwordResetTokenHash;
+
+    @Column(name = "password_reset_expires_at")
+    private LocalDateTime passwordResetExpiresAt;
+
+    @Column(name = "password_reset_used_at")
+    private LocalDateTime passwordResetUsedAt;
+
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 

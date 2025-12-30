@@ -19,6 +19,7 @@ import se.hydroleaf.controller.dto.CustomerRegistrationRequest;
 import se.hydroleaf.controller.dto.InviteValidationResponse;
 import se.hydroleaf.controller.dto.LoginRequest;
 import se.hydroleaf.controller.dto.LoginResponse;
+import se.hydroleaf.controller.dto.PasswordResetConfirmRequest;
 import se.hydroleaf.controller.dto.PasswordResetResponse;
 import se.hydroleaf.model.User;
 import se.hydroleaf.service.AuthService;
@@ -81,6 +82,13 @@ public class AuthController {
     @ResponseStatus(HttpStatus.OK)
     public PasswordResetResponse passwordReset(@RequestHeader(name = "Authorization", required = false) String token) {
         passwordResetService.requestPasswordReset(token);
+        return PasswordResetResponse.success();
+    }
+
+    @PostMapping("/password-reset/confirm")
+    @ResponseStatus(HttpStatus.OK)
+    public PasswordResetResponse confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
+        passwordResetService.confirmPasswordReset(request.token(), request.password());
         return PasswordResetResponse.success();
     }
 }

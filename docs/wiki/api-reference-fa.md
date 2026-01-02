@@ -11,6 +11,9 @@
 - `POST /api/auth/accept-invite` — پذیرش دعوت‌نامه ادمین (توکن + رمز) و ورود.
 - `GET /api/auth/accept-invite/{token}` — اعتبارسنجی توکن دعوت و مشاهده اطلاعات.
 - `POST /api/auth/password-reset` — درخواست بازنشانی رمز (در صورت وجود از توکن `Authorization` استفاده می‌کند).
+- `GET /api/auth/oauth/providers` — فهرست سرویس‌های OAuth پشتیبانی‌شده.
+- `POST /api/auth/oauth/google/start` — شروع ورود با گوگل و دریافت `authorizationUrl`.
+- `GET /api/auth/oauth/google/callback` — تکمیل ورود با گوگل (`code`, `state`).
 
 ## کاربران (ادمین یا مجوز TEAM)
 - `GET /api/users` — فهرست کاربران (نیازمند مجوز `TEAM`).

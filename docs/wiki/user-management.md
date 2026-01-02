@@ -18,6 +18,10 @@
 - `GET /api/users` و `GET /api/users/{id}` برای فهرست یا دریافت جزئیات کاربر.
 - `POST /api/users` برای ایجاد کاربر جدید (با role و permissions الزامی برای ادمین/سوپرادمین؛ کلاینت عمومی نمی‌تواند نقش را تعیین کند).
 - `PUT /api/users/{id}` برای ویرایش کاربر موجود.
+- Endpointهای ورود با گوگل:
+  - `GET /api/auth/oauth/providers` برای دریافت فهرست سرویس‌های پشتیبانی‌شده (فعلاً فقط `google`).
+  - `POST /api/auth/oauth/google/start` برای دریافت `authorizationUrl` و شروع فرایند ورود.
+  - `GET /api/auth/oauth/google/callback` برای تکمیل ورود با پارامترهای `code` و `state`.
 - Endpointهای ویژه‌ی سوپر ادمین برای مدیریت چرخهٔ حیات ادمین‌ها:
   - `GET /api/super-admin/admins` برای فهرست‌کردن ادمین‌ها همراه با وضعیت (`INVITED`/`ACTIVE`/`DISABLED`) و مجوزها.
   - `POST /api/super-admin/admins/invite` برای ارسال دعوت‌نامه ادمین (توکن دعوت فقط به‌صورت هش ذخیره می‌شود و در پاسخ بازگردانده نمی‌شود).
@@ -29,6 +33,18 @@
   - `POST /api/auth/accept-invite` با بدنهٔ `{ token, password }` که پس از اعتبارسنجی توکن، حساب را فعال و رمز را هش می‌کند.
 
 > نکته: برای endpointهای ادمین/سوپرادمین، هدر `Authorization` را با توکن ورود ارسال کنید.
+
+## ورود با گوگل (OAuth) برای فرانت‌اند
+فرانت‌اند برای ورود با گوگل سه endpoint در اختیار دارد که مسیر استاندارد را پوشش می‌دهند:
+
+1. **نمایش سرویس‌ها**: با `GET /api/auth/oauth/providers` لیست سرویس‌های OAuth موجود را دریافت کنید.
+2. **شروع ورود**: با `POST /api/auth/oauth/google/start` (بدنهٔ اختیاری `{ "redirectUri": "https://app.example.com/auth/google/callback" }`) لینک `authorizationUrl` برگردانده می‌شود؛ کاربر باید به این URL هدایت شود.
+3. **تکمیل ورود**: گوگل کاربر را به `GET /api/auth/oauth/google/callback` با پارامترهای `code` و `state` برمی‌گرداند؛ بک‌اند پس از اعتبارسنجی، توکن ورود را صادر می‌کند.
+
+**نکات مهم برای فرانت‌اند:**
+- اگر در درخواست `start` مقدار `redirectUri` ارسال شود، پس از موفقیت، بک‌اند کاربر را با وضعیت `302` به همان آدرس برمی‌گرداند و پارامترهای `success=1` و `token=<jwt>` را به query اضافه می‌کند.
+- اگر `redirectUri` ارسال نشود، مقدار پیش‌فرض از `app.oauth.frontend-base-url` گرفته می‌شود.
+- `redirectUri` باید با یکی از آدرس‌های مجاز در `app.oauth.allowed-redirect-uris` هم‌مبدا باشد؛ در غیر این صورت درخواست با خطای `400` رد می‌شود.
 
 ### مدل `InviteAdminRequest`
 - `email` (الزامی): رشتهٔ ایمیل معتبر حداکثر ۱۲۸ کاراکتری.

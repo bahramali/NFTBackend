@@ -11,6 +11,9 @@ This page enumerates every HTTP endpoint exposed by the backend. Unless noted, e
 - `POST /api/auth/accept-invite` — accept an admin invite (token + password) and login.
 - `GET /api/auth/accept-invite/{token}` — validate invite token and read metadata.
 - `POST /api/auth/password-reset` — request a password reset (uses `Authorization` token if available).
+- `GET /api/auth/oauth/providers` — list supported OAuth providers.
+- `POST /api/auth/oauth/google/start` — start Google OAuth login and return `authorizationUrl`.
+- `GET /api/auth/oauth/google/callback` — finish Google OAuth login (`code`, `state`).
 
 ## Users (admin or TEAM permission)
 - `GET /api/users` — list users (requires `TEAM` permission).

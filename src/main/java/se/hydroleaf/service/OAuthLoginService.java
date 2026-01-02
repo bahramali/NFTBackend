@@ -36,16 +36,27 @@ public class OAuthLoginService {
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public OAuthStartResult startLogin(OauthProvider provider, String redirectUri) {
+        return startLogin(provider, redirectUri, null);
+    }
+
+    public OAuthStartResult startLogin(OauthProvider provider, String redirectUri, String callbackBaseUrl) {
         OAuthProperties.GoogleProperties google = requireGoogleConfig(provider);
         String resolvedRedirect = resolveRedirectUri(redirectUri);
+        String callbackUri = resolveCallbackUri(google, callbackBaseUrl);
         String nonce = TokenGenerator.randomToken();
         String codeVerifier = TokenGenerator.randomVerifier();
         String codeChallenge = TokenGenerator.sha256Base64Url(codeVerifier);
-        OAuthStateStore.OAuthState state = stateStore.createState(provider, nonce, codeVerifier, resolvedRedirect);
+        OAuthStateStore.OAuthState state = stateStore.createState(
+                provider,
+                nonce,
+                codeVerifier,
+                resolvedRedirect,
+                callbackUri
+        );
 
         String authorizationUrl = UriComponentsBuilder.fromUriString(google.getAuthorizationEndpoint())
                 .queryParam("client_id", google.getClientId())
-                .queryParam("redirect_uri", google.getRedirectUri())
+                .queryParam("redirect_uri", callbackUri)
                 .queryParam("response_type", "code")
                 .queryParam("scope", String.join(" ", GOOGLE_SCOPES))
                 .queryParam("state", state.state())
@@ -68,7 +79,8 @@ public class OAuthLoginService {
         OidcTokenResponse tokenResponse = tokenClient.exchangeAuthorizationCode(
                 provider,
                 code,
-                storedState.codeVerifier()
+                storedState.codeVerifier(),
+                storedState.callbackUri()
         );
         OidcTokenClaims claims = tokenVerifier.verifyIdToken(provider, tokenResponse.idToken(), storedState.nonce());
         if (claims == null || !StringUtils.hasText(claims.subject())) {
@@ -193,10 +205,20 @@ public class OAuthLoginService {
         if (!StringUtils.hasText(google.getClientId())) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Google client ID is not configured");
         }
-        if (!StringUtils.hasText(google.getRedirectUri())) {
+        return google;
+    }
+
+    private String resolveCallbackUri(OAuthProperties.GoogleProperties google, String callbackBaseUrl) {
+        if (StringUtils.hasText(google.getRedirectUri())) {
+            return google.getRedirectUri();
+        }
+        if (!StringUtils.hasText(callbackBaseUrl)) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Google redirect URI is not configured");
         }
-        return google;
+        return UriComponentsBuilder.fromUriString(callbackBaseUrl)
+                .path("/api/auth/oauth/google/callback")
+                .build()
+                .toUriString();
     }
 
     public record OAuthStartResult(String authorizationUrl, String state) {}

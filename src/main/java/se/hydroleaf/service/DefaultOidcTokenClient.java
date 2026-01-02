@@ -22,7 +22,12 @@ public class DefaultOidcTokenClient implements OidcTokenClient {
     private final OAuthProperties oauthProperties;
 
     @Override
-    public OidcTokenResponse exchangeAuthorizationCode(OauthProvider provider, String code, String codeVerifier) {
+    public OidcTokenResponse exchangeAuthorizationCode(
+            OauthProvider provider,
+            String code,
+            String codeVerifier,
+            String redirectUri
+    ) {
         OAuthProperties.GoogleProperties google = oauthProperties.getGoogle();
         if (provider != OauthProvider.GOOGLE) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported provider");
@@ -33,7 +38,10 @@ public class DefaultOidcTokenClient implements OidcTokenClient {
         if (google.getClientSecret() == null || google.getClientSecret().isBlank()) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Google client secret is not configured");
         }
-        if (google.getRedirectUri() == null || google.getRedirectUri().isBlank()) {
+        String resolvedRedirectUri = (redirectUri != null && !redirectUri.isBlank())
+                ? redirectUri
+                : google.getRedirectUri();
+        if (resolvedRedirectUri == null || resolvedRedirectUri.isBlank()) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Google redirect URI is not configured");
         }
 
@@ -42,7 +50,7 @@ public class DefaultOidcTokenClient implements OidcTokenClient {
         form.add("code", Objects.requireNonNull(code));
         form.add("client_id", google.getClientId());
         form.add("client_secret", google.getClientSecret());
-        form.add("redirect_uri", google.getRedirectUri());
+        form.add("redirect_uri", resolvedRedirectUri);
         if (codeVerifier != null) {
             form.add("code_verifier", codeVerifier);
         }

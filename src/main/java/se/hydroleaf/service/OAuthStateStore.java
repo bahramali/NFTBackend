@@ -19,9 +19,15 @@ public class OAuthStateStore {
     private final Clock clock;
     private final Map<String, OAuthState> states = new ConcurrentHashMap<>();
 
-    public OAuthState createState(OauthProvider provider, String nonce, String codeVerifier, String redirectUri) {
+    public OAuthState createState(
+            OauthProvider provider,
+            String nonce,
+            String codeVerifier,
+            String redirectUri,
+            String callbackUri
+    ) {
         Instant now = Instant.now(clock);
-        OAuthState state = new OAuthState(provider, nonce, codeVerifier, redirectUri, now);
+        OAuthState state = new OAuthState(provider, nonce, codeVerifier, redirectUri, callbackUri, now);
         states.put(state.state(), state);
         return state;
     }
@@ -44,6 +50,7 @@ public class OAuthStateStore {
             String nonce,
             String codeVerifier,
             String redirectUri,
+            String callbackUri,
             Instant createdAt,
             String state
     ) {
@@ -52,9 +59,10 @@ public class OAuthStateStore {
                 String nonce,
                 String codeVerifier,
                 String redirectUri,
+                String callbackUri,
                 Instant createdAt
         ) {
-            this(provider, nonce, codeVerifier, redirectUri, createdAt, TokenGenerator.randomToken());
+            this(provider, nonce, codeVerifier, redirectUri, callbackUri, createdAt, TokenGenerator.randomToken());
         }
     }
 }

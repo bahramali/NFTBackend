@@ -43,6 +43,32 @@ folder "Auth" {
       """
     }
   }
+
+  req "OAuth Providers" {
+    method: "GET"
+    url: "{{baseUrl}}/api/auth/oauth/providers"
+  }
+
+  req "Google OAuth Start" {
+    method: "POST"
+    url: "{{baseUrl}}/api/auth/oauth/google/start"
+    headers {
+      "Content-Type": "application/json"
+    }
+    body {
+      type: "json"
+      json: """
+      {
+        "redirectUri": "https://app.example.com/auth/google/callback"
+      }
+      """
+    }
+  }
+
+  req "Google OAuth Callback" {
+    method: "GET"
+    url: "{{baseUrl}}/api/auth/oauth/google/callback?code=<code>&state=<state>"
+  }
 }
 
 folder "Users" {

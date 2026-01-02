@@ -31,15 +31,12 @@ public class SensorConfigController {
     }
 
     @GetMapping
-    public List<SensorConfig> getAll(@RequestHeader(name = "Authorization", required = false) String token) {
-        authorizationService.requireMonitoringConfig(token);
+    public List<SensorConfig> getAll() {
         return service.getAll();
     }
 
     @GetMapping("/{sensorType}")
-    public SensorConfig get(@RequestHeader(name = "Authorization", required = false) String token,
-                            @PathVariable String sensorType) {
-        authorizationService.requireMonitoringConfig(token);
+    public SensorConfig get(@PathVariable String sensorType) {
         try {
             return service.get(sensorType);
         } catch (IllegalArgumentException iae) {

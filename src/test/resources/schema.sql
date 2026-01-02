@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS user_identity;
 DROP TABLE IF EXISTS app_user_permissions;
 DROP TABLE IF EXISTS app_user;
 

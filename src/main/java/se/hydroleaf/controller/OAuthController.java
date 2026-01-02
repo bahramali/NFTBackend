@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 import se.hydroleaf.controller.dto.LoginResponse;
 import se.hydroleaf.controller.dto.OAuthProviderResponse;
@@ -34,9 +35,18 @@ public class OAuthController {
     }
 
     @PostMapping("/google/start")
-    public OAuthStartResponse startGoogle(@RequestBody(required = false) OAuthStartRequest request) {
+    public OAuthStartResponse startGoogle(
+            @RequestBody(required = false) OAuthStartRequest request
+    ) {
         String redirectUri = request != null ? request.redirectUri() : null;
-        OAuthLoginService.OAuthStartResult result = oauthLoginService.startLogin(OauthProvider.GOOGLE, redirectUri);
+        String callbackBaseUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .build()
+                .toUriString();
+        OAuthLoginService.OAuthStartResult result = oauthLoginService.startLogin(
+                OauthProvider.GOOGLE,
+                redirectUri,
+                callbackBaseUrl
+        );
         return new OAuthStartResponse(result.authorizationUrl());
     }
 

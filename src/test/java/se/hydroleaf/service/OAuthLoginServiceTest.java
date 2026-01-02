@@ -165,7 +165,12 @@ class OAuthLoginServiceTest {
 
     private static class FakeTokenClient implements OidcTokenClient {
         @Override
-        public OidcTokenResponse exchangeAuthorizationCode(OauthProvider provider, String code, String codeVerifier) {
+        public OidcTokenResponse exchangeAuthorizationCode(
+                OauthProvider provider,
+                String code,
+                String codeVerifier,
+                String redirectUri
+        ) {
             return new OidcTokenResponse("access", "id-token", null, 3600L, "Bearer");
         }
     }

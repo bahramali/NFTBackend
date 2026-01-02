@@ -7,6 +7,7 @@ public interface OidcTokenClient {
     OidcTokenResponse exchangeAuthorizationCode(
             OauthProvider provider,
             String code,
-            String codeVerifier
+            String codeVerifier,
+            String redirectUri
     );
 }

@@ -47,10 +47,13 @@ public class OAuthController {
     ) {
         OAuthLoginService.OAuthLoginResult result = oauthLoginService.handleCallback(OauthProvider.GOOGLE, code, state);
         AuthenticatedUser user = result.loginResult().user();
+        List<String> permissions = user.permissions().stream()
+                .map(Enum::name)
+                .toList();
         LoginResponse response = new LoginResponse(
                 user.userId(),
                 user.role(),
-                user.permissions(),
+                permissions,
                 result.loginResult().token()
         );
 

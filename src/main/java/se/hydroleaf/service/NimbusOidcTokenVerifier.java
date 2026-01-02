@@ -104,8 +104,12 @@ public class NimbusOidcTokenVerifier implements OidcTokenVerifier {
         if (now.isAfter(expiration.toInstant().plus(DEFAULT_CLOCK_SKEW))) {
             throw new BadJOSEException("Token expired");
         }
-        String tokenNonce = claims.getStringClaim("nonce");
-        if (nonce != null && !nonce.equals(tokenNonce)) {
+        try {
+            String tokenNonce = claims.getStringClaim("nonce");
+            if (nonce != null && !nonce.equals(tokenNonce)) {
+                throw new BadJOSEException("Invalid nonce");
+            }
+        } catch (ParseException ex) {
             throw new BadJOSEException("Invalid nonce");
         }
     }

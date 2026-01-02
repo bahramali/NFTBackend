@@ -51,6 +51,27 @@ app:
       - https://www.hydroleaf.se
       - https://api.hydroleaf.se
       - http://localhost:5173
+  oauth:
+    frontend-base-url: ${APP_PUBLIC_URL:https://hydroleaf.se}
+    allowed-redirect-uris:
+      - https://hydroleaf.se
+      - https://www.hydroleaf.se
+      - http://localhost:5173
+    state-ttl: 10m
+    rate-limit:
+      capacity: 60
+      refill-tokens: 60
+      refill-seconds: 60
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+      client-secret: ${GOOGLE_CLIENT_SECRET:}
+      redirect-uri: ${GOOGLE_REDIRECT_URI:}
+      authorization-endpoint: https://accounts.google.com/o/oauth2/v2/auth
+      token-endpoint: https://oauth2.googleapis.com/token
+      jwks-uri: https://www.googleapis.com/oauth2/v3/certs
+      issuers:
+        - https://accounts.google.com
+        - accounts.google.com
   invite-email:
     # single source of truth:
     smtp-enabled: ${APP_INVITE_EMAIL_SMTP_ENABLED:false}

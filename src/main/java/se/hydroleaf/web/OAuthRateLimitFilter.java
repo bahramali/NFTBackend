@@ -1,0 +1,144 @@
+package se.hydroleaf.web;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.Refill;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+import se.hydroleaf.common.api.ApiError;
+import se.hydroleaf.config.CorsProperties;
+import se.hydroleaf.config.OAuthProperties;
+
+@Component
+@Profile("!test")
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
+@RequiredArgsConstructor
+public class OAuthRateLimitFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(OAuthRateLimitFilter.class);
+    private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "OPTIONS");
+    private static final List<String> ALLOWED_HEADERS = List.of("Content-Type", "Authorization", "X-Requested-With");
+
+    private final OAuthProperties oauthProperties;
+    private final ObjectMapper objectMapper;
+    private final CorsProperties corsProperties;
+    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        if (!uri.startsWith("/api/auth/oauth")) {
+            return true;
+        }
+        return HttpMethod.OPTIONS.matches(request.getMethod());
+    }
+
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+        OAuthProperties.RateLimitProperties rate = oauthProperties.getRateLimit();
+        if (rate == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String key = resolveKey(request);
+        Bucket bucket = buckets.computeIfAbsent(key, k -> newBucket(rate, k));
+        if (bucket.tryConsume(1)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        log.warn("OAuth rate limit exceeded for {}", key);
+        handleRateLimitExceeded(request, response, rate);
+    }
+
+    private String resolveKey(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (StringUtils.hasText(forwardedFor)) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        String remote = request.getRemoteAddr();
+        return StringUtils.hasText(remote) ? remote : "unknown";
+    }
+
+    private Bucket newBucket(OAuthProperties.RateLimitProperties rate, String key) {
+        long capacity = Math.max(1, rate.getCapacity());
+        long refillTokens = Math.max(1, rate.getRefillTokens());
+        long refillSeconds = Math.max(1, rate.getRefillSeconds());
+
+        Bandwidth limit = Bandwidth.classic(
+                capacity,
+                Refill.intervally(refillTokens, Duration.ofSeconds(refillSeconds))
+        );
+
+        log.debug(
+                "Creating OAuth rate limit bucket for {} with cap {} refill {} per {}s",
+                key, capacity, refillTokens, refillSeconds
+        );
+
+        return Bucket.builder()
+                .addLimit(limit)
+                .build();
+    }
+
+    private void handleRateLimitExceeded(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            OAuthProperties.RateLimitProperties rate
+    ) throws IOException {
+        if (response.isCommitted()) {
+            return;
+        }
+        long retryAfterSeconds = Math.max(1, rate.getRefillSeconds());
+
+        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
+
+        applyCorsHeaders(request, response);
+
+        ApiError apiError = new ApiError("RATE_LIMITED", "Too many requests, please slow down");
+        response.getWriter().write(objectMapper.writeValueAsString(apiError));
+    }
+
+    private void applyCorsHeaders(HttpServletRequest request, HttpServletResponse response) {
+        String origin = request.getHeader(HttpHeaders.ORIGIN);
+        if (!StringUtils.hasText(origin)) {
+            return;
+        }
+        if (corsProperties.getAllowedOrigins().contains(origin)) {
+            response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+            response.addHeader(HttpHeaders.VARY, HttpHeaders.ORIGIN);
+            response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
+            response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, String.join(",", ALLOWED_METHODS));
+            response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, String.join(",", ALLOWED_HEADERS));
+            response.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.RETRY_AFTER);
+        }
+    }
+}

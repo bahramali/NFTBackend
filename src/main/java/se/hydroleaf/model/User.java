@@ -57,6 +57,9 @@ public class User {
     @Column(name = "display_name", length = 128)
     private String displayName;
 
+    @Column(name = "picture_url", length = 512)
+    private String pictureUrl;
+
     @Column(name = "phone", length = 32)
     private String phone;
 
@@ -90,6 +93,14 @@ public class User {
     @Column(name = "active", nullable = false)
     @Builder.Default
     private boolean active = true;
+
+    @Column(
+            name = "email_verified",
+            nullable = false,
+            columnDefinition = "boolean default false not null"
+    )
+    @Builder.Default
+    private boolean emailVerified = false;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 32, nullable = false, columnDefinition = "varchar(32) default 'ACTIVE' not null")

@@ -10,7 +10,7 @@ import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.jwk.source.RemoteJWKSet;
-import com.nimbusds.jwt.proc.JWSVerificationKeySelector;
+import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;

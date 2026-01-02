@@ -46,6 +46,13 @@ public class AuthService {
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new SecurityException("Invalid credentials");
         }
+        return createSession(user);
+    }
+
+    public LoginResult createSession(User user) {
+        if (user.getStatus() == UserStatus.INVITED || user.getStatus() == UserStatus.DISABLED) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not allowed to login");
+        }
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
         String token = UUID.randomUUID().toString();

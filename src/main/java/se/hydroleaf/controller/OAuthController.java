@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,7 @@ import se.hydroleaf.service.RefreshTokenCookieService;
 @RestController
 @RequestMapping("/api/auth/oauth")
 @RequiredArgsConstructor
+@Slf4j
 public class OAuthController {
 
     private final OAuthLoginService oauthLoginService;
@@ -52,11 +54,13 @@ public class OAuthController {
         String callbackBaseUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .build()
                 .toUriString();
+        log.info("Starting Google OAuth login. redirectUri={}, callbackBaseUrl={}", redirectUri, callbackBaseUrl);
         OAuthLoginService.OAuthStartResult result = oauthLoginService.startLogin(
                 OauthProvider.GOOGLE,
                 redirectUri,
                 callbackBaseUrl
         );
+        log.info("Google OAuth login started. authorizationUrl={}", result.authorizationUrl());
         return new OAuthStartResponse(result.authorizationUrl());
     }
 

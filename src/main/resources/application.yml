@@ -89,3 +89,17 @@ app:
     subject: ${APP_PASSWORD_RESET_EMAIL_SUBJECT:Reset your Hydroleaf password}
     reset-link-template: ${APP_PASSWORD_RESET_LINK_TEMPLATE:}
     public-base-url: ${APP_PASSWORD_RESET_PUBLIC_BASE_URL:${APP_PUBLIC_URL:https://hydroleaf.se}}
+  auth:
+    jwt:
+      secret: ${APP_JWT_SECRET:change-me-jwt-secret-change-me-jwt-secret}
+      issuer: ${APP_JWT_ISSUER:hydroleaf-api}
+      audience: ${APP_JWT_AUDIENCE:hydroleaf-app}
+      access-token-ttl: 15m
+    refresh:
+      token-ttl: 30d
+    cookie:
+      name: ${APP_REFRESH_COOKIE_NAME:refreshToken}
+      secure: ${APP_REFRESH_COOKIE_SECURE:true}
+      http-only: true
+      same-site: Strict
+      path: /api/auth

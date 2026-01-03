@@ -14,3 +14,10 @@ spring:
   sql:
     init:
       mode: never
+
+app:
+  auth:
+    jwt:
+      secret: test-jwt-secret-test-jwt-secret-test
+      issuer: test-issuer
+      audience: test-audience

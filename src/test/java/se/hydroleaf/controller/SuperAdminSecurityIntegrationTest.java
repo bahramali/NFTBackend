@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Sql(scripts = "classpath:schema.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = "classpath:schema_create.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class SuperAdminSecurityIntegrationTest {
 
     @Autowired
@@ -155,7 +155,7 @@ class SuperAdminSecurityIntegrationTest {
 
     private String bearerToken(String email, String password) {
         AuthService.LoginResult result = authService.login(email, password);
-        return "Bearer " + result.token();
+        return "Bearer " + result.accessToken();
     }
 
     private String createUserRequestJson(String email, String role) throws Exception {

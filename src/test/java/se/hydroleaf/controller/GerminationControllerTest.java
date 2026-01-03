@@ -21,6 +21,7 @@ import se.hydroleaf.repository.GerminationCycleRepository;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.GerminationService;
+import se.hydroleaf.service.JwtService;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -56,6 +57,9 @@ class GerminationControllerTest {
     @MockBean
     private AuthorizationService authorizationService;
 
+    @MockBean
+    private JwtService jwtService;
+
     @Autowired
     private GerminationService germinationService;
 
@@ -81,6 +85,7 @@ class GerminationControllerTest {
         Mockito.when(clock.getZone()).thenReturn(ZoneOffset.UTC);
         Mockito.when(clock.instant()).thenReturn(Instant.EPOCH);
         Mockito.when(authorizationService.requireAdminOrOperator(anyString())).thenReturn(adminUser);
+        Mockito.when(jwtService.parseAccessToken(anyString())).thenReturn(adminUser);
     }
 
     @Test

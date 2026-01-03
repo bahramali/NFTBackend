@@ -21,6 +21,7 @@ import se.hydroleaf.controller.dto.OAuthStartResponse;
 import se.hydroleaf.model.OauthProvider;
 import se.hydroleaf.service.OAuthLoginService;
 import se.hydroleaf.service.AuthenticatedUser;
+import se.hydroleaf.service.RefreshTokenCookieService;
 
 @RestController
 @RequestMapping("/api/auth/oauth")
@@ -28,6 +29,7 @@ import se.hydroleaf.service.AuthenticatedUser;
 public class OAuthController {
 
     private final OAuthLoginService oauthLoginService;
+    private final RefreshTokenCookieService refreshTokenCookieService;
 
     @GetMapping("/providers")
     public List<OAuthProviderResponse> listProviders() {
@@ -64,21 +66,25 @@ public class OAuthController {
                 user.userId(),
                 user.role(),
                 permissions,
-                result.loginResult().token()
+                result.loginResult().accessToken()
         );
+        String refreshCookie = refreshTokenCookieService.createRefreshCookie(result.loginResult().refreshToken()).toString();
 
         if (result.redirectUri() == null || result.redirectUri().isBlank()) {
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, refreshCookie)
+                    .body(response);
         }
 
         URI redirect = UriComponentsBuilder.fromUriString(result.redirectUri())
                 .queryParam("success", 1)
-                .queryParam("token", result.loginResult().token())
+                .queryParam("token", result.loginResult().accessToken())
                 .build()
                 .toUri();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(redirect);
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookie);
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 }

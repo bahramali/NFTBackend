@@ -65,7 +65,7 @@ class AdminCustomerControllerIntegrationTest {
     void listWithoutPermissionReturnsForbidden() throws Exception {
         String password = "Password12345!";
         createAdmin("no-permission@example.com", password, Set.of());
-        String token = authService.login("no-permission@example.com", password).token();
+        String token = authService.login("no-permission@example.com", password).accessToken();
 
         mockMvc.perform(get("/api/admin/customers")
                         .header("Authorization", "Bearer " + token))
@@ -76,7 +76,7 @@ class AdminCustomerControllerIntegrationTest {
     void listWithPermissionReturnsOk() throws Exception {
         String password = "Password12345!";
         createAdmin("permission@example.com", password, Set.of(Permission.CUSTOMERS_VIEW));
-        String token = authService.login("permission@example.com", password).token();
+        String token = authService.login("permission@example.com", password).accessToken();
 
         mockMvc.perform(get("/api/admin/customers")
                         .param("sort", "last_order_desc")
@@ -96,7 +96,7 @@ class AdminCustomerControllerIntegrationTest {
         createAdmin("permission@example.com", password, Set.of(Permission.CUSTOMERS_VIEW));
         User customer = createCustomer("customer@example.com");
         createOrder("customer@example.com");
-        String token = authService.login("permission@example.com", password).token();
+        String token = authService.login("permission@example.com", password).accessToken();
 
         MvcResult result = mockMvc.perform(get("/api/admin/customers")
                         .header("Authorization", "Bearer " + token))
@@ -121,7 +121,7 @@ class AdminCustomerControllerIntegrationTest {
         createCustomer("alpha@example.com", "Alpha Customer", LocalDateTime.now());
         createCustomer("beta@example.com", "Beta Customer", LocalDateTime.now().minusDays(120));
         createOrder("guest@example.com", 1000);
-        String token = authService.login("permission@example.com", password).token();
+        String token = authService.login("permission@example.com", password).accessToken();
 
         mockMvc.perform(get("/api/admin/customers")
                         .param("q", "alpha")
@@ -138,7 +138,7 @@ class AdminCustomerControllerIntegrationTest {
         createCustomer("active@example.com", "Active Customer", LocalDateTime.now());
         createCustomer("inactive@example.com", "Inactive Customer", LocalDateTime.now().minusDays(120));
         createOrder("guest@example.com", 1000);
-        String token = authService.login("permission@example.com", password).token();
+        String token = authService.login("permission@example.com", password).accessToken();
 
         mockMvc.perform(get("/api/admin/customers")
                         .param("status", "ACTIVE")
@@ -162,7 +162,7 @@ class AdminCustomerControllerIntegrationTest {
         createCustomer("alpha.two@example.com", "Alpha Two", LocalDateTime.now());
         createOrder("guest.one@example.com", 2000);
         createOrder("guest.two@example.com", 1000);
-        String token = authService.login("permission@example.com", password).token();
+        String token = authService.login("permission@example.com", password).accessToken();
 
         mockMvc.perform(get("/api/admin/customers")
                         .param("q", "alpha")
@@ -189,7 +189,7 @@ class AdminCustomerControllerIntegrationTest {
     void detailsUnknownCustomerReturnsNotFound() throws Exception {
         String password = "Password12345!";
         createAdmin("permission@example.com", password, Set.of(Permission.CUSTOMERS_VIEW));
-        String token = authService.login("permission@example.com", password).token();
+        String token = authService.login("permission@example.com", password).accessToken();
 
         mockMvc.perform(get("/api/admin/customers/unknown")
                         .header("Authorization", "Bearer " + token))

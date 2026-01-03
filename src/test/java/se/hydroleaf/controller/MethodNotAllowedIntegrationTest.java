@@ -8,6 +8,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.DeviceService;
+import se.hydroleaf.service.JwtService;
 import se.hydroleaf.service.RecordService;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -29,6 +30,9 @@ class MethodNotAllowedIntegrationTest {
 
     @MockBean
     private AuthorizationService authorizationService;
+
+    @MockBean
+    private JwtService jwtService;
 
     @Test
     void putHistoryAggregatedReturns405() throws Exception {

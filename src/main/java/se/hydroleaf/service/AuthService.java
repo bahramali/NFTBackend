@@ -3,8 +3,6 @@ package se.hydroleaf.service;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +22,8 @@ public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ConcurrentHashMap<String, AuthenticatedUser> tokens = new ConcurrentHashMap<>();
+    private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthenticatedUser authenticate(String bearerToken) {
         if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
@@ -32,11 +31,7 @@ public class AuthService {
             throw new SecurityException("Missing or invalid authorization header");
         }
         String token = bearerToken.substring("Bearer ".length()).trim();
-        AuthenticatedUser authenticatedUser = tokens.get(token);
-        if (authenticatedUser == null) {
-            log.warn("Authentication failed: invalid or expired token (tokenPrefix={})", tokenPrefix(token));
-            throw new SecurityException("Invalid or expired token");
-        }
+        AuthenticatedUser authenticatedUser = jwtService.parseAccessToken(token);
         log.info(
                 "Authentication succeeded (tokenPrefix={}, userId={}, role={})",
                 tokenPrefix(token),
@@ -46,6 +41,10 @@ public class AuthService {
     }
 
     public LoginResult login(String email, String password) {
+        return login(email, password, null, null);
+    }
+
+    public LoginResult login(String email, String password, String userAgent, String ip) {
         String normalizedEmail = normalizeEmail(email);
         Optional<User> byEmail = userRepository.findByEmailIgnoreCase(normalizedEmail);
         User user = byEmail.orElseThrow(() -> {
@@ -61,27 +60,46 @@ public class AuthService {
             log.warn("Login failed: invalid password for email={}", normalizedEmail);
             throw new SecurityException("Invalid credentials");
         }
-        return createSession(user);
+        return createSession(user, userAgent, ip);
     }
 
     public LoginResult createSession(User user) {
+        return createSession(user, null, null);
+    }
+
+    public LoginResult createSession(User user, String userAgent, String ip) {
         if (user.getStatus() == UserStatus.INVITED || user.getStatus() == UserStatus.DISABLED) {
             log.warn("Session creation blocked: user status is {} for userId={}", user.getStatus(), user.getId());
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not allowed to login");
         }
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
-        String token = UUID.randomUUID().toString();
         Set<Permission> permissions = user.getPermissions();
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(user.getId(), user.getRole(), permissions);
-        tokens.put(token, authenticatedUser);
+        String accessToken = jwtService.createAccessToken(authenticatedUser);
+        String refreshToken = refreshTokenService.createRefreshToken(user, userAgent, ip);
         log.info(
                 "Session created (tokenPrefix={}, userId={}, role={}, permissions={})",
-                tokenPrefix(token),
+                tokenPrefix(accessToken),
                 authenticatedUser.userId(),
                 authenticatedUser.role(),
                 permissions);
-        return new LoginResult(token, authenticatedUser);
+        return new LoginResult(accessToken, refreshToken, authenticatedUser);
+    }
+
+    public RefreshResult refreshAccessToken(String refreshToken, String userAgent, String ip) {
+        RefreshTokenService.RefreshTokenSession session = refreshTokenService.rotateRefreshToken(refreshToken, userAgent, ip);
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser(
+                session.user().getId(),
+                session.user().getRole(),
+                session.user().getPermissions()
+        );
+        String accessToken = jwtService.createAccessToken(authenticatedUser);
+        return new RefreshResult(accessToken, session.refreshToken());
+    }
+
+    public void logout(String refreshToken) {
+        refreshTokenService.revokeRefreshToken(refreshToken);
     }
 
     private String normalizeEmail(String email) {
@@ -95,7 +113,9 @@ public class AuthService {
         return trimmed;
     }
 
-    public record LoginResult(String token, AuthenticatedUser user) {}
+    public record LoginResult(String accessToken, String refreshToken, AuthenticatedUser user) {}
+
+    public record RefreshResult(String accessToken, String refreshToken) {}
 
     private String tokenPrefix(String token) {
         if (token == null || token.isBlank()) {

@@ -1,6 +1,7 @@
 package se.hydroleaf.controller;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +17,7 @@ import se.hydroleaf.repository.dto.summary.StatusAverageResponse;
 import se.hydroleaf.repository.dto.summary.WaterTankSummary;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
+import se.hydroleaf.service.JwtService;
 import se.hydroleaf.service.StatusService;
 
 import java.util.Map;
@@ -41,8 +43,16 @@ class StatusControllerTest {
     @MockitoBean
     private AuthorizationService authorizationService;
 
+    @MockitoBean
+    private JwtService jwtService;
+
     private AuthenticatedUser adminUser() {
         return new AuthenticatedUser(1L, UserRole.ADMIN, Set.<Permission>of());
+    }
+
+    @BeforeEach
+    void setupAuth() {
+        when(jwtService.parseAccessToken(anyString())).thenReturn(adminUser());
     }
 
     @Test

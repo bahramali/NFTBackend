@@ -48,7 +48,7 @@ public class TurnstileVerificationService {
                     .block(TIMEOUT);
 
             if (response != null && response.success()) {
-                return TurnstileVerificationResult.success();
+                return TurnstileVerificationResult.valid();
             }
             List<String> errors = response != null ? response.errorCodes() : List.of("empty-response");
             log.warn(
@@ -70,7 +70,7 @@ public class TurnstileVerificationService {
     }
 
     public record TurnstileVerificationResult(boolean success, List<String> errors) {
-        public static TurnstileVerificationResult success() {
+        public static TurnstileVerificationResult valid() {
             return new TurnstileVerificationResult(true, List.of());
         }
 

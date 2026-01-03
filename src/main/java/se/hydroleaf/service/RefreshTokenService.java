@@ -2,12 +2,15 @@ package se.hydroleaf.service;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.hydroleaf.config.AuthProperties;
+import se.hydroleaf.model.Permission;
 import se.hydroleaf.model.RefreshToken;
 import se.hydroleaf.model.User;
+import se.hydroleaf.model.UserRole;
 import se.hydroleaf.repository.RefreshTokenRepository;
 
 @Service
@@ -52,7 +55,7 @@ public class RefreshTokenService {
             throw new SecurityException("Missing refresh token");
         }
         String hash = hashToken(refreshToken);
-        RefreshToken token = refreshTokenRepository.findByTokenHashWithUser(hash)
+        RefreshToken token = refreshTokenRepository.findByTokenHashWithUserAndPermissions(hash)
                 .orElseThrow(() -> new SecurityException("Invalid refresh token"));
         Instant now = Instant.now(clock);
         if (token.getRevokedAt() != null) {
@@ -67,6 +70,8 @@ public class RefreshTokenService {
     private RefreshTokenSession createRefreshTokenSession(User user, String userAgent, String ip) {
         String token = TokenGenerator.randomVerifier();
         Instant now = Instant.now(clock);
+        Set<Permission> permissions = user.getPermissions();
+        UserRole role = user.getRole();
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
                 .tokenHash(hashToken(token))
@@ -76,12 +81,17 @@ public class RefreshTokenService {
                 .ip(ip)
                 .build();
         refreshTokenRepository.save(refreshToken);
-        return new RefreshTokenSession(token, user);
+        return new RefreshTokenSession(token, user.getId(), role, permissions);
     }
 
     private String hashToken(String refreshToken) {
         return TokenGenerator.sha256Base64Url(refreshToken);
     }
 
-    public record RefreshTokenSession(String refreshToken, User user) {}
+    public record RefreshTokenSession(
+            String refreshToken,
+            long userId,
+            UserRole role,
+            Set<Permission> permissions
+    ) {}
 }

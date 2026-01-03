@@ -19,5 +19,5 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
             left join fetch user.permissions
             where refreshToken.tokenHash = :tokenHash
             """)
-    Optional<RefreshToken> findByTokenHashWithUser(@Param("tokenHash") String tokenHash);
+    Optional<RefreshToken> findByTokenHashWithUserAndPermissions(@Param("tokenHash") String tokenHash);
 }

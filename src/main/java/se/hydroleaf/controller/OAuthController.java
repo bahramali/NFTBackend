@@ -1,11 +1,13 @@
 package se.hydroleaf.controller;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,6 +20,7 @@ import se.hydroleaf.controller.dto.LoginResponse;
 import se.hydroleaf.controller.dto.OAuthProviderResponse;
 import se.hydroleaf.controller.dto.OAuthStartRequest;
 import se.hydroleaf.controller.dto.OAuthStartResponse;
+import se.hydroleaf.config.OAuthProperties;
 import se.hydroleaf.model.OauthProvider;
 import se.hydroleaf.service.OAuthLoginService;
 import se.hydroleaf.service.AuthenticatedUser;
@@ -30,10 +33,15 @@ public class OAuthController {
 
     private final OAuthLoginService oauthLoginService;
     private final RefreshTokenCookieService refreshTokenCookieService;
+    private final OAuthProperties oauthProperties;
 
     @GetMapping("/providers")
     public List<OAuthProviderResponse> listProviders() {
-        return List.of(new OAuthProviderResponse("google", "Google"));
+        List<OAuthProviderResponse> providers = new ArrayList<>();
+        if (StringUtils.hasText(oauthProperties.getGoogle().getClientId())) {
+            providers.add(new OAuthProviderResponse("google", "Google"));
+        }
+        return providers;
     }
 
     @PostMapping("/google/start")

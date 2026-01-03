@@ -84,6 +84,8 @@ class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
                 .andReturn();
 
+        assertThat(refreshResult.getResolvedException()).isNull();
+
         Cookie rotatedCookie = refreshResult.getResponse().getCookie("refreshToken");
         assertThat(rotatedCookie).isNotNull();
         assertThat(rotatedCookie.getValue()).isNotEqualTo(refreshToken);

@@ -41,6 +41,12 @@ app:
       refill-tokens: 120
       refill-seconds: 60
 
+  contact:
+    rate-limit:
+      capacity: 5
+      refill-tokens: 5
+      refill-seconds: 60
+
   stripe:
     enabled: ${STRIPE_ENABLED:false}
     api-key: ${STRIPE_API_KEY:}
@@ -89,6 +95,11 @@ app:
     subject: ${APP_PASSWORD_RESET_EMAIL_SUBJECT:Reset your Hydroleaf password}
     reset-link-template: ${APP_PASSWORD_RESET_LINK_TEMPLATE:}
     public-base-url: ${APP_PASSWORD_RESET_PUBLIC_BASE_URL:${APP_PUBLIC_URL:https://hydroleaf.se}}
+  contact-email:
+    smtp-enabled: ${APP_CONTACT_EMAIL_SMTP_ENABLED:true}
+    to: ${APP_CONTACT_EMAIL_TO:info@hydroleaf.se}
+    from: ${APP_CONTACT_EMAIL_FROM:no-reply@hydroleaf.se}
+    subject-prefix: ${APP_CONTACT_EMAIL_SUBJECT_PREFIX:[HydroLeaf Contact]}
   auth:
     jwt:
       secret: ${APP_JWT_SECRET:change-me-jwt-secret-change-me-jwt-secret}

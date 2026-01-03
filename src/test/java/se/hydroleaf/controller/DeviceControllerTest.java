@@ -1,6 +1,7 @@
 package se.hydroleaf.controller;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,6 +14,7 @@ import se.hydroleaf.repository.dto.DeviceSensorsResponse;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
 import se.hydroleaf.service.DeviceService;
+import se.hydroleaf.service.JwtService;
 
 import java.util.List;
 import java.util.Set;
@@ -37,8 +39,16 @@ class DeviceControllerTest {
     @MockitoBean
     private AuthorizationService authorizationService;
 
+    @MockitoBean
+    private JwtService jwtService;
+
     private AuthenticatedUser adminUser() {
         return new AuthenticatedUser(1L, UserRole.ADMIN, Set.<Permission>of());
+    }
+
+    @BeforeEach
+    void setupAuth() {
+        when(jwtService.parseAccessToken(anyString())).thenReturn(adminUser());
     }
 
     @Test

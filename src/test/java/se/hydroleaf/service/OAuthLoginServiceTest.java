@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
@@ -53,7 +54,12 @@ class OAuthLoginServiceTest {
         OAuthStateStore stateStore = new OAuthStateStore(properties, clock);
         tokenClient = new FakeTokenClient();
         tokenVerifier = new FakeTokenVerifier();
-        AuthService authService = new AuthService(userRepository, passwordEncoder);
+        JwtService jwtService = Mockito.mock(JwtService.class);
+        RefreshTokenService refreshTokenService = Mockito.mock(RefreshTokenService.class);
+        Mockito.when(jwtService.createAccessToken(Mockito.any())).thenReturn("access-token");
+        Mockito.when(refreshTokenService.createRefreshToken(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn("refresh-token");
+        AuthService authService = new AuthService(userRepository, passwordEncoder, jwtService, refreshTokenService);
         service = new OAuthLoginService(
                 properties,
                 stateStore,

@@ -167,7 +167,8 @@ public class OAuthLoginService {
         }
         List<String> allowed = oauthProperties.getAllowedRedirectUris();
         if (allowed == null || allowed.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Redirect URI not allowed");
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "OAuth redirect allowlist is not configured");
         }
         URI requested = URI.create(redirectUri);
         boolean allowedMatch = allowed.stream().filter(StringUtils::hasText).anyMatch(entry -> {
@@ -203,7 +204,8 @@ public class OAuthLoginService {
         }
         OAuthProperties.GoogleProperties google = oauthProperties.getGoogle();
         if (!StringUtils.hasText(google.getClientId())) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Google client ID is not configured");
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Google OAuth client ID is not configured");
         }
         return google;
     }
@@ -213,7 +215,8 @@ public class OAuthLoginService {
             return google.getRedirectUri();
         }
         if (!StringUtils.hasText(callbackBaseUrl)) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Google redirect URI is not configured");
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Google OAuth redirect URI is not configured");
         }
         return UriComponentsBuilder.fromUriString(callbackBaseUrl)
                 .path("/api/auth/oauth/google/callback")

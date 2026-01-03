@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -77,8 +78,16 @@ public class ContactRateLimitFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        log.warn("Contact rate limit exceeded for {}", key);
-        handleRateLimitExceeded(request, response, rate);
+        String requestId = UUID.randomUUID().toString().substring(0, 8);
+        boolean suspectedBot = isSuspectedBot(request);
+        log.warn(
+                "contact_message_dropped requestId={} reason=rate_limit ip={} userAgent={} suspectedBot={}",
+                requestId,
+                key,
+                request.getHeader(HttpHeaders.USER_AGENT),
+                suspectedBot
+        );
+        handleRateLimitExceeded(request, response, rate, suspectedBot);
     }
 
     private String resolveKey(HttpServletRequest request) {
@@ -92,35 +101,67 @@ public class ContactRateLimitFilter extends OncePerRequestFilter {
     }
 
     private Bucket newBucket(ContactProperties.RateLimitProperties rate, String key) {
-        long capacity = Math.max(1, rate.getCapacity());
-        long refillTokens = Math.max(1, rate.getRefillTokens());
-        long refillSeconds = Math.max(1, rate.getRefillSeconds());
+        ContactProperties.LimitProperties perMinute = rate.getPerMinute() == null
+                ? new ContactProperties.LimitProperties(5, 5, 60)
+                : rate.getPerMinute();
+        ContactProperties.LimitProperties perDay = rate.getPerDay() == null
+                ? new ContactProperties.LimitProperties(20, 20, 86_400)
+                : rate.getPerDay();
 
-        Bandwidth limit = Bandwidth.classic(
-                capacity,
-                Refill.intervally(refillTokens, Duration.ofSeconds(refillSeconds))
+        long minuteCapacity = Math.max(1, perMinute.getCapacity());
+        long minuteRefillTokens = Math.max(1, perMinute.getRefillTokens());
+        long minuteRefillSeconds = Math.max(1, perMinute.getRefillSeconds());
+
+        long dayCapacity = Math.max(1, perDay.getCapacity());
+        long dayRefillTokens = Math.max(1, perDay.getRefillTokens());
+        long dayRefillSeconds = Math.max(1, perDay.getRefillSeconds());
+
+        Bandwidth minuteLimit = Bandwidth.classic(
+                minuteCapacity,
+                Refill.intervally(minuteRefillTokens, Duration.ofSeconds(minuteRefillSeconds))
+        );
+        Bandwidth dayLimit = Bandwidth.classic(
+                dayCapacity,
+                Refill.intervally(dayRefillTokens, Duration.ofSeconds(dayRefillSeconds))
         );
 
         log.debug(
-                "Creating contact rate limit bucket for {} with cap {} refill {} per {}s",
-                key, capacity, refillTokens, refillSeconds
+                "Creating contact rate limit bucket for {} with minute cap {} refill {} per {}s and day cap {} refill {} per {}s",
+                key,
+                minuteCapacity,
+                minuteRefillTokens,
+                minuteRefillSeconds,
+                dayCapacity,
+                dayRefillTokens,
+                dayRefillSeconds
         );
 
         return Bucket.builder()
-                .addLimit(limit)
+                .addLimit(minuteLimit)
+                .addLimit(dayLimit)
                 .build();
     }
 
     private void handleRateLimitExceeded(
             HttpServletRequest request,
             HttpServletResponse response,
-            ContactProperties.RateLimitProperties rate
+            ContactProperties.RateLimitProperties rate,
+            boolean suspectedBot
     ) throws IOException {
         if (response.isCommitted()) {
             return;
         }
 
-        long retryAfterSeconds = Math.max(1, rate.getRefillSeconds());
+        if (suspectedBot) {
+            response.setStatus(HttpStatus.NO_CONTENT.value());
+            applyCorsHeaders(request, response);
+            return;
+        }
+
+        ContactProperties.LimitProperties perMinute = rate.getPerMinute() == null
+                ? new ContactProperties.LimitProperties(5, 5, 60)
+                : rate.getPerMinute();
+        long retryAfterSeconds = Math.max(1, perMinute.getRefillSeconds());
 
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -131,6 +172,18 @@ public class ContactRateLimitFilter extends OncePerRequestFilter {
 
         ApiError apiError = new ApiError("RATE_LIMITED", "Too many requests, please slow down");
         response.getWriter().write(objectMapper.writeValueAsString(apiError));
+    }
+
+    private boolean isSuspectedBot(HttpServletRequest request) {
+        String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
+        if (!StringUtils.hasText(userAgent)) {
+            return true;
+        }
+        String lowered = userAgent.toLowerCase();
+        return lowered.contains("bot")
+                || lowered.contains("crawler")
+                || lowered.contains("spider")
+                || lowered.contains("scraper");
     }
 
     private void applyCorsHeaders(HttpServletRequest request, HttpServletResponse response) {

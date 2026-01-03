@@ -52,7 +52,7 @@ public class RefreshTokenService {
             throw new SecurityException("Missing refresh token");
         }
         String hash = hashToken(refreshToken);
-        RefreshToken token = refreshTokenRepository.findByTokenHash(hash)
+        RefreshToken token = refreshTokenRepository.findByTokenHashWithUser(hash)
                 .orElseThrow(() -> new SecurityException("Invalid refresh token"));
         Instant now = Instant.now(clock);
         if (token.getRevokedAt() != null) {

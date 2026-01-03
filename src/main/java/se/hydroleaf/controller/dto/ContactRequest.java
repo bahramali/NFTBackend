@@ -11,7 +11,6 @@ public record ContactRequest(
         @Size(max = 40) String phone,
         @NotNull ContactSubject subject,
         @NotBlank @Size(min = 20, max = 2000) String message,
-        @Size(max = 2048) String turnstileToken,
         String companyWebsite
 ) {
 }

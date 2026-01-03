@@ -13,7 +13,6 @@ import org.springframework.mail.MailPreparationException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.web.util.HtmlUtils;
 import se.hydroleaf.config.ContactEmailProperties;
 import se.hydroleaf.controller.dto.ContactRequest;
 
@@ -22,8 +21,6 @@ import se.hydroleaf.controller.dto.ContactRequest;
 public class SmtpContactEmailService implements ContactEmailService {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-    private static final String FIXED_TO = "info@hydroleaf.se";
-    private static final String FIXED_FROM = "no-reply@hydroleaf.se";
 
     private final JavaMailSender mailSender;
     private final ContactEmailProperties contactEmailProperties;
@@ -36,16 +33,15 @@ public class SmtpContactEmailService implements ContactEmailService {
             String userAgent,
             String requestId
     ) {
-        String toAddress = normalize(FIXED_TO);
+        String toAddress = normalize(contactEmailProperties.getTo());
         String fromAddress = resolveFromAddress();
-        String replyToAddress = normalize(sanitizeHeaderValue(request.email()));
+        String replyToAddress = normalize(request.email());
         if (toAddress == null || fromAddress == null || replyToAddress == null) {
             throw new MailPreparationException("Contact email requires valid to/from/replyTo addresses");
         }
 
         String subject = contactEmailProperties.getSubjectPrefix()
-                + " " + sanitizeHeaderValue(request.subject().toString())
-                + " - " + sanitizeHeaderValue(request.fullName());
+                + " " + request.subject() + " - " + request.fullName();
 
         MimeMessage message = mailSender.createMimeMessage();
         try {
@@ -81,7 +77,18 @@ public class SmtpContactEmailService implements ContactEmailService {
     }
 
     private String resolveFromAddress() {
-        return normalize(FIXED_FROM);
+        String configured = normalize(contactEmailProperties.getFrom());
+        if (configured != null) {
+            return configured;
+        }
+        if (mailSender instanceof JavaMailSenderImpl impl) {
+            String username = normalize(impl.getUsername());
+            if (username != null) {
+                log.warn("Contact email from address not set; falling back to SMTP username {}", username);
+                return username;
+            }
+        }
+        return null;
     }
 
     private String normalize(String value) {
@@ -102,33 +109,18 @@ public class SmtpContactEmailService implements ContactEmailService {
         StringBuilder body = new StringBuilder();
         body.append("HydroLeaf contact request received.\n\n");
         body.append("Request ID: ").append(requestId).append("\n");
-        body.append("Full name: ").append(escapePlainText(request.fullName())).append("\n");
-        body.append("Email: ").append(escapePlainText(request.email())).append("\n");
+        body.append("Full name: ").append(request.fullName()).append("\n");
+        body.append("Email: ").append(request.email()).append("\n");
         if (request.phone() != null && !request.phone().isBlank()) {
-            body.append("Phone: ").append(escapePlainText(request.phone().trim())).append("\n");
+            body.append("Phone: ").append(request.phone().trim()).append("\n");
         }
-        body.append("Subject: ").append(escapePlainText(request.subject().toString())).append("\n");
-        body.append("Message:\n").append(escapePlainText(request.message())).append("\n\n");
+        body.append("Subject: ").append(request.subject()).append("\n");
+        body.append("Message:\n").append(request.message()).append("\n\n");
         body.append("Timestamp: ").append(timestamp.format(DATE_TIME_FORMATTER)).append("\n");
-        body.append("IP: ").append(escapePlainText(ip == null ? "unknown" : ip)).append("\n");
+        body.append("IP: ").append(ip == null ? "unknown" : ip).append("\n");
         if (userAgent != null && !userAgent.isBlank()) {
-            body.append("User-Agent: ").append(escapePlainText(userAgent)).append("\n");
+            body.append("User-Agent: ").append(userAgent).append("\n");
         }
         return body.toString();
-    }
-
-    private String sanitizeHeaderValue(String value) {
-        if (value == null) {
-            return null;
-        }
-        return value.replace("\r", " ").replace("\n", " ").trim();
-    }
-
-    private String escapePlainText(String value) {
-        if (value == null) {
-            return "";
-        }
-        String sanitized = value.replace("\r", "");
-        return HtmlUtils.htmlEscape(sanitized);
     }
 }

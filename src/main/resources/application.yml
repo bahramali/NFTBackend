@@ -43,16 +43,9 @@ app:
 
   contact:
     rate-limit:
-      per-minute:
-        capacity: 5
-        refill-tokens: 5
-        refill-seconds: 60
-      per-day:
-        capacity: 20
-        refill-tokens: 20
-        refill-seconds: 86400
-    turnstile:
-      secret: ${APP_CONTACT_TURNSTILE_SECRET:}
+      capacity: 5
+      refill-tokens: 5
+      refill-seconds: 60
 
   stripe:
     enabled: ${STRIPE_ENABLED:false}

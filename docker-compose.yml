@@ -1,5 +1,14 @@
 version: '3.8'
 services:
+  backend:
+    build: .
+    env_file:
+      - .env.production
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - mosquitto
   db:
     image: postgres:16
     environment:

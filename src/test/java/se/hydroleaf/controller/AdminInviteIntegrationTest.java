@@ -199,7 +199,7 @@ class AdminInviteIntegrationTest {
 
     private String bearerToken(String email, String password) {
         AuthService.LoginResult result = authService.login(email, password);
-        return "Bearer " + result.token();
+        return "Bearer " + result.accessToken();
     }
 
     private String inviteRequestJson(String email) throws Exception {

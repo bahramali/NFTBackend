@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import se.hydroleaf.model.UserRole;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.AuthorizationService;
+import se.hydroleaf.service.JwtService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -33,6 +34,9 @@ class AdminProductControllerIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private JwtService jwtService;
 
     @MockBean
     private AuthorizationService authorizationService;
@@ -54,8 +58,10 @@ class AdminProductControllerIntegrationTest {
                 }
                 """;
 
+        String accessToken = jwtService.createAccessToken(new AuthenticatedUser(1L, UserRole.ADMIN, Set.of()));
+
         MvcResult createResult = mockMvc.perform(post("/api/admin/products")
-                        .header("Authorization", "Bearer test-token")
+                        .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isCreated())
@@ -69,7 +75,7 @@ class AdminProductControllerIntegrationTest {
         String productId = createdProduct.get("id").asText();
 
         mockMvc.perform(get("/api/admin/products/{id}", productId)
-                        .header("Authorization", "Bearer test-token"))
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.priceCents").value(1999))
                 .andExpect(jsonPath("$.inventoryQty").value(7))

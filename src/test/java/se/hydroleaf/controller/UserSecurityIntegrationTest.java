@@ -125,6 +125,6 @@ class UserSecurityIntegrationTest {
 
     private String bearerToken(String email, String password) {
         AuthService.LoginResult result = authService.login(email, password);
-        return "Bearer " + result.token();
+        return "Bearer " + result.accessToken();
     }
 }

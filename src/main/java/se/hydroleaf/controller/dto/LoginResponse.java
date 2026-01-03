@@ -7,6 +7,6 @@ public record LoginResponse(
         Long userId,
         UserRole role,
         List<String> permissions,
-        String token
+        String accessToken
 ) {
 }

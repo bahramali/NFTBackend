@@ -101,7 +101,7 @@ class OAuthLoginServiceTest {
 
         assertThat(result.loginResult().user().userId()).isEqualTo(user.getId());
         assertThat(userIdentityRepository.findAll()).hasSize(1);
-        assertThat(result.loginResult().token()).isNotBlank();
+        assertThat(result.loginResult().accessToken()).isNotBlank();
     }
 
     @Test

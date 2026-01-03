@@ -90,9 +90,9 @@ public class AuthService {
     public RefreshResult refreshAccessToken(String refreshToken, String userAgent, String ip) {
         RefreshTokenService.RefreshTokenSession session = refreshTokenService.rotateRefreshToken(refreshToken, userAgent, ip);
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(
-                session.user().getId(),
-                session.user().getRole(),
-                session.user().getPermissions()
+                session.userId(),
+                session.role(),
+                session.permissions()
         );
         String accessToken = jwtService.createAccessToken(authenticatedUser);
         return new RefreshResult(accessToken, session.refreshToken());

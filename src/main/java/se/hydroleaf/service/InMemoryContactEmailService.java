@@ -27,5 +27,10 @@ public class InMemoryContactEmailService implements ContactEmailService {
                 ip,
                 timestamp
         );
+        log.info(
+                "Contact auto-reply captured (SMTP disabled) requestId={} email={}",
+                requestId,
+                request.email()
+        );
     }
 }

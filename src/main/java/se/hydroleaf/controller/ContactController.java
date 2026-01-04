@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.util.StringUtils;
 import se.hydroleaf.controller.dto.ContactRequest;
 import se.hydroleaf.service.ContactEmailService;
@@ -64,7 +64,7 @@ public class ContactController {
     private final Environment environment;
 
     @PostMapping
-    public ResponseEntity<Void> submitContact(
+    public ResponseEntity<?> submitContact(
             @Valid @RequestBody ContactRequest request,
             HttpServletRequest httpRequest
     ) {
@@ -104,7 +104,7 @@ public class ContactController {
             );
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .header("X-Contact-Error", "turnstile_unconfigured")
-                    .build();
+                    .body(errorBody("turnstile_unconfigured"));
         }
 
         if (!isDevProfile() && !StringUtils.hasText(sanitizedRequest.turnstileToken())) {
@@ -114,7 +114,7 @@ public class ContactController {
                     ip,
                     userAgent
             );
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.badRequest().body(errorBody("turnstile_missing"));
         }
 
         if (StringUtils.hasText(sanitizedRequest.turnstileToken())) {
@@ -128,10 +128,7 @@ public class ContactController {
                         userAgent,
                         verificationResult.errors()
                 );
-                if (isDevProfile()) {
-                    return ResponseEntity.badRequest().build();
-                }
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody("turnstile_invalid"));
             }
         }
 
@@ -144,7 +141,7 @@ public class ContactController {
                     ip,
                     userAgent
             );
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(errorBody(contentIssue));
         }
 
         OffsetDateTime timestamp = OffsetDateTime.now(clock);
@@ -154,7 +151,7 @@ public class ContactController {
             return ResponseEntity.noContent().build();
         } catch (MailException ex) {
             log.error("Contact email failed requestId={} ip={} subject={}", requestId, ip, request.subject(), ex);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to send contact message");
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(errorBody("smtp_failed"));
         }
     }
 
@@ -234,5 +231,9 @@ public class ContactController {
             }
         }
         return count;
+    }
+
+    private Map<String, String> errorBody(String error) {
+        return Map.of("error", error);
     }
 }

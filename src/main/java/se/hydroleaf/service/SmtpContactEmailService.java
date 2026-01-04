@@ -23,7 +23,8 @@ public class SmtpContactEmailService implements ContactEmailService {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     private static final String FIXED_TO = "info@hydroleaf.se";
-    private static final String FIXED_FROM = "no-reply@hydroleaf.se";
+    private static final String FIXED_FROM = "HydroLeaf <no-reply@hydroleaf.se>";
+    private static final String AUTO_REPLY_SUBJECT = "We received your message – HydroLeaf";
 
     private final JavaMailSender mailSender;
     private final ContactEmailProperties contactEmailProperties;
@@ -38,8 +39,8 @@ public class SmtpContactEmailService implements ContactEmailService {
     ) {
         String toAddress = normalize(FIXED_TO);
         String fromAddress = resolveFromAddress();
-        String replyToAddress = normalize(sanitizeHeaderValue(request.email()));
-        if (toAddress == null || fromAddress == null || replyToAddress == null) {
+        String requesterEmail = normalize(sanitizeHeaderValue(request.email()));
+        if (toAddress == null || fromAddress == null || requesterEmail == null) {
             throw new MailPreparationException("Contact email requires valid to/from/replyTo addresses");
         }
 
@@ -52,7 +53,7 @@ public class SmtpContactEmailService implements ContactEmailService {
             MimeMessageHelper helper = new MimeMessageHelper(message, false, StandardCharsets.UTF_8.name());
             helper.setTo(toAddress);
             helper.setFrom(fromAddress);
-            helper.setReplyTo(replyToAddress);
+            helper.setReplyTo(requesterEmail);
             helper.setSubject(subject);
             helper.setText(buildBody(request, timestamp, ip, userAgent, requestId), false);
             helper.setSentDate(new Date());
@@ -78,6 +79,8 @@ public class SmtpContactEmailService implements ContactEmailService {
             log.error("Failed to send contact email requestId={} to={} error={}", requestId, toAddress, ex.getMessage(), ex);
             throw ex;
         }
+
+        sendAutoReply(request, fromAddress, requesterEmail, requestId);
     }
 
     private String resolveFromAddress() {
@@ -114,6 +117,60 @@ public class SmtpContactEmailService implements ContactEmailService {
         if (userAgent != null && !userAgent.isBlank()) {
             body.append("User-Agent: ").append(escapePlainText(userAgent)).append("\n");
         }
+        return body.toString();
+    }
+
+    private void sendAutoReply(
+            ContactRequest request,
+            String fromAddress,
+            String requesterEmail,
+            String requestId
+    ) {
+        String replyToAddress = normalize(FIXED_TO);
+        if (replyToAddress == null) {
+            throw new MailPreparationException("Contact auto-reply requires valid reply-to address");
+        }
+
+        MimeMessage ack = mailSender.createMimeMessage();
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(ack, false, StandardCharsets.UTF_8.name());
+            helper.setTo(requesterEmail);
+            helper.setFrom(fromAddress);
+            helper.setReplyTo(replyToAddress);
+            helper.setSubject(AUTO_REPLY_SUBJECT);
+            helper.setText(buildAutoReplyBody(request), false);
+            helper.setSentDate(new Date());
+        } catch (MessagingException ex) {
+            log.error("Failed to prepare contact auto-reply requestId={} to={} error={}", requestId, requesterEmail, ex.getMessage(), ex);
+            throw new MailPreparationException("Failed to prepare contact auto-reply email", ex);
+        }
+
+        try {
+            mailSender.send(ack);
+            log.info("Contact auto-reply sent requestId={} to={}", requestId, requesterEmail);
+        } catch (MailException ex) {
+            log.error("SMTP send failed for contact auto-reply requestId={} to={} error={}", requestId, requesterEmail, ex.getMessage());
+            if (mailSender instanceof JavaMailSenderImpl impl) {
+                log.error(
+                        "SMTP transport details host={} port={} username={} auth={} starttls={}",
+                        impl.getHost(),
+                        impl.getPort(),
+                        impl.getUsername(),
+                        impl.getJavaMailProperties().getProperty("mail.smtp.auth"),
+                        impl.getJavaMailProperties().getProperty("mail.smtp.starttls.enable"));
+            }
+            log.error("Failed to send contact auto-reply requestId={} to={} error={}", requestId, requesterEmail, ex.getMessage(), ex);
+            throw ex;
+        }
+    }
+
+    private String buildAutoReplyBody(ContactRequest request) {
+        StringBuilder body = new StringBuilder();
+        body.append("Hi ").append(escapePlainText(request.fullName())).append(",\n\n");
+        body.append("Thanks for contacting HydroLeaf. We have received your message and will reply ");
+        body.append("within 1 business day.\n\n");
+        body.append("If you need to add details, reply to this email.\n\n");
+        body.append("— HydroLeaf Team");
         return body.toString();
     }
 

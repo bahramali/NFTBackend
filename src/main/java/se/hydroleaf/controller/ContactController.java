@@ -95,6 +95,18 @@ public class ContactController {
             return ResponseEntity.noContent().build();
         }
 
+        if (!isDevProfile() && !turnstileVerificationService.isConfigured()) {
+            log.warn(
+                    "contact_message_dropped requestId={} reason=turnstile_unconfigured ip={} userAgent={}",
+                    requestId,
+                    ip,
+                    userAgent
+            );
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .header("X-Contact-Error", "turnstile_unconfigured")
+                    .build();
+        }
+
         if (!isDevProfile() && !StringUtils.hasText(sanitizedRequest.turnstileToken())) {
             log.warn(
                     "contact_message_dropped requestId={} reason=turnstile_missing ip={} userAgent={}",

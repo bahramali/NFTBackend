@@ -2,6 +2,7 @@ package se.hydroleaf.service;
 
 import java.time.Duration;
 import java.util.List;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -24,8 +25,22 @@ public class TurnstileVerificationService {
             .baseUrl("https://challenges.cloudflare.com")
             .build();
 
+    @PostConstruct
+    void logConfiguration() {
+        boolean enabled = isConfigured();
+        log.info(
+                "Turnstile verification {} (secret {})",
+                enabled ? "enabled" : "disabled",
+                enabled ? "present" : "missing"
+        );
+    }
+
+    public boolean isConfigured() {
+        return StringUtils.hasText(resolveSecret());
+    }
+
     public TurnstileVerificationResult verify(String token, String ip, String requestId) {
-        String secret = contactProperties.getTurnstile() != null ? contactProperties.getTurnstile().getSecret() : null;
+        String secret = resolveSecret();
         if (!StringUtils.hasText(secret) || !StringUtils.hasText(token)) {
             log.warn(
                     "Turnstile verification skipped due to missing secret/token requestId={} hasSecret={} hasToken={}",
@@ -67,6 +82,10 @@ public class TurnstileVerificationService {
             );
             return TurnstileVerificationResult.invalid(List.of("exception"));
         }
+    }
+
+    private String resolveSecret() {
+        return contactProperties.getTurnstile() != null ? contactProperties.getTurnstile().getSecret() : null;
     }
 
     public record TurnstileVerificationResult(boolean success, List<String> errors) {

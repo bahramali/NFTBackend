@@ -26,7 +26,7 @@ import se.hydroleaf.store.api.dto.ProductResponse;
 import se.hydroleaf.store.service.ProductService;
 
 @RestController
-@RequestMapping("/api/admin/products")
+@RequestMapping({"/api/admin/products", "/api/admin/store/products"})
 @RequiredArgsConstructor
 public class AdminProductController {
 
@@ -47,16 +47,18 @@ public class AdminProductController {
 
     @GetMapping
     public ResponseEntity<List<ProductResponse>> list(@RequestHeader(name = "Authorization", required = false) String token,
-                                                      @RequestParam(value = "active", required = false) Boolean active) {
+                                                      @RequestParam(value = "active", required = false) Boolean active,
+                                                      @RequestParam(value = "includeVariants", defaultValue = "false") boolean includeVariants) {
         requireStoreView(token);
-        return ResponseEntity.ok(productService.listProducts(active));
+        return ResponseEntity.ok(productService.listAdminProducts(active, includeVariants));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> get(@RequestHeader(name = "Authorization", required = false) String token,
-                                               @PathVariable UUID id) {
+                                               @PathVariable UUID id,
+                                               @RequestParam(value = "includeVariants", defaultValue = "false") boolean includeVariants) {
         requireStoreView(token);
-        return ResponseEntity.ok(productService.getProduct(id));
+        return ResponseEntity.ok(productService.getAdminProduct(id, includeVariants));
     }
 
     @PostMapping(consumes = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)

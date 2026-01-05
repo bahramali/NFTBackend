@@ -15,8 +15,30 @@ import se.hydroleaf.store.model.ProductVariant;
 @Component
 public class StoreMapper {
 
-    public ProductResponse toProductResponse(Product product) {
+    public ProductResponse toProductResponse(Product product, boolean includeVariants) {
+        List<ProductVariantResponse> variants = includeVariants
+                ? product.getVariants().stream().map(this::toProductVariantResponse).toList()
+                : null;
+        return ProductResponse.builder()
+                .id(product.getId())
+                .sku(product.getSku())
+                .name(product.getName())
+                .description(product.getDescription())
+                .priceCents(product.getPriceCents())
+                .currency(product.getCurrency())
+                .active(product.isActive())
+                .inventoryQty(product.getInventoryQty())
+                .imageUrl(product.getImageUrl())
+                .category(product.getCategory())
+                .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
+                .variants(variants)
+                .build();
+    }
+
+    public ProductResponse toStoreProductResponse(Product product) {
         List<ProductVariantResponse> variants = product.getVariants().stream()
+                .filter(ProductVariant::isActive)
                 .map(this::toProductVariantResponse)
                 .toList();
         return ProductResponse.builder()

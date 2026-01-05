@@ -21,11 +21,11 @@ public class StoreProductController {
 
     @GetMapping
     public ResponseEntity<List<ProductResponse>> list(@RequestParam(value = "active", required = false) Boolean active) {
-        return ResponseEntity.ok(productService.listProducts(active));
+        return ResponseEntity.ok(productService.listStoreProducts(active));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> get(@PathVariable UUID id) {
-        return ResponseEntity.ok(productService.getProduct(id));
+        return ResponseEntity.ok(productService.getStoreProduct(id));
     }
 }

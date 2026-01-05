@@ -14,9 +14,11 @@ import se.hydroleaf.store.api.dto.ProductRequest;
 import se.hydroleaf.store.api.dto.ProductResponse;
 import se.hydroleaf.store.config.StoreProperties;
 import se.hydroleaf.store.model.Product;
+import se.hydroleaf.store.model.ProductVariant;
 import se.hydroleaf.store.repository.CartItemRepository;
 import se.hydroleaf.store.repository.OrderRepository;
 import se.hydroleaf.store.repository.ProductRepository;
+import se.hydroleaf.store.repository.ProductVariantRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +31,7 @@ public class ProductService {
     private final StoreProperties storeProperties;
     private final CartItemRepository cartItemRepository;
     private final OrderRepository orderRepository;
+    private final ProductVariantRepository productVariantRepository;
 
     public List<ProductResponse> listProducts(Boolean active) {
         List<Product> products = Boolean.TRUE.equals(active)
@@ -75,10 +78,10 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("PRODUCT_NOT_FOUND", "Product not found"));
 
-        if (cartItemRepository.existsByProductId(productId)) {
+        if (cartItemRepository.existsByProductId(productId) || cartItemRepository.existsByVariantProductId(productId)) {
             throw new ConflictException("PRODUCT_IN_CART", "Cannot delete a product that exists in a cart. Deactivate it instead.");
         }
-        if (orderRepository.existsByItemsProductId(productId)) {
+        if (orderRepository.existsByItemsProductId(productId) || orderRepository.existsByItemsVariantProductId(productId)) {
             throw new ConflictException("PRODUCT_IN_ORDER", "Cannot delete a product that has been part of an order.");
         }
 
@@ -91,6 +94,17 @@ public class ProductService {
                 .orElseThrow(() -> new NotFoundException("PRODUCT_NOT_FOUND", "Product not available"));
         validateCurrency(product);
         return product;
+    }
+
+    public ProductVariant requireActiveVariant(UUID variantId) {
+        ProductVariant variant = productVariantRepository.findByIdAndActiveTrue(variantId)
+                .orElseThrow(() -> new NotFoundException("VARIANT_NOT_FOUND", "Product variant not available"));
+        Product product = variant.getProduct();
+        if (product == null || !product.isActive()) {
+            throw new NotFoundException("VARIANT_NOT_FOUND", "Product variant not available");
+        }
+        validateCurrency(product);
+        return variant;
     }
 
     private void applyDetails(Product product, ProductRequest request, String normalizedSku) {

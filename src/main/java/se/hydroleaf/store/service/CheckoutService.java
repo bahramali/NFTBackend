@@ -28,12 +28,13 @@ import se.hydroleaf.store.model.Payment;
 import se.hydroleaf.store.model.PaymentProvider;
 import se.hydroleaf.store.model.PaymentStatus;
 import se.hydroleaf.store.model.Product;
+import se.hydroleaf.store.model.ProductVariant;
 import se.hydroleaf.store.model.ShippingAddress;
 import se.hydroleaf.store.model.StoreOrder;
 import se.hydroleaf.store.repository.CartRepository;
 import se.hydroleaf.store.repository.OrderRepository;
 import se.hydroleaf.store.repository.PaymentRepository;
-import se.hydroleaf.store.repository.ProductRepository;
+import se.hydroleaf.store.repository.ProductVariantRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +43,7 @@ public class CheckoutService {
     private static final Logger log = LoggerFactory.getLogger(CheckoutService.class);
 
     private final CartRepository cartRepository;
-    private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository;
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
     private final StoreProperties storeProperties;
@@ -104,30 +105,38 @@ public class CheckoutService {
 
     private PricingTotals repriceAndReserveInventory(Cart cart) {
         long subtotal = 0L;
-        List<Product> updatedProducts = new ArrayList<>();
+        List<ProductVariant> updatedVariants = new ArrayList<>();
         for (CartItem item : cart.getItems()) {
-            Product product = productRepository.findWithLock(item.getProduct().getId())
-                    .orElseThrow(() -> new NotFoundException("PRODUCT_NOT_FOUND", "Product not available"));
+            if (item.getVariant() == null) {
+                throw new NotFoundException("VARIANT_NOT_FOUND", "Product variant not available");
+            }
+            ProductVariant variant = productVariantRepository.findWithLock(item.getVariant().getId())
+                    .orElseThrow(() -> new NotFoundException("VARIANT_NOT_FOUND", "Product variant not available"));
+            Product product = variant.getProduct();
             if (!product.isActive()) {
                 throw new ConflictException("PRODUCT_INACTIVE", "Product " + product.getName() + " is no longer available");
             }
-            if (item.getQty() > product.getInventoryQty()) {
-                throw new ConflictException("INSUFFICIENT_STOCK", "Not enough stock for " + product.getName());
+            if (!variant.isActive()) {
+                throw new ConflictException("VARIANT_INACTIVE", "Variant " + variant.getLabel() + " is no longer available");
+            }
+            if (item.getQty() > variant.getStockQuantity()) {
+                throw new ConflictException("INSUFFICIENT_STOCK", "Not enough stock for " + variant.getLabel());
             }
             if (!storeProperties.getCurrency().equalsIgnoreCase(product.getCurrency())) {
                 throw new ConflictException("CURRENCY_MISMATCH", "Product currency mismatch for " + product.getName());
             }
 
             item.setProduct(product);
-            item.setUnitPriceCents(product.getPriceCents());
-            item.setLineTotalCents(Math.multiplyExact(product.getPriceCents(), (long) item.getQty()));
+            item.setVariant(variant);
+            item.setUnitPriceCents(variant.getPriceCents());
+            item.setLineTotalCents(Math.multiplyExact(variant.getPriceCents(), (long) item.getQty()));
             subtotal += item.getLineTotalCents();
 
-            product.setInventoryQty(product.getInventoryQty() - item.getQty());
-            updatedProducts.add(product);
+            variant.setStockQuantity(variant.getStockQuantity() - item.getQty());
+            updatedVariants.add(variant);
         }
 
-        productRepository.saveAll(updatedProducts);
+        productVariantRepository.saveAll(updatedVariants);
         long shipping = storeProperties.getShippingFlatCents();
         long tax = calculateTax(subtotal);
         long total = subtotal + shipping + tax;
@@ -155,6 +164,7 @@ public class CheckoutService {
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .product(cartItem.getProduct())
+                    .variant(cartItem.getVariant())
                     .nameSnapshot(cartItem.getProduct().getName())
                     .unitPriceCents(cartItem.getUnitPriceCents())
                     .qty(cartItem.getQty())

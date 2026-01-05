@@ -12,8 +12,8 @@ import lombok.Setter;
 public class CartItemRequest {
 
     @NotNull
-    @JsonAlias("product_id")
-    private UUID productId;
+    @JsonAlias("variant_id")
+    private UUID variantId;
 
     @Min(1)
     @JsonAlias("quantity")

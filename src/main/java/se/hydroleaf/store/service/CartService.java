@@ -23,9 +23,9 @@ import se.hydroleaf.store.model.Cart;
 import se.hydroleaf.store.model.CartItem;
 import se.hydroleaf.store.model.CartStatus;
 import se.hydroleaf.store.model.Product;
+import se.hydroleaf.store.model.ProductVariant;
 import se.hydroleaf.store.repository.CartItemRepository;
 import se.hydroleaf.store.repository.CartRepository;
-import se.hydroleaf.store.repository.ProductRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +35,6 @@ public class CartService {
 
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final ProductRepository productRepository;
     private final StoreMapper storeMapper;
     private final StoreProperties storeProperties;
     private final ProductService productService;
@@ -67,26 +66,28 @@ public class CartService {
     @Transactional
     public CartResponse addItem(UUID cartId, CartItemRequest request) {
         Cart cart = requireOpenCart(cartId);
-        Product product = productService.requireActiveProduct(request.getProductId());
+        ProductVariant variant = productService.requireActiveVariant(request.getVariantId());
+        Product product = variant.getProduct();
         int qtyToAdd = Optional.ofNullable(request.getQty()).orElse(1);
 
         CartItem item = cart.getItems().stream()
-                .filter(i -> i.getProduct().getId().equals(product.getId()))
+                .filter(i -> i.getVariant() != null && i.getVariant().getId().equals(variant.getId()))
                 .findFirst()
                 .orElseGet(() -> {
                     CartItem created = new CartItem();
                     created.setCart(cart);
                     created.setProduct(product);
+                    created.setVariant(variant);
                     cart.getItems().add(created);
                     return created;
                 });
 
         int newQty = item.getId() == null ? qtyToAdd : item.getQty() + qtyToAdd;
-        applyQuantity(item, product, newQty);
+        applyQuantity(item, variant, newQty);
         cartRepository.save(cart);
 
         MoneySummary totals = refreshPricing(cart);
-        log.info("Added item to cart cartId={} productId={} qty={}", cart.getId(), product.getId(), newQty);
+        log.info("Added item to cart cartId={} variantId={} qty={}", cart.getId(), variant.getId(), newQty);
         return storeMapper.toCartResponse(cart, totals);
     }
 
@@ -96,8 +97,8 @@ public class CartService {
         CartItem item = cartItemRepository.findByIdAndCartId(itemId, cartId)
                 .orElseThrow(() -> new NotFoundException("CART_ITEM_NOT_FOUND", "Cart item not found"));
 
-        Product product = productService.requireActiveProduct(item.getProduct().getId());
-        applyQuantity(item, product, request.getQty());
+        ProductVariant variant = productService.requireActiveVariant(item.getVariant().getId());
+        applyQuantity(item, variant, request.getQty());
         cartRepository.save(cart);
 
         MoneySummary totals = refreshPricing(cart);
@@ -134,21 +135,22 @@ public class CartService {
         cartRepository.save(cart);
     }
 
-    private void applyQuantity(CartItem item, Product product, int qty) {
+    private void applyQuantity(CartItem item, ProductVariant variant, int qty) {
         if (qty < 1) {
             throw new BadRequestException("INVALID_QTY", "Quantity must be at least 1");
         }
-        int availableQty = product.getInventoryQty();
+        int availableQty = variant.getStockQuantity();
         if (availableQty < 1) {
-            throw new ConflictException("INSUFFICIENT_STOCK", "Product is out of stock");
+            throw new ConflictException("INSUFFICIENT_STOCK", "Variant is out of stock");
         }
         if (qty > availableQty) {
-            qty = availableQty;
+            throw new ConflictException("INSUFFICIENT_STOCK", "Not enough stock for selected variant");
         }
-        item.setProduct(product);
+        item.setProduct(variant.getProduct());
+        item.setVariant(variant);
         item.setQty(qty);
-        item.setUnitPriceCents(product.getPriceCents());
-        item.setLineTotalCents(Math.multiplyExact(product.getPriceCents(), (long) qty));
+        item.setUnitPriceCents(variant.getPriceCents());
+        item.setLineTotalCents(Math.multiplyExact(variant.getPriceCents(), (long) qty));
     }
 
     private Cart requireOpenCart(UUID cartId) {
@@ -163,15 +165,19 @@ public class CartService {
     private MoneySummary refreshPricing(Cart cart) {
         long subtotal = 0L;
         for (CartItem item : cart.getItems()) {
-            Product current = productService.requireActiveProduct(item.getProduct().getId());
-            int availableQty = current.getInventoryQty();
+            if (item.getVariant() == null) {
+                throw new NotFoundException("VARIANT_NOT_FOUND", "Product variant not available");
+            }
+            ProductVariant current = productService.requireActiveVariant(item.getVariant().getId());
+            int availableQty = current.getStockQuantity();
             if (availableQty < 1) {
-                throw new ConflictException("INSUFFICIENT_STOCK", "Item " + current.getName() + " is out of stock");
+                throw new ConflictException("INSUFFICIENT_STOCK", "Item " + current.getLabel() + " is out of stock");
             }
             if (item.getQty() > availableQty) {
-                item.setQty(availableQty);
+                throw new ConflictException("INSUFFICIENT_STOCK", "Not enough stock for " + current.getLabel());
             }
-            item.setProduct(current);
+            item.setProduct(current.getProduct());
+            item.setVariant(current);
             item.setUnitPriceCents(current.getPriceCents());
             item.setLineTotalCents(Math.multiplyExact(current.getPriceCents(), (long) item.getQty()));
             subtotal += item.getLineTotalCents();

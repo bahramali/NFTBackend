@@ -9,7 +9,7 @@ import se.hydroleaf.store.model.StoreOrder;
 
 public interface OrderRepository extends JpaRepository<StoreOrder, UUID> {
 
-    @EntityGraph(attributePaths = {"items", "items.product"})
+    @EntityGraph(attributePaths = {"items", "items.product", "items.variant"})
     Optional<StoreOrder> findById(UUID id);
 
     Optional<StoreOrder> findByOrderNumber(String orderNumber);
@@ -17,4 +17,8 @@ public interface OrderRepository extends JpaRepository<StoreOrder, UUID> {
     List<StoreOrder> findByEmailIgnoreCase(String email);
 
     boolean existsByItemsProductId(UUID productId);
+
+    boolean existsByItemsVariantId(UUID variantId);
+
+    boolean existsByItemsVariantProductId(UUID productId);
 }

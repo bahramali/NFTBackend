@@ -11,8 +11,11 @@ import lombok.Value;
 public class CartItemResponse {
     UUID id;
     UUID productId;
+    UUID variantId;
     String sku;
     String name;
+    String variantLabel;
+    Integer weightGrams;
     int qty;
     long unitPriceCents;
     long lineTotalCents;
@@ -24,8 +27,18 @@ public class CartItemResponse {
         return BigDecimal.valueOf(unitPriceCents, 2);
     }
 
+    @JsonProperty("unitPriceSek")
+    public BigDecimal unitPriceSek() {
+        return BigDecimal.valueOf(unitPriceCents, 2);
+    }
+
     @JsonProperty("lineTotal")
     public BigDecimal lineTotal() {
+        return BigDecimal.valueOf(lineTotalCents, 2);
+    }
+
+    @JsonProperty("lineTotalSek")
+    public BigDecimal lineTotalSek() {
         return BigDecimal.valueOf(lineTotalCents, 2);
     }
 }

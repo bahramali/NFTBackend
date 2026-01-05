@@ -13,6 +13,7 @@ import se.hydroleaf.store.config.StoreProperties;
 import se.hydroleaf.store.repository.CartItemRepository;
 import se.hydroleaf.store.repository.OrderRepository;
 import se.hydroleaf.store.repository.ProductRepository;
+import se.hydroleaf.store.repository.ProductVariantRepository;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -27,12 +28,15 @@ class ProductServiceTest {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private ProductVariantRepository productVariantRepository;
+
     private ProductService productService;
 
     @BeforeEach
     void setUp() {
         productService = new ProductService(productRepository, new StoreMapper(), new StoreProperties(),
-                cartItemRepository, orderRepository);
+                cartItemRepository, orderRepository, productVariantRepository);
     }
 
     @Test

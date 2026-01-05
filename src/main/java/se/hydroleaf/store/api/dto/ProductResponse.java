@@ -3,6 +3,7 @@ package se.hydroleaf.store.api.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Value;
@@ -22,6 +23,7 @@ public class ProductResponse {
     String category;
     Instant createdAt;
     Instant updatedAt;
+    List<ProductVariantResponse> variants;
 
     @JsonProperty("price")
     public BigDecimal price() {

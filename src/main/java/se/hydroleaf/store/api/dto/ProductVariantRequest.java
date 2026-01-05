@@ -3,7 +3,6 @@ package se.hydroleaf.store.api.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -15,42 +14,38 @@ import lombok.ToString;
 @Setter
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ProductRequest {
+public class ProductVariantRequest {
 
-    @Size(max = 64, message = "SKU must be at most 64 characters")
-    private String sku;
+    @Min(value = 1, message = "Weight grams must be greater than zero")
+    private int weightGrams;
 
-    @NotBlank(message = "Name is required")
-    private String name;
-
-    private String description;
+    @Size(max = 64, message = "Label must be at most 64 characters")
+    private String label;
 
     @Min(value = 0, message = "Price must be zero or positive")
     private long priceCents;
 
-    @Size(min = 3, max = 3, message = "Currency must be a 3-letter ISO code")
-    private String currency;
+    @Min(value = 0, message = "Stock quantity must be zero or positive")
+    private int stockQuantity;
+
+    @Size(max = 64, message = "SKU must be at most 64 characters")
+    private String sku;
+
+    private String ean;
 
     private boolean active = true;
 
-    @Min(value = 0, message = "Inventory quantity must be zero or positive")
-    private int inventoryQty;
-
-    private String imageUrl;
-
-    private String category;
+    @JsonSetter("priceSek")
+    void setDecimalPriceSek(BigDecimal priceSek) {
+        if (priceSek != null) {
+            this.priceCents = priceSek.movePointRight(2).setScale(0, RoundingMode.HALF_UP).longValueExact();
+        }
+    }
 
     @JsonSetter("price")
     void setDecimalPrice(BigDecimal price) {
         if (price != null) {
             this.priceCents = price.movePointRight(2).setScale(0, RoundingMode.HALF_UP).longValueExact();
-        }
-    }
-
-    @JsonSetter("stock")
-    void setStock(Integer stock) {
-        if (stock != null) {
-            this.inventoryQty = stock;
         }
     }
 }

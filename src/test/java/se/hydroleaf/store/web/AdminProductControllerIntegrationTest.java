@@ -43,7 +43,7 @@ class AdminProductControllerIntegrationTest {
 
     @Test
     void createProductReturnsPricingAndInventoryFields() throws Exception {
-        given(authorizationService.requireAdminOrOperator(anyString()))
+        given(authorizationService.requireAuthenticated(anyString()))
                 .willReturn(new AuthenticatedUser(1L, UserRole.ADMIN, Set.of()));
 
         String requestBody = """
@@ -60,7 +60,7 @@ class AdminProductControllerIntegrationTest {
 
         String accessToken = jwtService.createAccessToken(new AuthenticatedUser(1L, UserRole.ADMIN, Set.of()));
 
-        MvcResult createResult = mockMvc.perform(post("/api/admin/products")
+        MvcResult createResult = mockMvc.perform(post("/api/admin/store/products")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
@@ -74,12 +74,122 @@ class AdminProductControllerIntegrationTest {
         JsonNode createdProduct = objectMapper.readTree(createResult.getResponse().getContentAsByteArray());
         String productId = createdProduct.get("id").asText();
 
-        mockMvc.perform(get("/api/admin/products/{id}", productId)
+        mockMvc.perform(get("/api/admin/store/products/{id}", productId)
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.priceCents").value(1999))
                 .andExpect(jsonPath("$.inventoryQty").value(7))
                 .andExpect(jsonPath("$.price").value(19.99))
                 .andExpect(jsonPath("$.stock").value(7));
+    }
+
+    @Test
+    void createVariantAndListProductsIncludesVariants() throws Exception {
+        given(authorizationService.requireAuthenticated(anyString()))
+                .willReturn(new AuthenticatedUser(1L, UserRole.ADMIN, Set.of()));
+
+        String productRequest = """
+                {
+                  "name": "Variant Product",
+                  "description": "Base product",
+                  "price": 0,
+                  "currency": "SEK",
+                  "stock": 0,
+                  "imageUrl": "https://example.com/variant.png",
+                  "category": "testing"
+                }
+                """;
+
+        String accessToken = jwtService.createAccessToken(new AuthenticatedUser(1L, UserRole.ADMIN, Set.of()));
+
+        MvcResult createResult = mockMvc.perform(post("/api/admin/store/products")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(productRequest))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode createdProduct = objectMapper.readTree(createResult.getResponse().getContentAsByteArray());
+        String productId = createdProduct.get("id").asText();
+
+        String variantRequest = """
+                {
+                  "weightGrams": 50,
+                  "priceSek": 19.5,
+                  "stockQuantity": 12,
+                  "sku": "VAR-50",
+                  "ean": "1234567890123",
+                  "active": true
+                }
+                """;
+
+        mockMvc.perform(post("/api/admin/store/products/{productId}/variants", productId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(variantRequest))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.weightGrams").value(50))
+                .andExpect(jsonPath("$.priceCents").value(1950))
+                .andExpect(jsonPath("$.stockQuantity").value(12))
+                .andExpect(jsonPath("$.sku").value("VAR-50"));
+
+        mockMvc.perform(get("/api/admin/store/products/{id}", productId)
+                        .param("includeVariants", "true")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.variants[0].weightGrams").value(50))
+                .andExpect(jsonPath("$.variants[0].priceCents").value(1950));
+    }
+
+    @Test
+    void duplicateVariantWeightReturnsConflict() throws Exception {
+        given(authorizationService.requireAuthenticated(anyString()))
+                .willReturn(new AuthenticatedUser(1L, UserRole.ADMIN, Set.of()));
+
+        String productRequest = """
+                {
+                  "name": "Duplicate Weight Product",
+                  "description": "Base product",
+                  "price": 0,
+                  "currency": "SEK",
+                  "stock": 0,
+                  "imageUrl": "https://example.com/dup.png",
+                  "category": "testing"
+                }
+                """;
+
+        String accessToken = jwtService.createAccessToken(new AuthenticatedUser(1L, UserRole.ADMIN, Set.of()));
+
+        MvcResult createResult = mockMvc.perform(post("/api/admin/store/products")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(productRequest))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode createdProduct = objectMapper.readTree(createResult.getResponse().getContentAsByteArray());
+        String productId = createdProduct.get("id").asText();
+
+        String variantRequest = """
+                {
+                  "weightGrams": 70,
+                  "priceSek": 20,
+                  "stockQuantity": 5,
+                  "sku": "VAR-70",
+                  "active": true
+                }
+                """;
+
+        mockMvc.perform(post("/api/admin/store/products/{productId}/variants", productId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(variantRequest))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/admin/store/products/{productId}/variants", productId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(variantRequest))
+                .andExpect(status().isConflict());
     }
 }

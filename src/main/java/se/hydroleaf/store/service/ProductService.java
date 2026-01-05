@@ -33,17 +33,38 @@ public class ProductService {
     private final OrderRepository orderRepository;
     private final ProductVariantRepository productVariantRepository;
 
-    public List<ProductResponse> listProducts(Boolean active) {
+    public List<ProductResponse> listAdminProducts(Boolean active, boolean includeVariants) {
         List<Product> products = Boolean.TRUE.equals(active)
                 ? productRepository.findByActiveTrue()
                 : productRepository.findAll();
-        return products.stream().map(storeMapper::toProductResponse).toList();
+        return products.stream()
+                .map(product -> storeMapper.toProductResponse(product, includeVariants))
+                .toList();
     }
 
-    public ProductResponse getProduct(UUID id) {
+    public ProductResponse getAdminProduct(UUID id, boolean includeVariants) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("PRODUCT_NOT_FOUND", "Product not found"));
-        return storeMapper.toProductResponse(product);
+        return storeMapper.toProductResponse(product, includeVariants);
+    }
+
+    public List<ProductResponse> listStoreProducts(Boolean active) {
+        List<Product> products = Boolean.TRUE.equals(active)
+                ? productRepository.findByActiveTrue()
+                : productRepository.findAll();
+        return products.stream()
+                .filter(product -> product.isActive() && hasActiveVariant(product))
+                .map(storeMapper::toStoreProductResponse)
+                .toList();
+    }
+
+    public ProductResponse getStoreProduct(UUID id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("PRODUCT_NOT_FOUND", "Product not found"));
+        if (!product.isActive() || !hasActiveVariant(product)) {
+            throw new NotFoundException("PRODUCT_NOT_FOUND", "Product not found");
+        }
+        return storeMapper.toStoreProductResponse(product);
     }
 
     @Transactional
@@ -56,7 +77,7 @@ public class ProductService {
         applyDetails(product, request, normalizedSku);
         product = productRepository.save(product);
         log.info("Created product id={} sku={}", product.getId(), product.getSku());
-        return storeMapper.toProductResponse(product);
+        return storeMapper.toProductResponse(product, true);
     }
 
     @Transactional
@@ -70,7 +91,7 @@ public class ProductService {
         applyDetails(product, request, normalizedSku);
         product = productRepository.save(product);
         log.info("Updated product id={} sku={}", product.getId(), product.getSku());
-        return storeMapper.toProductResponse(product);
+        return storeMapper.toProductResponse(product, true);
     }
 
     @Transactional
@@ -105,6 +126,10 @@ public class ProductService {
         }
         validateCurrency(product);
         return variant;
+    }
+
+    private boolean hasActiveVariant(Product product) {
+        return product.getVariants().stream().anyMatch(ProductVariant::isActive);
     }
 
     private void applyDetails(Product product, ProductRequest request, String normalizedSku) {
@@ -156,8 +181,8 @@ public class ProductService {
     }
 
     private void validatePrice(long priceCents) {
-        if (priceCents <= 0) {
-            throw new BadRequestException("INVALID_PRICE", "Price must be greater than zero");
+        if (priceCents < 0) {
+            throw new BadRequestException("INVALID_PRICE", "Price must be zero or positive");
         }
     }
 

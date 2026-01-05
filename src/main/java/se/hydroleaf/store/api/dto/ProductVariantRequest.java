@@ -48,4 +48,18 @@ public class ProductVariantRequest {
             this.priceCents = price.movePointRight(2).setScale(0, RoundingMode.HALF_UP).longValueExact();
         }
     }
+
+    @JsonSetter("weight")
+    void setWeightAlias(Integer weight) {
+        if (weight != null) {
+            this.weightGrams = weight;
+        }
+    }
+
+    @JsonSetter("stock")
+    void setStockAlias(Integer stock) {
+        if (stock != null) {
+            this.stockQuantity = stock;
+        }
+    }
 }

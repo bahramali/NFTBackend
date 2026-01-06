@@ -17,7 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import se.hydroleaf.web.JwtAuthenticationFilter;
 
-@Component
+@Configuration
 public class SecurityConfig implements WebMvcConfigurer {
 
     @Bean

@@ -33,8 +33,8 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/devices").permitAll()
-                        .requestMatchers("/api/records/history/aggregated").permitAll()
+                        .requestMatchers("/api/devices/**").permitAll()
+                        .requestMatchers("/api/records/history/aggregated/**").permitAll()
                         .requestMatchers("/api/auth/oauth/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/checkout/**").permitAll()

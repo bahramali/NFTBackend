@@ -32,17 +32,28 @@ public class OAuthStateStore {
         return state;
     }
 
-    public Optional<OAuthState> consumeState(String state) {
-        OAuthState stored = states.remove(state);
+    public Optional<OAuthState> getState(String state) {
+        OAuthState stored = states.get(state);
         if (stored == null) {
             return Optional.empty();
         }
         Instant now = Instant.now(clock);
         Duration ttl = oauthProperties.getStateTtl();
         if (ttl != null && now.isAfter(stored.createdAt().plus(ttl))) {
+            states.remove(state);
             return Optional.empty();
         }
         return Optional.of(stored);
+    }
+
+    public void removeState(String state) {
+        states.remove(state);
+    }
+
+    public Optional<OAuthState> consumeState(String state) {
+        Optional<OAuthState> stored = getState(state);
+        stored.ifPresent(value -> removeState(state));
+        return stored;
     }
 
     public record OAuthState(

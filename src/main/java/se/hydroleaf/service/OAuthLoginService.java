@@ -70,8 +70,11 @@ public class OAuthLoginService {
     }
 
     public OAuthLoginResult handleCallback(OauthProvider provider, String code, String state) {
-        OAuthStateStore.OAuthState storedState = stateStore.consumeState(state)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid OAuth state"));
+        OAuthStateStore.OAuthState storedState = stateStore.getState(state)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Invalid or expired OAuth state"
+                ));
         if (storedState.provider() != provider) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "OAuth provider mismatch");
         }
@@ -88,6 +91,7 @@ public class OAuthLoginService {
         }
         User user = upsertUser(provider, claims);
         AuthService.LoginResult loginResult = authService.createSession(user);
+        stateStore.removeState(state);
         return new OAuthLoginResult(loginResult, storedState.redirectUri());
     }
 

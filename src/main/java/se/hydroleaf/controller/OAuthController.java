@@ -54,13 +54,17 @@ public class OAuthController {
         String callbackBaseUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .build()
                 .toUriString();
-        log.info("Starting Google OAuth login. redirectUri={}, callbackBaseUrl={}", redirectUri, callbackBaseUrl);
+        log.info("Google OAuth start requested. redirectHost={}, callbackHost={}",
+                hostOnly(redirectUri),
+                hostOnly(callbackBaseUrl));
         OAuthLoginService.OAuthStartResult result = oauthLoginService.startLogin(
                 OauthProvider.GOOGLE,
                 redirectUri,
                 callbackBaseUrl
         );
-        log.info("Google OAuth login started. authorizationUrl={}", result.authorizationUrl());
+        log.info("Google OAuth start completed. statePrefix={}, redirectHost={}",
+                statePrefix(result.state()),
+                hostOnly(redirectUri));
         return new OAuthStartResponse(result.authorizationUrl());
     }
 
@@ -69,6 +73,7 @@ public class OAuthController {
             @RequestParam("code") String code,
             @RequestParam("state") String state
     ) {
+        log.info("Google OAuth callback received. statePrefix={}", statePrefix(state));
         OAuthLoginService.OAuthLoginResult result = oauthLoginService.handleCallback(OauthProvider.GOOGLE, code, state);
         AuthenticatedUser user = result.loginResult().user();
         List<String> permissions = user.permissions().stream()
@@ -83,10 +88,15 @@ public class OAuthController {
         String refreshCookie = refreshTokenCookieService.createRefreshCookie(result.loginResult().refreshToken()).toString();
 
         if (result.redirectUri() == null || result.redirectUri().isBlank()) {
+            log.info("Google OAuth callback completed. statePrefix={}, redirectHost=none", statePrefix(state));
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, refreshCookie)
                     .body(response);
         }
+
+        log.info("Google OAuth callback completed. statePrefix={}, redirectHost={}",
+                statePrefix(state),
+                hostOnly(result.redirectUri()));
 
         URI redirect = UriComponentsBuilder.fromUriString(result.redirectUri())
                 .queryParam("success", 1)
@@ -98,5 +108,27 @@ public class OAuthController {
         headers.setLocation(redirect);
         headers.add(HttpHeaders.SET_COOKIE, refreshCookie);
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
+    }
+
+    private String hostOnly(String uri) {
+        if (!StringUtils.hasText(uri)) {
+            return "none";
+        }
+        URI parsed = URI.create(uri);
+        if (!StringUtils.hasText(parsed.getHost())) {
+            return "none";
+        }
+        if (parsed.getPort() > 0) {
+            return parsed.getHost() + ":" + parsed.getPort();
+        }
+        return parsed.getHost();
+    }
+
+    private String statePrefix(String state) {
+        if (!StringUtils.hasText(state)) {
+            return "none";
+        }
+        int prefixLength = Math.min(state.length(), 8);
+        return state.substring(0, prefixLength);
     }
 }

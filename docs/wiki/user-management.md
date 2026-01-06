@@ -38,7 +38,7 @@
 فرانت‌اند برای ورود با گوگل سه endpoint در اختیار دارد که مسیر استاندارد را پوشش می‌دهند:
 
 1. **نمایش سرویس‌ها**: با `GET /api/auth/oauth/providers` لیست سرویس‌های OAuth موجود را دریافت کنید.
-2. **شروع ورود**: با `POST /api/auth/oauth/google/start` (بدنهٔ اختیاری `{ "redirectUri": "https://app.example.com/auth/google/callback" }`) لینک `authorizationUrl` برگردانده می‌شود؛ کاربر باید به این URL هدایت شود.
+2. **شروع ورود**: با `POST /api/auth/oauth/google/start` (بدنهٔ اختیاری `{ "redirectUri": "https://app.example.com/auth/google/callback" }`) لینک `authorizationUrl` برگردانده می‌شود؛ کاربر باید به این URL هدایت شود. مسیر `/api/auth/oauth/google/login` پیاده‌سازی نشده است.
 3. **تکمیل ورود**: گوگل کاربر را به `GET /api/auth/oauth/google/callback` با پارامترهای `code` و `state` برمی‌گرداند؛ بک‌اند پس از اعتبارسنجی، توکن ورود را صادر می‌کند.
 
 **نکات مهم برای فرانت‌اند:**

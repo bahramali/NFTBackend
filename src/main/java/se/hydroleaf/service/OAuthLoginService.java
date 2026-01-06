@@ -70,25 +70,36 @@ public class OAuthLoginService {
     }
 
     public OAuthLoginResult handleCallback(OauthProvider provider, String code, String state) {
-        OAuthStateStore.OAuthState storedState = stateStore.consumeState(state)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid OAuth state"));
-        if (storedState.provider() != provider) {
+        Optional<OAuthStateStore.OAuthState> storedState = stateStore.getState(state);
+        if (storedState.isEmpty()) {
+            if (stateStore.wasConsumed(state)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "OAuth state already used");
+            }
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired OAuth state");
+        }
+        OAuthStateStore.OAuthState stateValue = storedState.get();
+        if (stateValue.provider() != provider) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "OAuth provider mismatch");
         }
 
         OidcTokenResponse tokenResponse = tokenClient.exchangeAuthorizationCode(
                 provider,
                 code,
-                storedState.codeVerifier(),
-                storedState.callbackUri()
+                stateValue.codeVerifier(),
+                stateValue.callbackUri()
         );
-        OidcTokenClaims claims = tokenVerifier.verifyIdToken(provider, tokenResponse.idToken(), storedState.nonce());
+        OidcTokenClaims claims = tokenVerifier.verifyIdToken(
+                provider,
+                tokenResponse.idToken(),
+                stateValue.nonce()
+        );
         if (claims == null || !StringUtils.hasText(claims.subject())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid ID token");
         }
         User user = upsertUser(provider, claims);
         AuthService.LoginResult loginResult = authService.createSession(user);
-        return new OAuthLoginResult(loginResult, storedState.redirectUri());
+        stateStore.removeState(state);
+        return new OAuthLoginResult(loginResult, stateValue.redirectUri());
     }
 
     private User upsertUser(OauthProvider provider, OidcTokenClaims claims) {

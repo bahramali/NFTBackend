@@ -12,7 +12,7 @@
 - `GET /api/auth/accept-invite/{token}` — اعتبارسنجی توکن دعوت و مشاهده اطلاعات.
 - `POST /api/auth/password-reset` — درخواست بازنشانی رمز (در صورت وجود از توکن `Authorization` استفاده می‌کند).
 - `GET /api/auth/oauth/providers` — فهرست سرویس‌های OAuth پشتیبانی‌شده.
-- `POST /api/auth/oauth/google/start` — شروع ورود با گوگل و دریافت `authorizationUrl`.
+- `POST /api/auth/oauth/google/start` — شروع ورود با گوگل و دریافت `authorizationUrl` (از همین مسیر استفاده کنید؛ `/api/auth/oauth/google/login` پیاده‌سازی نشده است).
 - `GET /api/auth/oauth/google/callback` — تکمیل ورود با گوگل (`code`, `state`).
 
 ## کاربران (ادمین یا مجوز TEAM)

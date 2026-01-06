@@ -12,7 +12,7 @@ This page enumerates every HTTP endpoint exposed by the backend. Unless noted, e
 - `GET /api/auth/accept-invite/{token}` — validate invite token and read metadata.
 - `POST /api/auth/password-reset` — request a password reset (uses `Authorization` token if available).
 - `GET /api/auth/oauth/providers` — list supported OAuth providers.
-- `POST /api/auth/oauth/google/start` — start Google OAuth login and return `authorizationUrl`.
+- `POST /api/auth/oauth/google/start` — start Google OAuth login and return `authorizationUrl` (use this endpoint; `/api/auth/oauth/google/login` is not implemented).
 - `GET /api/auth/oauth/google/callback` — finish Google OAuth login (`code`, `state`).
 
 ## Users (admin or TEAM permission)

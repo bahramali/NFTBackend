@@ -21,6 +21,3 @@ app:
       secret: test-jwt-secret-test-jwt-secret-test
       issuer: test-issuer
       audience: test-audience
-  security:
-    jwt:
-      enabled: false

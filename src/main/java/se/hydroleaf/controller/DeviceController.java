@@ -1,12 +1,14 @@
 package se.hydroleaf.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import se.hydroleaf.config.SecurityConfig;
 import se.hydroleaf.repository.dto.DeviceResponse;
 import se.hydroleaf.repository.dto.DeviceSensorsResponse;
 import se.hydroleaf.service.AuthorizationService;
@@ -16,6 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/devices")
+@Import(SecurityConfig.class)
 public class DeviceController {
 
     private final DeviceService deviceService;

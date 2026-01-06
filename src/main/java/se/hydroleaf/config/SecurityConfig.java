@@ -14,11 +14,11 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.stereotype.Component;
 import se.hydroleaf.web.JwtAuthenticationFilter;
 
-@Configuration
-public class SecurityConfig implements WebMvcConfigurer {
+@Component
+public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {

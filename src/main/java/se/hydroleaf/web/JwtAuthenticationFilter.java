@@ -7,24 +7,35 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.service.JwtService;
 
 @Component
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final AuthenticationEntryPoint authenticationEntryPoint;
+
+    public JwtAuthenticationFilter(
+            JwtService jwtService,
+            ObjectProvider<AuthenticationEntryPoint> authenticationEntryPointProvider
+    ) {
+        this.jwtService = jwtService;
+        this.authenticationEntryPoint = authenticationEntryPointProvider.getIfAvailable(
+                () -> new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
+        );
+    }
 
     @Override
     protected void doFilterInternal(

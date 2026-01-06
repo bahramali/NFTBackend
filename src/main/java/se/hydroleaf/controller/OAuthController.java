@@ -70,11 +70,31 @@ public class OAuthController {
 
     @GetMapping("/google/callback")
     public ResponseEntity<?> handleGoogleCallback(
-            @RequestParam("code") String code,
-            @RequestParam("state") String state
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "state", required = false) String state
     ) {
+        if (!StringUtils.hasText(code) || !StringUtils.hasText(state)) {
+            return oauthError(
+                    HttpStatus.BAD_REQUEST,
+                    "missing_params",
+                    "code and state are required"
+            );
+        }
         log.info("Google OAuth callback received. statePrefix={}", statePrefix(state));
-        OAuthLoginService.OAuthLoginResult result = oauthLoginService.handleCallback(OauthProvider.GOOGLE, code, state);
+        OAuthLoginService.OAuthLoginResult result;
+        try {
+            result = oauthLoginService.handleCallback(OauthProvider.GOOGLE, code, state);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+            if (status == HttpStatus.UNAUTHORIZED && "Invalid or expired OAuth state".equals(ex.getReason())) {
+                return oauthError(status, "invalid_state", "invalid_state");
+            }
+            if (status == HttpStatus.BAD_GATEWAY || status == HttpStatus.GATEWAY_TIMEOUT) {
+                return oauthError(status, "token_exchange_failed", "token_exchange_failed");
+            }
+            String message = ex.getReason() != null ? ex.getReason() : "oauth_error";
+            return oauthError(status, "oauth_error", message);
+        }
         AuthenticatedUser user = result.loginResult().user();
         List<String> permissions = user.permissions().stream()
                 .map(Enum::name)
@@ -108,6 +128,13 @@ public class OAuthController {
         headers.setLocation(redirect);
         headers.add(HttpHeaders.SET_COOKIE, refreshCookie);
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
+    }
+
+    private ResponseEntity<OAuthErrorResponse> oauthError(HttpStatus status, String error, String message) {
+        return ResponseEntity.status(status).body(new OAuthErrorResponse(error, message));
+    }
+
+    private record OAuthErrorResponse(String error, String message) {
     }
 
     private String hostOnly(String uri) {

@@ -18,6 +18,7 @@ public class OAuthStateStore {
     private final OAuthProperties oauthProperties;
     private final Clock clock;
     private final Map<String, OAuthState> states = new ConcurrentHashMap<>();
+    private final Map<String, Instant> consumedStates = new ConcurrentHashMap<>();
 
     public OAuthState createState(
             OauthProvider provider,
@@ -47,13 +48,29 @@ public class OAuthStateStore {
     }
 
     public void removeState(String state) {
-        states.remove(state);
+        OAuthState removed = states.remove(state);
+        if (removed != null) {
+            consumedStates.put(state, Instant.now(clock));
+        }
     }
 
     public Optional<OAuthState> consumeState(String state) {
         Optional<OAuthState> stored = getState(state);
         stored.ifPresent(value -> removeState(state));
         return stored;
+    }
+
+    public boolean wasConsumed(String state) {
+        Instant consumedAt = consumedStates.get(state);
+        if (consumedAt == null) {
+            return false;
+        }
+        Duration ttl = oauthProperties.getStateTtl();
+        if (ttl != null && Instant.now(clock).isAfter(consumedAt.plus(ttl))) {
+            consumedStates.remove(state);
+            return false;
+        }
+        return true;
     }
 
     public record OAuthState(

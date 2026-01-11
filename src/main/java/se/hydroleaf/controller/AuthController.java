@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -64,6 +65,12 @@ public class AuthController {
         } catch (SecurityException se) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, se.getMessage(), se);
         }
+    }
+
+    @RequestMapping(value = "/login", method = RequestMethod.OPTIONS)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> loginPreflight() {
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/accept-invite")

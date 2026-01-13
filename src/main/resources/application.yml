@@ -30,7 +30,6 @@ app:
     allowed-origins:
       - https://hydroleaf.se
       - https://www.hydroleaf.se
-      - https://app.hydroleaf.se
       - https://bahramali.github.io
       - https://bahramali.github.io/NFTMonitoring
       - http://localhost:5173

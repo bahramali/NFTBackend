@@ -12,15 +12,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import se.hydroleaf.common.api.BadRequestException;
 
 @RestController
 @RequestMapping("/api/payments/stripe")
 public class StripePaymentController {
 
     private final StripePaymentService stripePaymentService;
+    private final StripeCheckoutService stripeCheckoutService;
 
-    public StripePaymentController(StripePaymentService stripePaymentService) {
+    public StripePaymentController(
+            StripePaymentService stripePaymentService,
+            StripeCheckoutService stripeCheckoutService
+    ) {
         this.stripePaymentService = stripePaymentService;
+        this.stripeCheckoutService = stripeCheckoutService;
     }
 
     @PostMapping("/payment-intents")
@@ -49,6 +55,35 @@ public class StripePaymentController {
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(response);
+    }
+
+    @PostMapping("/checkout-session")
+    public ResponseEntity<StripeCheckoutSessionResponse> createCheckoutSession(
+            @Valid @RequestBody StripeCheckoutSessionRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey
+    ) throws StripeException {
+        String resolvedIdempotencyKey = idempotencyKey;
+        if (!StringUtils.hasText(resolvedIdempotencyKey)) {
+            resolvedIdempotencyKey = request.orderId().toString();
+        }
+
+        StripeCheckoutSessionResponse response = stripeCheckoutService.createCheckoutSession(
+                request.orderId(),
+                resolvedIdempotencyKey
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/webhook")
+    public ResponseEntity<Void> handleWebhook(
+            @RequestHeader(value = "Stripe-Signature", required = false) String signature,
+            @RequestBody byte[] payload
+    ) {
+        if (!StringUtils.hasText(signature)) {
+            throw new BadRequestException("STRIPE_SIGNATURE_MISSING", "Stripe signature header is missing.");
+        }
+        stripeCheckoutService.handleWebhook(signature, payload);
+        return ResponseEntity.ok().build();
     }
 
     private String deterministicKey(String orderId, Long amount) {

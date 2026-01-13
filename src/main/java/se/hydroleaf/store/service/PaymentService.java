@@ -28,6 +28,7 @@ public class PaymentService {
                 .orElseThrow(() -> new NotFoundException("PAYMENT_NOT_FOUND", "Payment not found"));
 
         if (payment.getStatus() == PaymentStatus.PAID) {
+            log.info("Stripe webhook already processed for providerRef={}", providerRef);
             return;
         }
 

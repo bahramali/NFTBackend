@@ -6,10 +6,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class StripeProperties {
 
     private boolean enabled = false;
-    private String apiKey;
+    private String secretKey;
     private String webhookSecret;
-    private String successUrl = "https://hydroleaf.se/store/checkout/success?orderId={orderId}";
-    private String cancelUrl = "https://hydroleaf.se/store/checkout/cancel?orderId={orderId}";
+    private String successUrl = "https://hydroleaf.se/store/order/%s/success";
+    private String cancelUrl = "https://hydroleaf.se/store/order/%s/cancel";
 
     public boolean isEnabled() {
         return enabled;
@@ -19,12 +19,12 @@ public class StripeProperties {
         this.enabled = enabled;
     }
 
-    public String getApiKey() {
-        return apiKey;
+    public String getSecretKey() {
+        return secretKey;
     }
 
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
     }
 
     public String getWebhookSecret() {

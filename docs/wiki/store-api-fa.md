@@ -37,9 +37,9 @@
 - وضعیت سفارش فقط با علامت‌گذاری پرداخت به `PAID` تغییر می‌کند (وبهوک).
 
 ## ادغام استرایپ
-- با `app.stripe.enabled` و `app.stripe.api-key` کنترل می‌شود؛ در حالت فعال، نشست Checkout استرایپ ساخته و `paymentUrl` استرایپ برگردانده می‌شود.
-- URL موفق/لغو از قالب‌های `app.stripe.success-url` و `app.stripe.cancel-url` پر می‌شود (`orderId` جایگزین می‌گردد).
-- اگر `app.stripe.webhook-secret` تنظیم شده باشد، امضای وبهوک اعتبارسنجی می‌شود؛ در غیر این صورت برای توسعه محلی بدون امضا پردازش می‌شود.
+- با `app.stripe.enabled` و `app.stripe.secret-key` کنترل می‌شود (متغیر محیطی `STRIPE_SECRET_KEY` با نام مستعار قدیمی `STRIPE_API_KEY`). در حالت فعال، نشست Checkout استرایپ ساخته و `paymentUrl` استرایپ برگردانده می‌شود.
+- URL موفق/لغو از قالب‌های `app.stripe.success-url` و `app.stripe.cancel-url` پر می‌شود (پیشنهادی: `https://<domain>/store/order/%s/success|cancel` که `%s` برابر `orderId` است).
+- بررسی امضای وبهوک با `app.stripe.webhook-secret` (`STRIPE_WEBHOOK_SECRET`) الزامی است و نبودن امضا/کلید باعث رد شدن رویداد می‌شود.
 - تنها رویداد `checkout.session.completed` پردازش می‌شود و جلسات ناشناخته ثبت می‌شوند.
 
 ## تنظیمات کلیدی

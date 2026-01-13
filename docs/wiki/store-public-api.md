@@ -43,9 +43,9 @@ Inventory is validated on every cart mutation and during checkout with pessimist
 
 ## Stripe integration
 
-- Controlled by `app.stripe.enabled` and `app.stripe.api-key`. When enabled, checkout creates a Stripe Checkout Session with line items for each cart item plus optional shipping/tax, returning `paymentUrl` from Stripe.
-- Success/cancel URLs are templated: `app.stripe.success-url` and `app.stripe.cancel-url` (default `.../checkout/success|cancel?orderId={orderId}`).
-- Webhook parsing enforces the signature when `app.stripe.webhook-secret` is set; otherwise payloads are deserialized without verification for local testing.
+- Controlled by `app.stripe.enabled` and `app.stripe.secret-key` (env `STRIPE_SECRET_KEY`, with legacy alias `STRIPE_API_KEY`). When enabled, checkout creates a Stripe Checkout Session with line items for each cart item plus optional shipping/tax, returning `paymentUrl` from Stripe.
+- Success/cancel URLs are templated: `app.stripe.success-url` and `app.stripe.cancel-url` (recommended `https://<domain>/store/order/%s/success|cancel`, `%s` is the order id).
+- Webhook parsing enforces the Stripe signature using `app.stripe.webhook-secret` (`STRIPE_WEBHOOK_SECRET`). Missing secrets or signatures reject the event.
 - Only `checkout.session.completed` events are processed; unknown or duplicate sessions are safely logged.
 
 ## Configuration knobs

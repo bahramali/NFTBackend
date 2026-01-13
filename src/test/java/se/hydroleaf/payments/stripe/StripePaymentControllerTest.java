@@ -27,6 +27,9 @@ class StripePaymentControllerTest {
     @MockBean
     private StripePaymentService stripePaymentService;
 
+    @MockBean
+    private StripeCheckoutService stripeCheckoutService;
+
     @Test
     @WithMockUser
     void createPaymentIntentReturnsClientSecret() throws Exception {

@@ -61,6 +61,10 @@ app:
     success-url: ${STRIPE_SUCCESS_URL:https://hydroleaf.se/store/checkout/success?orderId={orderId}}
     cancel-url: ${STRIPE_CANCEL_URL:https://hydroleaf.se/store/checkout/cancel?orderId={orderId}}
 
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY:}
+  allow-client-amount: ${STRIPE_ALLOW_CLIENT_AMOUNT:false}
+
   cors:
     allowed-origins:
       - https://hydroleaf.se

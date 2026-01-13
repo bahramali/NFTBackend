@@ -21,3 +21,7 @@ app:
       secret: test-jwt-secret-test-jwt-secret-test
       issuer: test-issuer
       audience: test-audience
+
+stripe:
+  secret-key: sk_test_placeholder
+  allow-client-amount: true

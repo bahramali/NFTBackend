@@ -132,6 +132,8 @@ public class AuthController {
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, refreshTokenCookieService.createRefreshCookie(result.refreshToken()).toString())
                     .body(response);
+        } catch (se.hydroleaf.service.RefreshTokenException ex) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ex.getCode(), ex);
         } catch (SecurityException se) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, se.getMessage(), se);
         }
@@ -149,6 +151,8 @@ public class AuthController {
             return ResponseEntity.noContent()
                     .header(HttpHeaders.SET_COOKIE, refreshTokenCookieService.clearRefreshCookie().toString())
                     .build();
+        } catch (se.hydroleaf.service.RefreshTokenException ex) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ex.getCode(), ex);
         } catch (SecurityException se) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, se.getMessage(), se);
         }

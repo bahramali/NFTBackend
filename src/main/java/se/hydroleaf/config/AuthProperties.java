@@ -35,7 +35,7 @@ public class AuthProperties {
         private String name = "refreshToken";
         private boolean secure = true;
         private boolean httpOnly = true;
-        private String sameSite = "Strict";
+        private String sameSite = "Lax";
         private String path = "/api/auth";
     }
 }

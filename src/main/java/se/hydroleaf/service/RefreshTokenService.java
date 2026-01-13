@@ -52,17 +52,17 @@ public class RefreshTokenService {
     @Transactional(readOnly = true)
     public RefreshToken requireValidToken(String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
-            throw new SecurityException("Missing refresh token");
+            throw new RefreshTokenException("missing_refresh_token");
         }
         String hash = hashToken(refreshToken);
         RefreshToken token = refreshTokenRepository.findByTokenHashWithUserAndPermissions(hash)
-                .orElseThrow(() -> new SecurityException("Invalid refresh token"));
+                .orElseThrow(() -> new RefreshTokenException("invalid_refresh_token"));
         Instant now = Instant.now(clock);
         if (token.getRevokedAt() != null) {
-            throw new SecurityException("Refresh token revoked");
+            throw new RefreshTokenException("refresh_token_revoked");
         }
         if (token.getExpiresAt().isBefore(now)) {
-            throw new SecurityException("Refresh token expired");
+            throw new RefreshTokenException("refresh_token_expired");
         }
         return token;
     }

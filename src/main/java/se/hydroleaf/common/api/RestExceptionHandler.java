@@ -1,5 +1,6 @@
 package se.hydroleaf.common.api;
 
+import com.stripe.exception.StripeException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
@@ -53,6 +54,21 @@ public class RestExceptionHandler {
         log.warn("Request failed with status {} on {} {}: {}", ex.getStatusCode(), request.getMethod(), request.getRequestURI(), ex.getReason());
         return ResponseEntity.status(ex.getStatusCode())
                 .body(new ApiError("REQUEST_FAILED", ex.getReason()));
+    }
+
+    @ExceptionHandler(StripeException.class)
+    public ResponseEntity<ApiError> handleStripeException(StripeException ex, HttpServletRequest request) {
+        log.warn("Stripe request failed on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
+        HttpStatus status = HttpStatus.BAD_GATEWAY;
+        Integer statusCode = ex.getStatusCode();
+        if (statusCode != null) {
+            HttpStatus resolved = HttpStatus.resolve(statusCode);
+            if (resolved != null) {
+                status = resolved;
+            }
+        }
+        return ResponseEntity.status(status)
+                .body(new ApiError("STRIPE_ERROR", "Stripe request failed"));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

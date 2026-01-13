@@ -17,10 +17,12 @@ public class StoreCorsConfig {
 
     private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
     private static final List<String> ALLOWED_HEADERS = List.of(
-            "Content-Type",
+            "Accept",
             "Authorization",
-            "X-Requested-With",
+            "Content-Type",
+            "Origin",
             "X-Cart-Id",
+            "X-Requested-With",
             "X-Session-Id"
     );
     private static final List<String> EXPOSED_HEADERS = List.of("Location", "Retry-After");

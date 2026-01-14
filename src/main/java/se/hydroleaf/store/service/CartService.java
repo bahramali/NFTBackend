@@ -137,14 +137,6 @@ public class CartService {
         return new CartCheckoutSnapshot(cart, totals);
     }
 
-    @Transactional
-    public void markCheckedOut(UUID cartId) {
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new NotFoundException("CART_NOT_FOUND", "Cart not found"));
-        cart.setStatus(CartStatus.CHECKED_OUT);
-        cartRepository.save(cart);
-    }
-
     private void applyQuantity(CartItem item, ProductVariant variant, int qty) {
         if (qty < 1) {
             throw new BadRequestException("INVALID_QTY", "Quantity must be at least 1");

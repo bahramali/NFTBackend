@@ -70,7 +70,7 @@ public class StripeCartCheckoutSessionService {
                     .orElseGet(() -> paymentAttemptRepository.save(PaymentAttempt.builder()
                             .stripeSessionId(session.getId())
                             .cartId(cart.getId())
-                            .userId(user.userId())
+                            .userId(cart.getUserId())
                             .status(PaymentAttemptStatus.CREATED)
                             .build()));
             log.info("Created Stripe checkout session {} for cartId={}", session.getId(), cart.getId());

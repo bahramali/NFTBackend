@@ -29,7 +29,7 @@ public class ApiExceptionHandler {
 
     public record FieldErrorResponse(String field, String message) {}
 
-    public record ValidationErrorResponse(List<FieldErrorResponse> errors) {}
+    public record ValidationErrorResponse(String error, String message, List<FieldErrorResponse> errors) {}
 
     public record InvalidPermissionsResponse(List<FieldErrorResponse> errors, List<String> invalidPermissions) {}
 
@@ -42,7 +42,7 @@ public class ApiExceptionHandler {
         if (log.isDebugEnabled()) {
             log.debug("Validation failed: {}", errors);
         }
-        return new ValidationErrorResponse(errors);
+        return validationResponse(errors);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -64,13 +64,14 @@ public class ApiExceptionHandler {
         if (log.isDebugEnabled()) {
             log.debug("Unreadable request body", ex);
         }
-        return new ValidationErrorResponse(List.of(new FieldErrorResponse("", "Malformed JSON request")));
+        return errorResponse("VALIDATION_ERROR", "Malformed JSON request", List.of(new FieldErrorResponse("", "Malformed JSON request")));
     }
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ValidationErrorResponse> handleResponseStatus(ResponseStatusException ex) {
         FieldErrorResponse error = new FieldErrorResponse("", Objects.requireNonNullElse(ex.getReason(), ""));
-        return ResponseEntity.status(ex.getStatusCode()).body(new ValidationErrorResponse(List.of(error)));
+        return ResponseEntity.status(ex.getStatusCode())
+                .body(errorResponse("REQUEST_FAILED", error.message(), List.of(error)));
     }
 
     @ExceptionHandler(InvalidPermissionException.class)
@@ -88,19 +89,20 @@ public class ApiExceptionHandler {
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .header(org.springframework.http.HttpHeaders.WWW_AUTHENTICATE, "Bearer")
-                .body(new ValidationErrorResponse(List.of(error)));
+                .body(errorResponse("UNAUTHORIZED", error.message(), List.of(error)));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ValidationErrorResponse handleIllegalArgument(IllegalArgumentException ex) {
-        return new ValidationErrorResponse(List.of(new FieldErrorResponse("", ex.getMessage())));
+        return errorResponse("VALIDATION_ERROR", ex.getMessage(), List.of(new FieldErrorResponse("", ex.getMessage())));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ValidationErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         FieldErrorResponse error = new FieldErrorResponse("", "Request method '" + ex.getMethod() + "' not supported");
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(new ValidationErrorResponse(List.of(error)));
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(errorResponse("REQUEST_FAILED", error.message(), List.of(error)));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
@@ -109,7 +111,8 @@ public class ApiExceptionHandler {
         if (log.isDebugEnabled()) {
             log.debug("Resource not found: {}", ex.getResourcePath());
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ValidationErrorResponse(List.of(error)));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(errorResponse("REQUEST_FAILED", error.message(), List.of(error)));
     }
 
     private ValidationErrorResponse invalidFormatResponse(InvalidFormatException ex) {
@@ -122,9 +125,9 @@ public class ApiExceptionHandler {
                             .map(Object::toString)
                             .collect(Collectors.joining(", "));
             String message = "Invalid value '%s'. Allowed values: %s".formatted(ex.getValue(), allowed);
-            return new ValidationErrorResponse(List.of(new FieldErrorResponse(field, message)));
+            return errorResponse("VALIDATION_ERROR", message, List.of(new FieldErrorResponse(field, message)));
         }
-        return new ValidationErrorResponse(List.of(new FieldErrorResponse(field, "Invalid value")));
+        return errorResponse("VALIDATION_ERROR", "Invalid value", List.of(new FieldErrorResponse(field, "Invalid value")));
     }
 
     private ValidationErrorResponse unrecognizedFieldResponse(UnrecognizedPropertyException ex) {
@@ -134,7 +137,17 @@ public class ApiExceptionHandler {
                 ? ""
                 : pathFrom(path.subList(0, path.size() - 1));
         String field = parentPath.isBlank() ? fieldName : parentPath + "." + fieldName;
-        return new ValidationErrorResponse(List.of(new FieldErrorResponse(field, "Unrecognized field '%s'".formatted(fieldName))));
+        String message = "Unrecognized field '%s'".formatted(fieldName);
+        return errorResponse("VALIDATION_ERROR", message, List.of(new FieldErrorResponse(field, message)));
+    }
+
+    private ValidationErrorResponse validationResponse(List<FieldErrorResponse> errors) {
+        String message = errors.isEmpty() ? "Request validation failed" : errors.get(0).message();
+        return new ValidationErrorResponse("VALIDATION_ERROR", message, errors);
+    }
+
+    private ValidationErrorResponse errorResponse(String code, String message, List<FieldErrorResponse> errors) {
+        return new ValidationErrorResponse(code, message, errors);
     }
 
     private String pathFrom(List<JsonMappingException.Reference> path) {

@@ -68,7 +68,7 @@ public class CartService {
         Cart cart = requireOpenCart(cartId);
         ProductVariant variant = productService.requireActiveVariant(request.getVariantId());
         Product product = variant.getProduct();
-        int qtyToAdd = Optional.ofNullable(request.getQty()).orElse(1);
+        int qtyToAdd = request.getQty();
 
         CartItem item = cart.getItems().stream()
                 .filter(i -> i.getVariant() != null && i.getVariant().getId().equals(variant.getId()))

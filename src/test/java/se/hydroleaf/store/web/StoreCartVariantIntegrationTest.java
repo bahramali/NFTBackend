@@ -172,4 +172,76 @@ class StoreCartVariantIntegrationTest {
                         .content(outOfStockRequest))
                 .andExpect(status().isConflict());
     }
+
+    @Test
+    void addToCartAcceptsLegacyItemId() throws Exception {
+        Product product = productRepository.save(Product.builder()
+                .sku("MINT")
+                .name("Fresh Mint")
+                .description("Test mint")
+                .priceCents(0)
+                .currency("SEK")
+                .active(true)
+                .inventoryQty(0)
+                .imageUrl("https://example.com/mint.png")
+                .category("greens")
+                .build());
+
+        ProductVariant inStockVariant = productVariantRepository.save(ProductVariant.builder()
+                .product(product)
+                .label("10g")
+                .weightGrams(10)
+                .priceCents(1500)
+                .stockQuantity(8)
+                .sku("MINT-10G")
+                .active(true)
+                .build());
+
+        MvcResult createCartResult = mockMvc.perform(post("/api/store/cart")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode cartNode = objectMapper.readTree(createCartResult.getResponse().getContentAsByteArray());
+        UUID cartId = UUID.fromString(cartNode.get("id").asText());
+
+        String requestBody = """
+                {
+                  "itemId": "%s",
+                  "quantity": 1
+                }
+                """.formatted(inStockVariant.getId());
+
+        mockMvc.perform(post("/api/store/cart/{cartId}/items", cartId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].variantId").value(inStockVariant.getId().toString()))
+                .andExpect(jsonPath("$.items[0].variantLabel").value("10g"))
+                .andExpect(jsonPath("$.items[0].weightGrams").value(10));
+    }
+
+    @Test
+    void addToCartReturnsValidationErrorForMissingVariant() throws Exception {
+        MvcResult createCartResult = mockMvc.perform(post("/api/store/cart")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode cartNode = objectMapper.readTree(createCartResult.getResponse().getContentAsByteArray());
+        UUID cartId = UUID.fromString(cartNode.get("id").asText());
+
+        String requestBody = """
+                {
+                  "quantity": 1
+                }
+                """;
+
+        mockMvc.perform(post("/api/store/cart/{cartId}/items", cartId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("variantId is required"));
+    }
 }

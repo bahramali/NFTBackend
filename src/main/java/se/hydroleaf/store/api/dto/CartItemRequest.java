@@ -11,11 +11,11 @@ import lombok.Setter;
 @Setter
 public class CartItemRequest {
 
-    @NotNull
-    @JsonAlias("variant_id")
+    @NotNull(message = "variantId is required")
+    @JsonAlias({ "variant_id", "itemId" })
     private UUID variantId;
 
     @Min(1)
     @JsonAlias("quantity")
-    private Integer qty;
+    private int qty;
 }

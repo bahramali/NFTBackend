@@ -59,7 +59,7 @@ public class StoreOrder {
     @Column(nullable = false)
     private long taxCents;
 
-    @Column(nullable = false, name = "total_amount_cents")
+    @Column(nullable = false, name = "total_cents")
     private long totalCents;
 
     @Column(nullable = false, length = 3)

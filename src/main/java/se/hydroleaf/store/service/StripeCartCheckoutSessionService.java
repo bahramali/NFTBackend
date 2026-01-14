@@ -66,12 +66,13 @@ public class StripeCartCheckoutSessionService {
 
         try {
             Session session = Session.create(params);
-            paymentAttemptRepository.save(PaymentAttempt.builder()
-                    .stripeSessionId(session.getId())
-                    .cartId(cart.getId())
-                    .userId(user.userId())
-                    .status(PaymentAttemptStatus.CREATED)
-                    .build());
+            paymentAttemptRepository.findByStripeSessionId(session.getId())
+                    .orElseGet(() -> paymentAttemptRepository.save(PaymentAttempt.builder()
+                            .stripeSessionId(session.getId())
+                            .cartId(cart.getId())
+                            .userId(user.userId())
+                            .status(PaymentAttemptStatus.CREATED)
+                            .build()));
             log.info("Created Stripe checkout session {} for cartId={}", session.getId(), cart.getId());
             return new StripeCheckoutSessionResult(session.getUrl());
         } catch (StripeException e) {

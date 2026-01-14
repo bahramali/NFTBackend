@@ -93,7 +93,7 @@ public class CheckoutService {
                 .build();
         paymentRepository.save(payment);
 
-        cart.setStatus(CartStatus.CHECKED_OUT);
+        // cart closes only on Stripe webhook confirmation.
         cartRepository.save(cart);
 
         log.info("Checkout initiated cartId={} orderId={}", cart.getId(), order.getId());

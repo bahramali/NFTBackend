@@ -20,6 +20,9 @@ import se.hydroleaf.store.config.StoreProperties;
 import se.hydroleaf.store.config.StripeProperties;
 import se.hydroleaf.store.model.Cart;
 import se.hydroleaf.store.model.CartItem;
+import se.hydroleaf.store.model.PaymentAttempt;
+import se.hydroleaf.store.model.PaymentAttemptStatus;
+import se.hydroleaf.store.repository.PaymentAttemptRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +36,7 @@ public class StripeCartCheckoutSessionService {
     private final CartService cartService;
     private final StripeProperties stripeProperties;
     private final StoreProperties storeProperties;
+    private final PaymentAttemptRepository paymentAttemptRepository;
 
     public StripeCheckoutSessionResult createCheckoutSession(AuthenticatedUser user, java.util.UUID cartId) {
         ensureStripeEnabled();
@@ -62,6 +66,12 @@ public class StripeCartCheckoutSessionService {
 
         try {
             Session session = Session.create(params);
+            paymentAttemptRepository.save(PaymentAttempt.builder()
+                    .stripeSessionId(session.getId())
+                    .cartId(cart.getId())
+                    .userId(user.userId())
+                    .status(PaymentAttemptStatus.CREATED)
+                    .build());
             log.info("Created Stripe checkout session {} for cartId={}", session.getId(), cart.getId());
             return new StripeCheckoutSessionResult(session.getUrl());
         } catch (StripeException e) {

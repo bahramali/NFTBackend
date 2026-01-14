@@ -75,7 +75,7 @@ public class PaymentWebhookService {
         switch (newStatus) {
             case PAID -> payment.getOrder().setStatus(OrderStatus.PAID);
             case FAILED -> payment.getOrder().setStatus(OrderStatus.FAILED);
-            case CANCELED -> payment.getOrder().setStatus(OrderStatus.CANCELED);
+            case CANCELLED -> payment.getOrder().setStatus(OrderStatus.CANCELED);
             default -> {
             }
         }
@@ -96,7 +96,7 @@ public class PaymentWebhookService {
         return switch (normalized) {
             case "PAID", "CAPTURED", "CHARGED", "COMPLETED" -> PaymentStatus.PAID;
             case "FAILED" -> PaymentStatus.FAILED;
-            case "CANCELED", "CANCELLED" -> PaymentStatus.CANCELED;
+            case "CANCELED", "CANCELLED" -> PaymentStatus.CANCELLED;
             case "REFUNDED" -> PaymentStatus.REFUNDED;
             default -> PaymentStatus.CREATED;
         };

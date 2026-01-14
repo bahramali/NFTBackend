@@ -37,6 +37,7 @@ import se.hydroleaf.store.model.OrderStatus;
 import se.hydroleaf.store.model.ShippingAddress;
 import se.hydroleaf.store.model.StoreOrder;
 import se.hydroleaf.store.repository.OrderRepository;
+import se.hydroleaf.store.repository.PaymentRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -62,6 +63,9 @@ class MyAccountIntegrationTest {
     private OrderRepository orderRepository;
 
     @Autowired
+    private PaymentRepository paymentRepository;
+
+    @Autowired
     private CustomerAddressRepository customerAddressRepository;
 
     @Autowired
@@ -71,6 +75,7 @@ class MyAccountIntegrationTest {
     void cleanDatabase() {
         latestSensorValueRepository.deleteAll();
         deviceRepository.deleteAll();
+        paymentRepository.deleteAll();
         orderRepository.deleteAll();
         customerAddressRepository.deleteAll();
         userRepository.deleteAll();

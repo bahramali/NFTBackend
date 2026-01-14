@@ -123,6 +123,9 @@ public class CartService {
     public CartResponse getCart(UUID cartId) {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new NotFoundException("CART_NOT_FOUND", "Cart not found"));
+        if (cart.getStatus() != CartStatus.OPEN) {
+            throw new ConflictException("CART_CLOSED", "Cart is no longer open");
+        }
         MoneySummary totals = refreshPricing(cart);
         return storeMapper.toCartResponse(cart, totals);
     }

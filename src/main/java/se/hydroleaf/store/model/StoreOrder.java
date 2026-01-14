@@ -62,6 +62,9 @@ public class StoreOrder {
     @Column(nullable = false, name = "total_cents")
     private long totalCents;
 
+    @Column(nullable = false, name = "total_amount_cents")
+    private long totalAmountCents;
+
     @Column(nullable = false, length = 3)
     @Builder.Default
     private String currency = "SEK";

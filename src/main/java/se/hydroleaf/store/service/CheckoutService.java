@@ -155,6 +155,7 @@ public class CheckoutService {
                 .shippingCents(totals.shipping())
                 .taxCents(totals.tax())
                 .totalCents(totals.total())
+                .totalAmountCents(totals.total())
                 .currency(storeProperties.getCurrency())
                 .shippingAddress(toShippingAddress(request.getShippingAddress()))
                 .items(new ArrayList<>())

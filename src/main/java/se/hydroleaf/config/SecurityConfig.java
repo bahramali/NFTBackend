@@ -52,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/notes/**").permitAll()
                         .requestMatchers("/api/payments/webhook").permitAll()
+                        .requestMatchers("/api/payments/stripe/webhook").permitAll()
                         .requestMatchers("/api/store/**").permitAll()
                         .requestMatchers("/api/store/webhook").permitAll()
                         .anyRequest().authenticated())

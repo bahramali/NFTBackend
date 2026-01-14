@@ -5,6 +5,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -101,7 +102,7 @@ public class StripeService {
         }
 
         EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
-        Optional<Object> object = deserializer.getObject();
+        Optional<StripeObject> object = deserializer.getObject();
         Session session = object.filter(Session.class::isInstance)
                 .map(Session.class::cast)
                 .orElse(null);

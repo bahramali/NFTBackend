@@ -92,7 +92,7 @@ public class StripeService {
         }
     }
 
-    public String extractSessionId(String payload, String signatureHeader) {
+    public Session extractCompletedSession(String payload, String signatureHeader) {
         Event event = parseEvent(payload, signatureHeader);
         if (event == null) {
             return null;
@@ -107,7 +107,6 @@ public class StripeService {
         return deserializer.getObject()
                 .filter(Session.class::isInstance)
                 .map(Session.class::cast)
-                .map(Session::getId)
                 .orElse(null);
     }
 

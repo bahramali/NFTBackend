@@ -1,5 +1,6 @@
 package se.hydroleaf.store.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,8 +13,10 @@ public class ShippingAddressDto {
     private String name;
 
     @NotBlank
+    @JsonAlias("addressLine1")
     private String line1;
 
+    @JsonAlias("addressLine2")
     private String line2;
 
     @NotBlank

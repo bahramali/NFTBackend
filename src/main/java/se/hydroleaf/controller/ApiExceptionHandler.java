@@ -61,6 +61,12 @@ public class ApiExceptionHandler {
             }
             return unrecognizedFieldResponse(unrecognizedProperty);
         }
+        if (cause instanceof JsonMappingException mappingException) {
+            if (log.isDebugEnabled()) {
+                log.debug("Invalid JSON mapping in request body", mappingException);
+            }
+            return mappingErrorResponse(mappingException);
+        }
         if (log.isDebugEnabled()) {
             log.debug("Unreadable request body", ex);
         }
@@ -138,6 +144,15 @@ public class ApiExceptionHandler {
                 : pathFrom(path.subList(0, path.size() - 1));
         String field = parentPath.isBlank() ? fieldName : parentPath + "." + fieldName;
         String message = "Unrecognized field '%s'".formatted(fieldName);
+        return errorResponse("VALIDATION_ERROR", message, List.of(new FieldErrorResponse(field, message)));
+    }
+
+    private ValidationErrorResponse mappingErrorResponse(JsonMappingException ex) {
+        String field = pathFrom(ex.getPath());
+        String message = ex.getOriginalMessage();
+        if (message == null || message.isBlank()) {
+            message = "Malformed JSON request";
+        }
         return errorResponse("VALIDATION_ERROR", message, List.of(new FieldErrorResponse(field, message)));
     }
 

@@ -68,33 +68,31 @@ public class CheckoutService {
         StoreOrder order = buildOrder(cart, request, totals);
         orderRepository.save(order);
 
-        Payment payment = Payment.builder()
-                .order(order)
-                .provider(PaymentProvider.STRIPE)
-                .status(PaymentStatus.CREATED)
-                .amountCents(order.getTotalCents())
-                .currency(order.getCurrency())
-                .providerPaymentId("PENDING")
-                .build();
-        paymentRepository.save(payment);
-
-        cart.setStatus(CartStatus.CHECKED_OUT);
-        cartRepository.save(cart);
-
         String paymentUrl = storeProperties.getFallbackPaymentUrl().replace("{orderId}", order.getId().toString());
-        String providerRef = order.getOrderNumber();
         try {
             StripeService.StripeSessionResult sessionResult = stripeService.createCheckoutSession(order);
-            if (sessionResult != null) {
-                providerRef = sessionResult.sessionId();
-                paymentUrl = sessionResult.url();
+            if (sessionResult == null) {
+                throw new StripeIntegrationException("Stripe checkout session was not created");
             }
+            paymentUrl = sessionResult.url();
+            String providerRef = sessionResult.sessionId();
+
+            Payment payment = Payment.builder()
+                    .order(order)
+                    .provider(PaymentProvider.STRIPE)
+                    .status(PaymentStatus.CREATED)
+                    .amountCents(order.getTotalCents())
+                    .currency(order.getCurrency())
+                    .providerPaymentId(providerRef)
+                    .providerReference(providerRef)
+                    .build();
+            paymentRepository.save(payment);
         } catch (StripeIntegrationException ex) {
             log.error("Stripe session creation failed for orderId={}: {}", order.getId(), ex.getMessage());
             throw ex;
         }
-
-        payment.setProviderPaymentId(providerRef);
+        cart.setStatus(CartStatus.CHECKED_OUT);
+        cartRepository.save(cart);
 
         log.info("Checkout initiated cartId={} orderId={}", cart.getId(), order.getId());
         return CheckoutResponse.builder()

@@ -90,7 +90,7 @@ public class StripeCheckoutService {
         payment.setAmountCents(order.getTotalCents());
         payment.setCurrency(order.getCurrency());
         payment.setProviderPaymentId(session.getId());
-        payment.setProviderReference(session.getPaymentIntent());
+        payment.setProviderReference(resolveProviderReference(session));
         paymentRepository.save(payment);
 
         log.info("Created Stripe checkout session {} for orderId={}", session.getId(), orderId);
@@ -146,11 +146,11 @@ public class StripeCheckoutService {
                     .amountCents(order.getTotalCents())
                     .currency(order.getCurrency())
                     .providerPaymentId(sessionId)
-                    .providerReference(session.getPaymentIntent())
+                    .providerReference(resolveProviderReference(session))
                     .build();
         } else {
             payment.setStatus(PaymentStatus.PAID);
-            payment.setProviderReference(session.getPaymentIntent());
+            payment.setProviderReference(resolveProviderReference(session));
             payment.setAmountCents(order.getTotalCents());
             payment.setCurrency(order.getCurrency());
         }
@@ -297,5 +297,13 @@ public class StripeCheckoutService {
             return String.format(template, orderId);
         }
         return template.replace("{orderId}", orderId);
+    }
+
+    private String resolveProviderReference(Session session) {
+        String paymentIntent = session.getPaymentIntent();
+        if (StringUtils.hasText(paymentIntent)) {
+            return paymentIntent;
+        }
+        return session.getId();
     }
 }

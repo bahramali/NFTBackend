@@ -9,9 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import se.hydroleaf.common.api.NotFoundException;
-import se.hydroleaf.store.service.PaymentService;
 import se.hydroleaf.store.service.StripeService;
+import se.hydroleaf.store.service.StripeWebhookOrderService;
 
 @RestController
 @RequestMapping("/api/store/webhook")
@@ -21,18 +20,14 @@ public class WebhookController {
     private static final Logger log = LoggerFactory.getLogger(WebhookController.class);
 
     private final StripeService stripeService;
-    private final PaymentService paymentService;
+    private final StripeWebhookOrderService stripeWebhookOrderService;
 
     @PostMapping("/stripe")
     public ResponseEntity<Void> handleStripe(@RequestBody String payload, @RequestHeader(value = "Stripe-Signature", required = false) String signature) {
-        String sessionId = stripeService.extractSessionId(payload, signature);
-        if (sessionId != null) {
-            try {
-                paymentService.markPaid(sessionId);
-                log.info("Stripe webhook processed for session {}", sessionId);
-            } catch (NotFoundException ex) {
-                log.warn("Stripe webhook received for unknown session {}", sessionId);
-            }
+        var session = stripeService.extractCompletedSession(payload, signature);
+        if (session != null) {
+            stripeWebhookOrderService.finalizePaidOrder(session);
+            log.info("Stripe webhook processed for session {}", session.getId());
         } else {
             log.warn("Stripe webhook received without session id");
         }

@@ -257,21 +257,6 @@ public class StripeWebhookOrderService {
     }
 
     private ShippingAddress resolveShippingAddress(Session session) {
-        Session.ShippingDetails shippingDetails = session.getShippingDetails();
-        if (shippingDetails != null && shippingDetails.getAddress() != null) {
-            Address address = shippingDetails.getAddress();
-            return ShippingAddress.builder()
-                    .name(shippingDetails.getName())
-                    .line1(address.getLine1())
-                    .line2(address.getLine2())
-                    .city(address.getCity())
-                    .state(address.getState())
-                    .postalCode(address.getPostalCode())
-                    .country(address.getCountry())
-                    .phone(shippingDetails.getPhone())
-                    .build();
-        }
-
         Session.CustomerDetails customerDetails = session.getCustomerDetails();
         if (customerDetails != null && customerDetails.getAddress() != null) {
             Address address = customerDetails.getAddress();

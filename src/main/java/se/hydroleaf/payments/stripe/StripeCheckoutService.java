@@ -4,6 +4,7 @@ import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
+import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
 import com.stripe.net.Webhook;
@@ -39,6 +40,8 @@ public class StripeCheckoutService {
 
     private static final Logger log = LoggerFactory.getLogger(StripeCheckoutService.class);
     private static final String EVENT_SESSION_COMPLETED = "checkout.session.completed";
+    private static final String EVENT_SESSION_EXPIRED = "checkout.session.expired";
+    private static final String EVENT_PAYMENT_FAILED = "payment_intent.payment_failed";
 
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
@@ -72,6 +75,10 @@ public class StripeCheckoutService {
                 .setSuccessUrl(formatOrderUrl(stripeProperties.getSuccessUrl(), orderId.toString()))
                 .setCancelUrl(formatOrderUrl(stripeProperties.getCancelUrl(), orderId.toString()))
                 .addAllLineItem(buildLineItems(order))
+                .setPaymentIntentData(SessionCreateParams.PaymentIntentData.builder()
+                        .putMetadata("orderId", orderId.toString())
+                        .putMetadata("orderNumber", order.getOrderNumber())
+                        .build())
                 .setCustomerEmail(order.getEmail())
                 .putMetadata("orderId", orderId.toString())
                 .putMetadata("orderNumber", order.getOrderNumber())
@@ -104,62 +111,21 @@ public class StripeCheckoutService {
         }
 
         Event event = parseEvent(signature, payload);
-        if (!EVENT_SESSION_COMPLETED.equals(event.getType())) {
-            log.debug("Ignoring Stripe event type {}", event.getType());
+        String eventType = event.getType();
+        if (EVENT_SESSION_COMPLETED.equals(eventType)) {
+            handleSessionCompleted(extractSession(event));
+            return;
+        }
+        if (EVENT_SESSION_EXPIRED.equals(eventType)) {
+            handleSessionExpired(extractSession(event));
+            return;
+        }
+        if (EVENT_PAYMENT_FAILED.equals(eventType)) {
+            handlePaymentFailed(extractPaymentIntent(event));
             return;
         }
 
-        Session session = extractSession(event);
-        if (session == null) {
-            log.warn("Stripe event missing session payload");
-            return;
-        }
-
-        String sessionId = session.getId();
-        if (!StringUtils.hasText(sessionId)) {
-            log.warn("Stripe session missing id");
-            return;
-        }
-
-        Payment payment = paymentRepository.findByProviderPaymentId(sessionId).orElse(null);
-        StoreOrder order = resolveOrder(session, payment);
-        if (order == null) {
-            log.warn("Stripe webhook received for unknown order sessionId={}", sessionId);
-            return;
-        }
-
-        if (order.getStatus() == OrderStatus.PAID || (payment != null && payment.getStatus() == PaymentStatus.PAID)) {
-            log.info("Stripe webhook already processed for sessionId={} orderId={}", sessionId, order.getId());
-            return;
-        }
-
-        if (!isAmountAndCurrencyValid(session, order)) {
-            log.warn("Stripe webhook amount mismatch sessionId={} orderId={}", sessionId, order.getId());
-            return;
-        }
-
-        if (payment == null) {
-            payment = Payment.builder()
-                    .order(order)
-                    .provider(PaymentProvider.STRIPE)
-                    .status(PaymentStatus.PAID)
-                    .amountCents(order.getTotalCents())
-                    .currency(order.getCurrency())
-                    .providerPaymentId(sessionId)
-                    .providerReference(resolveProviderReference(session))
-                    .build();
-        } else {
-            payment.setStatus(PaymentStatus.PAID);
-            payment.setProviderReference(resolveProviderReference(session));
-            payment.setAmountCents(order.getTotalCents());
-            payment.setCurrency(order.getCurrency());
-        }
-        paymentRepository.save(payment);
-
-        order.setStatus(OrderStatus.PAID);
-        orderRepository.save(order);
-
-        log.info("Marked order paid from Stripe webhook orderId={} sessionId={}", order.getId(), sessionId);
+        log.debug("Ignoring Stripe event type {}", eventType);
     }
 
     private void ensurePayable(StoreOrder order) {
@@ -262,6 +228,14 @@ public class StripeCheckoutService {
                 .orElse(null);
     }
 
+    private PaymentIntent extractPaymentIntent(Event event) {
+        EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
+        return deserializer.getObject()
+                .filter(PaymentIntent.class::isInstance)
+                .map(PaymentIntent.class::cast)
+                .orElse(null);
+    }
+
     private StoreOrder resolveOrder(Session session, Payment payment) {
         if (payment != null) {
             return payment.getOrder();
@@ -276,6 +250,150 @@ public class StripeCheckoutService {
             }
         }
         return null;
+    }
+
+    private StoreOrder resolveOrder(PaymentIntent paymentIntent, Payment payment) {
+        if (payment != null) {
+            return payment.getOrder();
+        }
+        Map<String, String> metadata = paymentIntent != null ? paymentIntent.getMetadata() : null;
+        if (metadata != null && StringUtils.hasText(metadata.get("orderId"))) {
+            try {
+                UUID orderId = UUID.fromString(metadata.get("orderId"));
+                return orderRepository.findById(orderId).orElse(null);
+            } catch (IllegalArgumentException ex) {
+                log.warn("Invalid orderId metadata in Stripe payment intent {}", paymentIntent.getId());
+            }
+        }
+        return null;
+    }
+
+    private void handleSessionCompleted(Session session) {
+        if (session == null) {
+            log.warn("Stripe event missing session payload");
+            return;
+        }
+
+        String sessionId = session.getId();
+        if (!StringUtils.hasText(sessionId)) {
+            log.warn("Stripe session missing id");
+            return;
+        }
+
+        Payment payment = paymentRepository.findByProviderPaymentId(sessionId).orElse(null);
+        StoreOrder order = resolveOrder(session, payment);
+        if (order == null) {
+            log.warn("Stripe webhook received for unknown order sessionId={}", sessionId);
+            return;
+        }
+
+        if (order.getStatus() == OrderStatus.PAID || (payment != null && payment.getStatus() == PaymentStatus.PAID)) {
+            log.info("Stripe webhook already processed for sessionId={} orderId={}", sessionId, order.getId());
+            return;
+        }
+
+        if (!isAmountAndCurrencyValid(session, order)) {
+            log.warn("Stripe webhook amount mismatch sessionId={} orderId={}", sessionId, order.getId());
+            return;
+        }
+
+        if (payment == null) {
+            payment = Payment.builder()
+                    .order(order)
+                    .provider(PaymentProvider.STRIPE)
+                    .status(PaymentStatus.PAID)
+                    .amountCents(order.getTotalCents())
+                    .currency(order.getCurrency())
+                    .providerPaymentId(sessionId)
+                    .providerReference(resolveProviderReference(session))
+                    .build();
+        } else {
+            payment.setStatus(PaymentStatus.PAID);
+            payment.setProviderReference(resolveProviderReference(session));
+            payment.setAmountCents(order.getTotalCents());
+            payment.setCurrency(order.getCurrency());
+        }
+        paymentRepository.save(payment);
+
+        order.setStatus(OrderStatus.PAID);
+        orderRepository.save(order);
+
+        log.info("Marked order paid from Stripe webhook orderId={} sessionId={}", order.getId(), sessionId);
+    }
+
+    private void handleSessionExpired(Session session) {
+        if (session == null) {
+            log.warn("Stripe session expired event missing session payload");
+            return;
+        }
+
+        String sessionId = session.getId();
+        if (!StringUtils.hasText(sessionId)) {
+            log.warn("Stripe session expired event missing id");
+            return;
+        }
+
+        Payment payment = paymentRepository.findByProviderPaymentId(sessionId).orElse(null);
+        StoreOrder order = resolveOrder(session, payment);
+        if (order == null) {
+            log.warn("Stripe checkout session expired for unknown order sessionId={}", sessionId);
+            return;
+        }
+
+        if (order.getStatus() == OrderStatus.PAID) {
+            log.info("Stripe checkout expired for already paid orderId={} sessionId={}", order.getId(), sessionId);
+            return;
+        }
+
+        if (payment != null && payment.getStatus() != PaymentStatus.CANCELLED) {
+            payment.setStatus(PaymentStatus.CANCELLED);
+            paymentRepository.save(payment);
+        }
+
+        if (order.getStatus() != OrderStatus.CANCELED) {
+            order.setStatus(OrderStatus.CANCELED);
+            orderRepository.save(order);
+        }
+
+        log.info("Marked order canceled after Stripe checkout expired orderId={} sessionId={}", order.getId(), sessionId);
+    }
+
+    private void handlePaymentFailed(PaymentIntent paymentIntent) {
+        if (paymentIntent == null) {
+            log.warn("Stripe payment failed event missing payment intent payload");
+            return;
+        }
+
+        String paymentIntentId = paymentIntent.getId();
+        if (!StringUtils.hasText(paymentIntentId)) {
+            log.warn("Stripe payment failed event missing payment intent id");
+            return;
+        }
+
+        Payment payment = paymentRepository.findByProviderReference(paymentIntentId).orElse(null);
+        StoreOrder order = resolveOrder(paymentIntent, payment);
+        if (order == null) {
+            log.warn("Stripe payment failed for unknown order paymentIntent={}", paymentIntentId);
+            return;
+        }
+
+        if (order.getStatus() == OrderStatus.PAID) {
+            log.info("Stripe payment failed for already paid orderId={} paymentIntent={}", order.getId(), paymentIntentId);
+            return;
+        }
+
+        if (payment != null) {
+            payment.setStatus(PaymentStatus.FAILED);
+            payment.setProviderReference(paymentIntentId);
+            paymentRepository.save(payment);
+        }
+
+        if (order.getStatus() != OrderStatus.FAILED) {
+            order.setStatus(OrderStatus.FAILED);
+            orderRepository.save(order);
+        }
+
+        log.info("Marked order failed after Stripe payment failure orderId={} paymentIntent={}", order.getId(), paymentIntentId);
     }
 
     private boolean isAmountAndCurrencyValid(Session session, StoreOrder order) {

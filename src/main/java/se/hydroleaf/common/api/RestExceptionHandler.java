@@ -28,7 +28,7 @@ public class RestExceptionHandler {
     public ResponseEntity<ApiError> handleApiException(ApiException ex, HttpServletRequest request) {
         log.warn("API error on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(ex.getStatus())
-                .body(new ApiError(ex.getCode(), ex.getMessage()));
+                .body(new ApiError(ex.getCode(), ex.getMessage(), request.getRequestURI(), null));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

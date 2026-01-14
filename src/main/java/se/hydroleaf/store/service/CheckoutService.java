@@ -69,28 +69,28 @@ public class CheckoutService {
         orderRepository.save(order);
 
         String paymentUrl = storeProperties.getFallbackPaymentUrl().replace("{orderId}", order.getId().toString());
+        String providerRef = order.getOrderNumber();
         try {
             StripeService.StripeSessionResult sessionResult = stripeService.createCheckoutSession(order);
-            if (sessionResult == null) {
-                throw new StripeIntegrationException("Stripe checkout session was not created");
+            if (sessionResult != null) {
+                paymentUrl = sessionResult.url();
+                providerRef = sessionResult.sessionId();
             }
-            paymentUrl = sessionResult.url();
-            String providerRef = sessionResult.sessionId();
-
-            Payment payment = Payment.builder()
-                    .order(order)
-                    .provider(PaymentProvider.STRIPE)
-                    .status(PaymentStatus.CREATED)
-                    .amountCents(order.getTotalCents())
-                    .currency(order.getCurrency())
-                    .providerPaymentId(providerRef)
-                    .providerReference(providerRef)
-                    .build();
-            paymentRepository.save(payment);
         } catch (StripeIntegrationException ex) {
             log.error("Stripe session creation failed for orderId={}: {}", order.getId(), ex.getMessage());
             throw ex;
         }
+
+        Payment payment = Payment.builder()
+                .order(order)
+                .provider(PaymentProvider.STRIPE)
+                .status(PaymentStatus.CREATED)
+                .amountCents(order.getTotalCents())
+                .currency(order.getCurrency())
+                .providerPaymentId(providerRef)
+                .providerReference(providerRef)
+                .build();
+        paymentRepository.save(payment);
         cart.setStatus(CartStatus.CHECKED_OUT);
         cartRepository.save(cart);
 

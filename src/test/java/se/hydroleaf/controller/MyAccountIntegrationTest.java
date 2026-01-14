@@ -403,6 +403,7 @@ class MyAccountIntegrationTest {
                 .shippingCents(0)
                 .taxCents(0)
                 .totalCents(totalCents)
+                .totalAmountCents(totalCents)
                 .currency("SEK")
                 .shippingAddress(ShippingAddress.builder()
                         .name("Tester")

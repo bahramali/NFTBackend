@@ -7,4 +7,6 @@ import se.hydroleaf.store.model.PaymentAttempt;
 
 public interface PaymentAttemptRepository extends JpaRepository<PaymentAttempt, UUID> {
     Optional<PaymentAttempt> findByStripeSessionId(String stripeSessionId);
+
+    Optional<PaymentAttempt> findTopByCartIdOrderByCreatedAtDesc(UUID cartId);
 }

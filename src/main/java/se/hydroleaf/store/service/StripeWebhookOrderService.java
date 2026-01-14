@@ -1,6 +1,7 @@
 package se.hydroleaf.store.service;
 
 import com.stripe.model.Address;
+import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
@@ -25,6 +26,7 @@ import se.hydroleaf.store.model.OrderItem;
 import se.hydroleaf.store.model.OrderStatus;
 import se.hydroleaf.store.model.Payment;
 import se.hydroleaf.store.model.PaymentAttempt;
+import se.hydroleaf.store.model.PaymentAttemptStatus;
 import se.hydroleaf.store.model.PaymentProvider;
 import se.hydroleaf.store.model.PaymentStatus;
 import se.hydroleaf.store.model.Product;
@@ -118,6 +120,57 @@ public class StripeWebhookOrderService {
         cartRepository.save(cart);
 
         log.info("Created paid order from Stripe webhook orderId={} sessionId={}", order.getId(), sessionId);
+    }
+
+    @Transactional
+    public void markCheckoutExpired(Session session) {
+        if (session == null) {
+            return;
+        }
+        String sessionId = session.getId();
+        if (!StringUtils.hasText(sessionId)) {
+            log.warn("Stripe session missing id for expiration event");
+            return;
+        }
+        PaymentAttempt attempt = paymentAttemptRepository.findByStripeSessionId(sessionId).orElse(null);
+        if (attempt == null) {
+            log.warn("Stripe checkout expired without matching payment attempt sessionId={}", sessionId);
+            return;
+        }
+        if (attempt.getStatus() != PaymentAttemptStatus.CANCELLED) {
+            attempt.setStatus(PaymentAttemptStatus.CANCELLED);
+            paymentAttemptRepository.save(attempt);
+        }
+        log.info("Marked Stripe checkout expired for cartId={} sessionId={}", attempt.getCartId(), sessionId);
+    }
+
+    @Transactional
+    public void markPaymentFailed(PaymentIntent paymentIntent) {
+        if (paymentIntent == null) {
+            return;
+        }
+        String cartIdValue = paymentIntent.getMetadata() != null ? paymentIntent.getMetadata().get("cartId") : null;
+        if (!StringUtils.hasText(cartIdValue)) {
+            log.warn("Stripe payment failed missing cartId metadata paymentIntent={}", paymentIntent.getId());
+            return;
+        }
+        UUID cartId;
+        try {
+            cartId = UUID.fromString(cartIdValue);
+        } catch (IllegalArgumentException ex) {
+            log.warn("Invalid cartId metadata on Stripe payment failed paymentIntent={}", paymentIntent.getId());
+            return;
+        }
+        PaymentAttempt attempt = paymentAttemptRepository.findTopByCartIdOrderByCreatedAtDesc(cartId).orElse(null);
+        if (attempt == null) {
+            log.warn("Stripe payment failed without matching payment attempt cartId={} paymentIntent={}", cartId, paymentIntent.getId());
+            return;
+        }
+        if (attempt.getStatus() != PaymentAttemptStatus.FAILED) {
+            attempt.setStatus(PaymentAttemptStatus.FAILED);
+            paymentAttemptRepository.save(attempt);
+        }
+        log.info("Marked Stripe payment failed for cartId={} paymentIntent={}", cartId, paymentIntent.getId());
     }
 
     private Payment findExistingPayment(String sessionId, String paymentIntent) {

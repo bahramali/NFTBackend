@@ -128,6 +128,16 @@ public class CartService {
     }
 
     @Transactional
+    public CartCheckoutSnapshot loadCartForCheckout(UUID cartId) {
+        Cart cart = requireOpenCart(cartId);
+        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+            throw new BadRequestException("EMPTY_CART", "Cart has no items");
+        }
+        MoneySummary totals = refreshPricing(cart);
+        return new CartCheckoutSnapshot(cart, totals);
+    }
+
+    @Transactional
     public void markCheckedOut(UUID cartId) {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new NotFoundException("CART_NOT_FOUND", "Cart not found"));
@@ -205,4 +215,6 @@ public class CartService {
                 .divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP)
                 .longValue();
     }
+
+    public record CartCheckoutSnapshot(Cart cart, MoneySummary totals) {}
 }

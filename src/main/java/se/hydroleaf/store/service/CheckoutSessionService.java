@@ -35,6 +35,7 @@ public class CheckoutSessionService {
         String cancelUrl = netsEasyProperties.getCancelUrl().replace("{orderId}", orderId.toString());
 
         order.setTotalCents(totalAmount);
+        order.setTotalAmountCents(totalAmount);
 
         PaymentProviderClient.HostedCheckoutSession session = paymentProviderClient.createHostedCheckoutSession(
                 order,

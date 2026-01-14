@@ -66,7 +66,7 @@ public class Payment {
     @Column(nullable = false, name = "provider_payment_id")
     private String providerPaymentId;
 
-    @Column(name = "provider_reference", nullable = false)
+    @Column(name = "provider_ref", nullable = false)
     private String providerReference;
 
     @Column(nullable = false, updatable = false)

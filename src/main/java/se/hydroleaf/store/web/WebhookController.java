@@ -24,12 +24,27 @@ public class WebhookController {
 
     @PostMapping("/stripe")
     public ResponseEntity<Void> handleStripe(@RequestBody String payload, @RequestHeader(value = "Stripe-Signature", required = false) String signature) {
-        var session = stripeService.extractCompletedSession(payload, signature);
-        if (session != null) {
-            stripeWebhookOrderService.finalizePaidOrder(session);
-            log.info("Stripe webhook processed for session {}", session.getId());
-        } else {
-            log.warn("Stripe webhook received without session id");
+        var webhookEvent = stripeService.extractWebhookEvent(payload, signature);
+        if (webhookEvent == null) {
+            log.warn("Stripe webhook received without event payload");
+            return ResponseEntity.ok().build();
+        }
+        switch (webhookEvent.type()) {
+            case "checkout.session.completed" -> {
+                if (webhookEvent.session() != null) {
+                    stripeWebhookOrderService.finalizePaidOrder(webhookEvent.session());
+                    log.info("Stripe webhook processed for session {}", webhookEvent.session().getId());
+                } else {
+                    log.warn("Stripe webhook session completed without session payload");
+                }
+            }
+            case "checkout.session.expired" -> {
+                stripeWebhookOrderService.markCheckoutExpired(webhookEvent.session());
+            }
+            case "payment_intent.payment_failed" -> {
+                stripeWebhookOrderService.markPaymentFailed(webhookEvent.paymentIntent());
+            }
+            default -> log.debug("Ignoring Stripe event type {}", webhookEvent.type());
         }
         return ResponseEntity.ok().build();
     }

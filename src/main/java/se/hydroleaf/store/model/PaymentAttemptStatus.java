@@ -1,5 +1,7 @@
 package se.hydroleaf.store.model;
 
 public enum PaymentAttemptStatus {
-    CREATED
+    CREATED,
+    FAILED,
+    CANCELLED
 }

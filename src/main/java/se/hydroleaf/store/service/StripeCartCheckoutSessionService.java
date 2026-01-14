@@ -60,6 +60,10 @@ public class StripeCartCheckoutSessionService {
                 .setSuccessUrl(SUCCESS_URL)
                 .setCancelUrl(CANCEL_URL)
                 .addAllLineItem(lineItems)
+                .setPaymentIntentData(SessionCreateParams.PaymentIntentData.builder()
+                        .putMetadata("userId", String.valueOf(user.userId()))
+                        .putMetadata("cartId", cart.getId().toString())
+                        .build())
                 .putMetadata("userId", String.valueOf(user.userId()))
                 .putMetadata("cartId", cart.getId().toString())
                 .build();

@@ -102,6 +102,7 @@ public class MyAccountService {
         User user = userRepository.findById(authenticatedUser.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         List<StoreOrder> orders = orderRepository.findByEmailIgnoreCase(user.getEmail());
+        Map<UUID, OrderSummaryDTO.ItemCounts> itemCounts = loadItemCounts(orders);
         Map<UUID, Payment> paymentsByOrderId = orders.isEmpty()
                 ? Map.of()
                 : paymentRepository.findByOrderIdIn(orders.stream().map(StoreOrder::getId).toList()).stream()
@@ -114,7 +115,11 @@ public class MyAccountService {
                 .map(order -> {
                     Payment payment = paymentsByOrderId.get(order.getId());
                     PaymentActionDTO paymentAction = resolvePaymentAction(order, payment);
-                    return OrderSummaryDTO.from(order, payment, paymentAction);
+                    OrderSummaryDTO.ItemCounts counts = itemCounts.getOrDefault(
+                            order.getId(),
+                            new OrderSummaryDTO.ItemCounts(0, 0)
+                    );
+                    return OrderSummaryDTO.from(order, payment, paymentAction, counts);
                 })
                 .toList();
     }
@@ -165,6 +170,21 @@ public class MyAccountService {
     private String buildIdempotencyKey(StoreOrder order, Payment payment) {
         Instant updatedAt = payment != null ? payment.getUpdatedAt() : order.getCreatedAt();
         return order.getId() + ":" + updatedAt.toEpochMilli();
+    }
+
+    private Map<UUID, OrderSummaryDTO.ItemCounts> loadItemCounts(List<StoreOrder> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return Map.of();
+        }
+        List<UUID> orderIds = orders.stream().map(StoreOrder::getId).toList();
+        return orderRepository.findItemCounts(orderIds).stream()
+                .collect(Collectors.toMap(
+                        OrderRepository.OrderItemCounts::getId,
+                        counts -> new OrderSummaryDTO.ItemCounts(
+                                Math.toIntExact(counts.getItemsCount()),
+                                Math.toIntExact(counts.getItemsQuantity())
+                        )
+                ));
     }
 
     private MyDeviceResponse toDeviceResponse(Device device) {

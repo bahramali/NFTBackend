@@ -57,13 +57,96 @@ This page enumerates every HTTP endpoint exposed by the backend. Unless noted, e
 
 These DTOs are stable across environments and should be treated as the canonical contract for the Orders page.
 
-- `OrderSummaryDTO` (list view): `{ orderId, orderNumber, createdAt, status, totalCents, currency, itemsCount, itemsQuantity }`.
-- `OrderDetailsDTO` (details view):
-  `{ orderId, orderNumber, createdAt, status, email, subtotalCents, shippingCents, taxCents, totalCents, currency, shippingAddress, items }`.
-- `ShippingAddressDTO`: `{ name, line1, line2, city, state, postalCode, country, phone }`.
-  `line2`, `state`, and `phone` may be `null` when not supplied at checkout.
-- `OrderItemDTO`: `{ id, productId, variantId, name, unitPriceCents, quantity, lineTotalCents }`.
-  `productId` and `variantId` may be `null` when an item is no longer linked to an active catalog record.
+#### Endpoints
+- `GET /api/store/orders/my` — list store orders for the current authenticated user.
+- `GET /api/store/orders/{orderId}` — fetch one store order for the current authenticated user.
+- `GET /api/orders/{orderId}` — public order status lookup (no auth).
+
+#### DTO schemas
+- `OrderSummaryDTO` (list view)
+  ```json
+  {
+    "orderId": "uuid",
+    "orderNumber": "string",
+    "createdAt": "instant",
+    "lastUpdatedAt": "instant",
+    "orderStatus": "OPEN|PROCESSING|SHIPPED|DELIVERED|CANCELLED",
+    "paymentStatus": "PENDING|SUCCEEDED|FAILED|REFUNDED",
+    "displayStatus": "string",
+    "currency": "SEK",
+    "totalCents": 0,
+    "totalAmountCents": 0,
+    "itemsCount": 0,
+    "itemsQuantity": 0,
+    "paymentProvider": "STRIPE|null",
+    "deliveryType": "DELIVERY|PICKUP",
+    "paymentAction": {
+      "type": "REDIRECT",
+      "label": "Continue payment",
+      "url": "https://checkout.stripe.com/..."
+    }
+  }
+  ```
+- `OrderDetailsDTO` (details view). The `OrderSummaryDTO` fields are **unwrapped**, so detail responses include all summary fields plus:
+  ```json
+  {
+    "email": "string",
+    "totals": {
+      "subtotalCents": 0,
+      "shippingCents": 0,
+      "taxCents": 0,
+      "discountCents": 0,
+      "totalCents": 0
+    },
+    "shippingAddress": {
+      "name": "string",
+      "street": "string",
+      "zip": "string",
+      "city": "string",
+      "country": "string"
+    },
+    "billingAddress": null,
+    "payment": {
+      "provider": "STRIPE",
+      "status": "PENDING|SUCCEEDED|FAILED|REFUNDED",
+      "lastError": null,
+      "paidAt": "instant|null"
+    },
+    "items": [
+      {
+        "productId": "uuid|null",
+        "productName": "string",
+        "variantId": "uuid|null",
+        "variantName": "string|null",
+        "quantity": 0,
+        "unitPriceCents": 0,
+        "lineTotalCents": 0
+      }
+    ],
+    "trackingUrl": null,
+    "timeline": []
+  }
+  ```
+
+#### Status enums + meaning
+- `orderStatus`
+  - `OPEN` — order created, awaiting payment or processing.
+  - `PROCESSING` — payment captured, order is being prepared.
+  - `SHIPPED` — handed off to carrier.
+  - `DELIVERED` — delivered to customer.
+  - `CANCELLED` — order cancelled (no fulfillment).
+- `paymentStatus` (mapped from provider)
+  - `PENDING` — no payment yet or provider reports "created".
+  - `SUCCEEDED` — payment captured.
+  - `FAILED` — payment failed or was cancelled.
+  - `REFUNDED` — payment refunded.
+
+#### `paymentAction` (when present, and how to use)
+- `paymentAction` is present **only** when the order can still be paid:
+  - the order is `OPEN`, and
+  - the latest payment is not `PAID`, `CANCELLED`, or `REFUNDED`, and
+  - the provider is Stripe (or there is no payment record yet).
+- When present, the front-end should render a "Continue payment" action and **redirect the user to `paymentAction.url`**. If `paymentAction` is `null`, hide the action.
 
 ## Devices & sensors (admin/operator)
 - `GET /api/devices` — list devices.

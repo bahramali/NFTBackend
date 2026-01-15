@@ -7,6 +7,16 @@
 <body>
   <h1>HydroLeaf Application</h1>
   <p>This is a placeholder page served by the backend.</p>
+  <form>
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" autocomplete="username" />
+
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" />
+    <div>
+      <a href="/forgot-password">Forgot your password?</a>
+    </div>
+  </form>
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
   <script>

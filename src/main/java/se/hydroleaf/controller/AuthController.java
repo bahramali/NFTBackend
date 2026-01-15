@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -25,6 +24,7 @@ import se.hydroleaf.controller.dto.InviteValidationResponse;
 import se.hydroleaf.controller.dto.LoginRequest;
 import se.hydroleaf.controller.dto.LoginResponse;
 import se.hydroleaf.controller.dto.PasswordResetConfirmRequest;
+import se.hydroleaf.controller.dto.PasswordResetRequest;
 import se.hydroleaf.controller.dto.PasswordResetResponse;
 import se.hydroleaf.controller.dto.RefreshTokenRequest;
 import se.hydroleaf.model.User;
@@ -167,8 +167,8 @@ public class AuthController {
 
     @PostMapping(value = "/password-reset", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public PasswordResetResponse passwordReset(@RequestHeader(name = "Authorization", required = false) String token) {
-        passwordResetService.requestPasswordReset(token);
+    public PasswordResetResponse passwordReset(@Valid @RequestBody PasswordResetRequest request) {
+        passwordResetService.requestPasswordResetForEmail(request.email());
         return PasswordResetResponse.success();
     }
 

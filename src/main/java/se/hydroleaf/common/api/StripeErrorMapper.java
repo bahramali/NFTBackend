@@ -1,7 +1,7 @@
 package se.hydroleaf.common.api;
 
-import com.stripe.exception.APIConnectionException;
-import com.stripe.exception.APIException;
+import com.stripe.exception.ApiConnectionException;
+import com.stripe.exception.ApiException;
 import com.stripe.exception.AuthenticationException;
 import com.stripe.exception.CardException;
 import com.stripe.exception.InvalidRequestException;
@@ -23,10 +23,10 @@ public final class StripeErrorMapper {
         if (ex instanceof InvalidRequestException) {
             return new StripeError("STRIPE_INVALID_REQUEST", "Stripe request was invalid.");
         }
-        if (ex instanceof APIConnectionException) {
+        if (ex instanceof ApiConnectionException) {
             return new StripeError("STRIPE_CONNECTION_ERROR", "Unable to reach Stripe. Please retry.");
         }
-        if (ex instanceof APIException) {
+        if (ex instanceof ApiException) {
             return new StripeError("STRIPE_API_ERROR", "Stripe service error. Please retry.");
         }
         if (ex instanceof CardException) {

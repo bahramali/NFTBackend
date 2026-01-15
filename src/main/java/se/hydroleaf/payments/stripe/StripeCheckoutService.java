@@ -19,8 +19,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.common.api.BadRequestException;
 import se.hydroleaf.common.api.ConflictException;
 import se.hydroleaf.common.api.NotFoundException;
@@ -51,57 +53,21 @@ public class StripeCheckoutService {
     public StripeCheckoutSessionResponse createCheckoutSession(UUID orderId, String idempotencyKey) throws StripeException {
         StoreOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("ORDER_NOT_FOUND", "Order not found"));
-        ensurePayable(order);
+        return createCheckoutSession(order, idempotencyKey);
+    }
 
-        Payment existingPayment = paymentRepository.findByOrderIdAndProvider(orderId, PaymentProvider.STRIPE)
-                .orElse(null);
-        if (existingPayment != null) {
-            if (existingPayment.getStatus() == PaymentStatus.PAID) {
-                throw new ConflictException("ORDER_ALREADY_PAID", "Order is already paid");
-            }
-
-            String existingSessionId = existingPayment.getProviderPaymentId();
-            if (StringUtils.hasText(existingSessionId) && !"PENDING".equalsIgnoreCase(existingSessionId)) {
-                Session existingSession = Session.retrieve(existingSessionId);
-                if (isSessionReusable(existingSession)) {
-                    updatePaymentIntent(existingPayment, existingSession);
-                    return new StripeCheckoutSessionResponse(existingSession.getId(), existingSession.getUrl());
-                }
-            }
+    @Transactional
+    public StripeCheckoutSessionResponse createCheckoutSessionForUser(
+            UUID orderId,
+            String idempotencyKey,
+            String userEmail
+    ) throws StripeException {
+        StoreOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("ORDER_NOT_FOUND", "Order not found"));
+        if (!order.getEmail().equalsIgnoreCase(userEmail)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Order does not belong to user");
         }
-
-        SessionCreateParams params = SessionCreateParams.builder()
-                .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl(formatOrderUrl(stripeProperties.getSuccessUrl(), orderId.toString()))
-                .setCancelUrl(formatOrderUrl(stripeProperties.getCancelUrl(), orderId.toString()))
-                .addAllLineItem(buildLineItems(order))
-                .setPaymentIntentData(SessionCreateParams.PaymentIntentData.builder()
-                        .putMetadata("orderId", orderId.toString())
-                        .putMetadata("orderNumber", order.getOrderNumber())
-                        .build())
-                .setCustomerEmail(order.getEmail())
-                .putMetadata("orderId", orderId.toString())
-                .putMetadata("orderNumber", order.getOrderNumber())
-                .build();
-
-        RequestOptions options = RequestOptions.builder()
-                .setIdempotencyKey(idempotencyKey)
-                .build();
-
-        Session session = Session.create(params, options);
-        Payment payment = existingPayment != null ? existingPayment : Payment.builder()
-                .order(order)
-                .provider(PaymentProvider.STRIPE)
-                .build();
-        payment.setStatus(PaymentStatus.CREATED);
-        payment.setAmountCents(order.getTotalCents());
-        payment.setCurrency(order.getCurrency());
-        payment.setProviderPaymentId(session.getId());
-        payment.setProviderReference(resolveProviderReference(session));
-        paymentRepository.save(payment);
-
-        log.info("Created Stripe checkout session {} for orderId={}", session.getId(), orderId);
-        return new StripeCheckoutSessionResponse(session.getId(), session.getUrl());
+        return createCheckoutSession(order, idempotencyKey);
     }
 
     @Transactional
@@ -147,6 +113,67 @@ public class StripeCheckoutService {
         if (order.getItems() == null || order.getItems().isEmpty()) {
             throw new BadRequestException("ORDER_EMPTY", "Order has no items");
         }
+    }
+
+    private StripeCheckoutSessionResponse createCheckoutSession(StoreOrder order, String idempotencyKey) throws StripeException {
+        UUID orderId = order.getId();
+        ensurePayable(order);
+
+        Payment existingPayment = paymentRepository.findByOrderIdAndProvider(orderId, PaymentProvider.STRIPE)
+                .orElse(null);
+        if (existingPayment != null) {
+            if (existingPayment.getStatus() == PaymentStatus.PAID) {
+                throw new ConflictException("ORDER_ALREADY_PAID", "Order is already paid");
+            }
+            if (existingPayment.getStatus() == PaymentStatus.CANCELLED) {
+                throw new ConflictException("ORDER_PAYMENT_CANCELLED", "Order payment is canceled");
+            }
+            if (existingPayment.getStatus() == PaymentStatus.REFUNDED) {
+                throw new ConflictException("ORDER_REFUNDED", "Order has been refunded");
+            }
+
+            String existingSessionId = existingPayment.getProviderPaymentId();
+            if (StringUtils.hasText(existingSessionId) && !"PENDING".equalsIgnoreCase(existingSessionId)) {
+                Session existingSession = Session.retrieve(existingSessionId);
+                if (isSessionReusable(existingSession)) {
+                    updatePaymentIntent(existingPayment, existingSession);
+                    return new StripeCheckoutSessionResponse(existingSession.getId(), existingSession.getUrl());
+                }
+            }
+        }
+
+        SessionCreateParams params = SessionCreateParams.builder()
+                .setMode(SessionCreateParams.Mode.PAYMENT)
+                .setSuccessUrl(formatOrderUrl(stripeProperties.getSuccessUrl(), orderId.toString()))
+                .setCancelUrl(formatOrderUrl(stripeProperties.getCancelUrl(), orderId.toString()))
+                .addAllLineItem(buildLineItems(order))
+                .setPaymentIntentData(SessionCreateParams.PaymentIntentData.builder()
+                        .putMetadata("orderId", orderId.toString())
+                        .putMetadata("orderNumber", order.getOrderNumber())
+                        .build())
+                .setCustomerEmail(order.getEmail())
+                .putMetadata("orderId", orderId.toString())
+                .putMetadata("orderNumber", order.getOrderNumber())
+                .build();
+
+        RequestOptions options = RequestOptions.builder()
+                .setIdempotencyKey(idempotencyKey)
+                .build();
+
+        Session session = Session.create(params, options);
+        Payment payment = existingPayment != null ? existingPayment : Payment.builder()
+                .order(order)
+                .provider(PaymentProvider.STRIPE)
+                .build();
+        payment.setStatus(PaymentStatus.CREATED);
+        payment.setAmountCents(order.getTotalCents());
+        payment.setCurrency(order.getCurrency());
+        payment.setProviderPaymentId(session.getId());
+        payment.setProviderReference(resolveProviderReference(session));
+        paymentRepository.save(payment);
+
+        log.info("Created Stripe checkout session {} for orderId={}", session.getId(), orderId);
+        return new StripeCheckoutSessionResponse(session.getId(), session.getUrl());
     }
 
     private List<SessionCreateParams.LineItem> buildLineItems(StoreOrder order) {

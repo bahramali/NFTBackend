@@ -130,8 +130,10 @@ public class MyAccountService {
         User user = userRepository.findById(authenticatedUser.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         StoreOrder order = orderRepository.findById(orderId)
-                .filter(o -> o.getEmail().equalsIgnoreCase(user.getEmail()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+        if (!order.getEmail().equalsIgnoreCase(user.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Order does not belong to user");
+        }
         Payment payment = paymentRepository.findTopByOrderIdOrderByUpdatedAtDesc(order.getId()).orElse(null);
         return OrderDetailsDTO.from(order, payment, resolvePaymentAction(order, payment));
     }

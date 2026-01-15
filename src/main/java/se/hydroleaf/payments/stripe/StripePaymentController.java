@@ -12,7 +12,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.common.api.BadRequestException;
+import se.hydroleaf.model.User;
+import se.hydroleaf.repository.UserRepository;
+import se.hydroleaf.service.AuthenticatedUser;
+import se.hydroleaf.service.AuthorizationService;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/payments/stripe")
@@ -20,13 +26,19 @@ public class StripePaymentController {
 
     private final StripePaymentService stripePaymentService;
     private final StripeCheckoutService stripeCheckoutService;
+    private final AuthorizationService authorizationService;
+    private final UserRepository userRepository;
 
     public StripePaymentController(
             StripePaymentService stripePaymentService,
-            StripeCheckoutService stripeCheckoutService
+            StripeCheckoutService stripeCheckoutService,
+            AuthorizationService authorizationService,
+            UserRepository userRepository
     ) {
         this.stripePaymentService = stripePaymentService;
         this.stripeCheckoutService = stripeCheckoutService;
+        this.authorizationService = authorizationService;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/payment-intents")
@@ -60,6 +72,7 @@ public class StripePaymentController {
     @PostMapping("/checkout-session")
     public ResponseEntity<StripeCheckoutSessionResponse> createCheckoutSession(
             @Valid @RequestBody StripeCheckoutSessionRequest request,
+            @RequestHeader(name = "Authorization", required = false) String token,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey
     ) throws StripeException {
         String resolvedIdempotencyKey = idempotencyKey;
@@ -67,9 +80,14 @@ public class StripePaymentController {
             resolvedIdempotencyKey = request.orderId().toString();
         }
 
-        StripeCheckoutSessionResponse response = stripeCheckoutService.createCheckoutSession(
+        AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
+        User user = userRepository.findById(authenticatedUser.userId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        StripeCheckoutSessionResponse response = stripeCheckoutService.createCheckoutSessionForUser(
                 request.orderId(),
-                resolvedIdempotencyKey
+                resolvedIdempotencyKey,
+                user.getEmail()
         );
         return ResponseEntity.ok(response);
     }

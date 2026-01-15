@@ -184,7 +184,7 @@ class MyAccountIntegrationTest {
     }
 
     @Test
-    void accessingOtherOrderReturns404() throws Exception {
+    void accessingOtherOrderReturns403() throws Exception {
         User owner = createCustomer("owner3@example.com", "Owner Three");
         User other = createCustomer("other3@example.com", "Other Three");
 
@@ -193,7 +193,7 @@ class MyAccountIntegrationTest {
         String token = bearerToken(owner.getEmail(), "password123");
 
         mockMvc.perform(get("/api/store/orders/" + othersOrder.getId()).header("Authorization", token))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isForbidden());
     }
 
     @Test

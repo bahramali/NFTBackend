@@ -28,17 +28,20 @@ public class PasswordResetService {
     private static final Duration RESET_EXPIRY = Duration.ofHours(1);
     private static final int MIN_PASSWORD_LENGTH = 8;
 
-    private final AuthorizationService authorizationService;
     private final UserRepository userRepository;
     private final PasswordResetEmailService passwordResetEmailService;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
     private final Map<Long, Instant> lastResetRequests = new ConcurrentHashMap<>();
 
-    public void requestPasswordReset(String token) {
-        AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
-        User user = userRepository.findById(authenticatedUser.userId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    public void requestPasswordResetForEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+        }
+        User user = userRepository.findByEmailIgnoreCase(email).orElse(null);
+        if (user == null) {
+            return;
+        }
         Instant now = clock.instant();
         Instant lastRequest = lastResetRequests.get(user.getId());
         if (lastRequest != null && lastRequest.plus(RESET_COOLDOWN).isAfter(now)) {

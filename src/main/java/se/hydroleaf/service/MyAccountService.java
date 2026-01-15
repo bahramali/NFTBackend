@@ -115,7 +115,8 @@ public class MyAccountService {
         StoreOrder order = orderRepository.findById(orderId)
                 .filter(o -> o.getEmail().equalsIgnoreCase(user.getEmail()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
-        return OrderDetailsDTO.from(order);
+        Payment payment = paymentRepository.findTopByOrderIdOrderByUpdatedAtDesc(order.getId()).orElse(null);
+        return OrderDetailsDTO.from(order, payment);
     }
 
     private MyDeviceResponse toDeviceResponse(Device device) {

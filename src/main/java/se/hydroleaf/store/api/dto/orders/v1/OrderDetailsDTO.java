@@ -1,90 +1,130 @@
 package se.hydroleaf.store.api.dto.orders.v1;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import se.hydroleaf.store.model.OrderItem;
+import se.hydroleaf.store.model.Payment;
+import se.hydroleaf.store.model.PaymentStatus;
 import se.hydroleaf.store.model.ShippingAddress;
 import se.hydroleaf.store.model.StoreOrder;
 
 public record OrderDetailsDTO(
-        UUID orderId,
-        String orderNumber,
-        Instant createdAt,
-        String status,
+        @JsonUnwrapped OrderSummaryDTO summary,
         String email,
-        long subtotalCents,
-        long shippingCents,
-        long taxCents,
-        long totalCents,
-        String currency,
-        ShippingAddressDTO shippingAddress,
-        List<OrderItemDTO> items
+        TotalsDTO totals,
+        AddressDTO shippingAddress,
+        AddressDTO billingAddress,
+        PaymentInfoDTO payment,
+        List<OrderItemDTO> items,
+        String trackingUrl,
+        List<OrderTimelineDTO> timeline
 ) {
 
-    public static OrderDetailsDTO from(StoreOrder order) {
+    public static OrderDetailsDTO from(StoreOrder order, Payment payment) {
         return new OrderDetailsDTO(
-                order.getId(),
-                order.getOrderNumber(),
-                order.getCreatedAt(),
-                order.getStatus().name(),
+                OrderSummaryDTO.from(order, payment),
                 order.getEmail(),
-                order.getSubtotalCents(),
-                order.getShippingCents(),
-                order.getTaxCents(),
-                order.getTotalCents(),
-                order.getCurrency(),
-                ShippingAddressDTO.from(order.getShippingAddress()),
-                OrderItemDTO.from(order.getItems())
+                TotalsDTO.from(order),
+                AddressDTO.from(order.getShippingAddress()),
+                null,
+                PaymentInfoDTO.from(payment),
+                OrderItemDTO.from(order.getItems()),
+                null,
+                List.of()
         );
     }
 
-    public record ShippingAddressDTO(
-            String name,
-            String line1,
-            String line2,
-            String city,
-            String state,
-            String postalCode,
-            String country,
-            String phone
+    public record TotalsDTO(
+            long subtotalCents,
+            long shippingCents,
+            long taxCents,
+            Long discountCents,
+            long totalCents
     ) {
-        public static ShippingAddressDTO from(ShippingAddress address) {
+        public static TotalsDTO from(StoreOrder order) {
+            long discount = order.getTotalAmountCents() - order.getTotalCents();
+            Long discountCents = discount > 0 ? discount : null;
+            return new TotalsDTO(
+                    order.getSubtotalCents(),
+                    order.getShippingCents(),
+                    order.getTaxCents(),
+                    discountCents,
+                    order.getTotalCents()
+            );
+        }
+    }
+
+    public record AddressDTO(
+            String name,
+            String street,
+            String zip,
+            String city,
+            String country
+    ) {
+        public static AddressDTO from(ShippingAddress address) {
             if (address == null) {
                 return null;
             }
-            return new ShippingAddressDTO(
+            return new AddressDTO(
                     address.getName(),
-                    address.getLine1(),
-                    address.getLine2(),
-                    address.getCity(),
-                    address.getState(),
+                    formatStreet(address),
                     address.getPostalCode(),
-                    address.getCountry(),
-                    address.getPhone()
+                    address.getCity(),
+                    address.getCountry()
+            );
+        }
+
+        private static String formatStreet(ShippingAddress address) {
+            if (address.getLine2() == null || address.getLine2().isBlank()) {
+                return address.getLine1();
+            }
+            return address.getLine1() + " " + address.getLine2();
+        }
+    }
+
+    public record PaymentInfoDTO(
+            String provider,
+            String status,
+            String lastError,
+            Instant paidAt
+    ) {
+        public static PaymentInfoDTO from(Payment payment) {
+            if (payment == null) {
+                return null;
+            }
+            Instant paidAt = payment.getStatus() == PaymentStatus.PAID ? payment.getUpdatedAt() : null;
+            return new PaymentInfoDTO(
+                    payment.getProvider().name(),
+                    payment.getStatus().name(),
+                    null,
+                    paidAt
             );
         }
     }
 
     public record OrderItemDTO(
-            UUID id,
             UUID productId,
+            String productName,
             UUID variantId,
-            String name,
-            long unitPriceCents,
+            String variantName,
             int quantity,
+            long unitPriceCents,
             long lineTotalCents
     ) {
         public static OrderItemDTO from(OrderItem item) {
             UUID productId = item.getProduct() != null ? item.getProduct().getId() : null;
+            String productName = item.getProduct() != null ? item.getProduct().getName() : item.getNameSnapshot();
             UUID variantId = item.getVariant() != null ? item.getVariant().getId() : null;
+            String variantName = item.getVariant() != null ? item.getVariant().getLabel() : null;
             return new OrderItemDTO(
-                    item.getId(),
                     productId,
+                    productName,
                     variantId,
-                    item.getNameSnapshot(),
-                    item.getUnitPriceCents(),
+                    variantName,
                     item.getQty(),
+                    item.getUnitPriceCents(),
                     item.getLineTotalCents()
             );
         }
@@ -95,5 +135,11 @@ public record OrderDetailsDTO(
             }
             return items.stream().map(OrderItemDTO::from).toList();
         }
+    }
+
+    public record OrderTimelineDTO(
+            String status,
+            Instant timestamp
+    ) {
     }
 }

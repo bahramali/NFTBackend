@@ -27,6 +27,8 @@ public class PasswordResetService {
     private static final Duration RESET_COOLDOWN = Duration.ofMinutes(5);
     private static final Duration RESET_EXPIRY = Duration.ofHours(1);
     private static final int MIN_PASSWORD_LENGTH = 8;
+    private static final String PASSWORD_COMPLEXITY_MESSAGE =
+            "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character";
 
     private final UserRepository userRepository;
     private final PasswordResetEmailService passwordResetEmailService;
@@ -62,12 +64,7 @@ public class PasswordResetService {
         if (token == null || token.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token is required");
         }
-        if (newPassword == null || newPassword.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required");
-        }
-        if (newPassword.length() < MIN_PASSWORD_LENGTH) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 8 characters");
-        }
+        validatePassword(newPassword);
         String tokenHash = hashToken(token);
         User user = userRepository.findByPasswordResetTokenHash(tokenHash)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid password reset token"));
@@ -83,6 +80,21 @@ public class PasswordResetService {
         user.setPasswordResetTokenHash(null);
         user.setPasswordResetExpiresAt(null);
         userRepository.save(user);
+    }
+
+    private void validatePassword(String password) {
+        if (password == null || password.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required");
+        }
+        if (password.length() < MIN_PASSWORD_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least %d characters".formatted(MIN_PASSWORD_LENGTH));
+        }
+        if (!password.chars().anyMatch(Character::isUpperCase)
+                || !password.chars().anyMatch(Character::isLowerCase)
+                || !password.chars().anyMatch(Character::isDigit)
+                || password.chars().allMatch(Character::isLetterOrDigit)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, PASSWORD_COMPLEXITY_MESSAGE);
+        }
     }
 
     private String hashToken(String token) {

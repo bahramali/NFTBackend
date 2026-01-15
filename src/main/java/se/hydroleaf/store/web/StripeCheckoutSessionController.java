@@ -29,7 +29,7 @@ public class StripeCheckoutSessionController {
     ) {
         AuthenticatedUser user = authorizationService.requireAuthenticated(token);
         StripeCartCheckoutSessionService.StripeCheckoutSessionResult result =
-                stripeCartCheckoutSessionService.createCheckoutSession(user, request.getCartId());
+                stripeCartCheckoutSessionService.createCheckoutSession(user, request);
         return ResponseEntity.ok(new StripeCheckoutSessionResponse(result.checkoutUrl()));
     }
 }

@@ -20,10 +20,11 @@ public record OrderSummaryDTO(
         int itemsQuantity,
         String paymentProvider,
         String paymentStatus,
-        String deliveryType
+        String deliveryType,
+        PaymentActionDTO paymentAction
 ) {
 
-    public static OrderSummaryDTO from(StoreOrder order, Payment payment) {
+    public static OrderSummaryDTO from(StoreOrder order, Payment payment, PaymentActionDTO paymentAction) {
         int count = order.getItems() != null ? order.getItems().size() : 0;
         int quantity = order.getItems() != null
                 ? order.getItems().stream().mapToInt(item -> item.getQty()).sum()
@@ -43,7 +44,8 @@ public record OrderSummaryDTO(
                 quantity,
                 payment != null ? payment.getProvider().name() : null,
                 payment != null ? payment.getStatus().name() : null,
-                deliveryType(order)
+                deliveryType(order),
+                paymentAction
         );
     }
 

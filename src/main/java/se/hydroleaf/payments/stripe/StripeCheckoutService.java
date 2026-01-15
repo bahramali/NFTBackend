@@ -132,8 +132,14 @@ public class StripeCheckoutService {
         if (!stripeProperties.isEnabled() || !StringUtils.hasText(stripeProperties.getSecretKey())) {
             throw new BadRequestException("STRIPE_DISABLED", "Stripe payments are not configured.");
         }
-        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
-            throw new ConflictException("ORDER_NOT_PAYABLE", "Order is not pending payment");
+        if (order.getStatus() == OrderStatus.PAID) {
+            throw new ConflictException("ORDER_ALREADY_PAID", "Order is already paid");
+        }
+        if (order.getStatus() == OrderStatus.CANCELED) {
+            throw new ConflictException("ORDER_CANCELED", "Order is canceled");
+        }
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT && order.getStatus() != OrderStatus.FAILED) {
+            throw new ConflictException("ORDER_NOT_PAYABLE", "Order is not payable");
         }
         if (order.getTotalCents() <= 0) {
             throw new BadRequestException("ORDER_TOTAL_INVALID", "Order total must be greater than zero");

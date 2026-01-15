@@ -67,8 +67,9 @@ public class RestExceptionHandler {
                 status = resolved;
             }
         }
+        StripeErrorMapper.StripeError error = StripeErrorMapper.fromException(ex);
         return ResponseEntity.status(status)
-                .body(new ApiError("STRIPE_ERROR", "Stripe request failed"));
+                .body(new ApiError(error.code(), error.message()));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

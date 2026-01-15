@@ -150,7 +150,7 @@ public class MyAccountService {
             String url = stripeCheckoutService.createCheckoutSession(order.getId(), idempotencyKey).url();
             return new PaymentActionDTO("REDIRECT", "Continue payment", url);
         } catch (StripeException ex) {
-            throw new StripeIntegrationException("Unable to create Stripe checkout session: " + ex.getMessage());
+            throw StripeIntegrationException.fromStripeException(ex);
         }
     }
 

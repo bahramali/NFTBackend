@@ -97,7 +97,7 @@ public record OrderDetailsDTO(
             Instant paidAt = payment.getStatus() == PaymentStatus.PAID ? payment.getUpdatedAt() : null;
             return new PaymentInfoDTO(
                     payment.getProvider().name(),
-                    payment.getStatus().name(),
+                    OrderStatusMapper.toPaymentStatus(payment.getStatus()),
                     null,
                     paidAt
             );

@@ -112,7 +112,7 @@ public class CustomerService {
                 .phone(phone)
                 .build();
         long totalSpent = orders.stream()
-                .filter(order -> order.getStatus() == OrderStatus.PAID)
+                .filter(this::isRevenueOrder)
                 .mapToLong(StoreOrder::getTotalCents)
                 .sum();
         Instant lastOrderAt = latestOrder != null ? latestOrder.getCreatedAt() : null;
@@ -164,7 +164,7 @@ public class CustomerService {
         String customerType = user != null ? "REGISTERED" : "GUEST";
         int ordersCount = orders.size();
         long totalSpent = orders.stream()
-                .filter(order -> order.getStatus() == OrderStatus.PAID)
+                .filter(this::isRevenueOrder)
                 .mapToLong(StoreOrder::getTotalCents)
                 .sum();
         Instant lastOrderAt = latestOrder != null ? latestOrder.getCreatedAt() : null;
@@ -356,6 +356,12 @@ public class CustomerService {
             }
         }
         return "INACTIVE";
+    }
+
+    private boolean isRevenueOrder(StoreOrder order) {
+        return order.getStatus() == OrderStatus.PROCESSING
+                || order.getStatus() == OrderStatus.SHIPPED
+                || order.getStatus() == OrderStatus.DELIVERED;
     }
 
     private Instant toInstant(LocalDateTime time) {

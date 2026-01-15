@@ -232,7 +232,7 @@ class AdminCustomerControllerIntegrationTest {
         StoreOrder order = StoreOrder.builder()
                 .orderNumber("ORDER-" + UUID.randomUUID())
                 .email(email)
-                .status(OrderStatus.PAID)
+                .status(OrderStatus.PROCESSING)
                 .subtotalCents(totalCents)
                 .shippingCents(0)
                 .taxCents(0)

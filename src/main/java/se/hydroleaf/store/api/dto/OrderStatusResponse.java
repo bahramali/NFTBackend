@@ -9,7 +9,9 @@ import lombok.Getter;
 public class OrderStatusResponse {
 
     private final UUID orderId;
-    private final String status;
+    private final String orderStatus;
+    private final String paymentStatus;
+    private final String displayStatus;
     private final long totalAmountCents;
     private final String currency;
 }

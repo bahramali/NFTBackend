@@ -3,6 +3,7 @@ package se.hydroleaf.controller;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -29,9 +30,71 @@ public class ApiExceptionHandler {
 
     public record FieldErrorResponse(String field, String message) {}
 
-    public record ValidationErrorResponse(String error, String message, List<FieldErrorResponse> errors) {}
+    public static class ValidationErrorResponse {
 
-    public record InvalidPermissionsResponse(List<FieldErrorResponse> errors, List<String> invalidPermissions) {}
+        private final String error;
+        private final String message;
+        private final List<FieldErrorResponse> errors;
+
+        public ValidationErrorResponse(String error, String message, List<FieldErrorResponse> errors) {
+            this.error = error;
+            this.message = message;
+            this.errors = errors;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        @JsonProperty("code")
+        public String getCode() {
+            return error;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public List<FieldErrorResponse> getErrors() {
+            return errors;
+        }
+    }
+
+    public static class InvalidPermissionsResponse {
+
+        private final String error;
+        private final String message;
+        private final List<FieldErrorResponse> errors;
+        private final List<String> invalidPermissions;
+
+        public InvalidPermissionsResponse(String error, String message, List<FieldErrorResponse> errors, List<String> invalidPermissions) {
+            this.error = error;
+            this.message = message;
+            this.errors = errors;
+            this.invalidPermissions = invalidPermissions;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        @JsonProperty("code")
+        public String getCode() {
+            return error;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public List<FieldErrorResponse> getErrors() {
+            return errors;
+        }
+
+        public List<String> getInvalidPermissions() {
+            return invalidPermissions;
+        }
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -84,7 +147,7 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public InvalidPermissionsResponse handleInvalidPermissions(InvalidPermissionException ex) {
         FieldErrorResponse error = new FieldErrorResponse("permissions", ex.getMessage());
-        return new InvalidPermissionsResponse(List.of(error), ex.invalidPermissions());
+        return new InvalidPermissionsResponse("INVALID_PERMISSIONS", ex.getMessage(), List.of(error), ex.invalidPermissions());
     }
 
     @ExceptionHandler(SecurityException.class)

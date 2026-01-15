@@ -91,7 +91,7 @@ public class StripeService {
             log.info("Created Stripe checkout session {} for orderId={}", session.getId(), order.getId());
             return new StripeSessionResult(session.getId(), session.getUrl());
         } catch (StripeException e) {
-            throw new StripeIntegrationException("Unable to create Stripe checkout session: " + e.getMessage());
+            throw StripeIntegrationException.fromStripeException(e);
         }
     }
 
@@ -116,18 +116,18 @@ public class StripeService {
         try {
             if (!StringUtils.hasText(stripeProperties.getWebhookSecret())) {
                 log.warn("Stripe webhook secret not configured; rejecting webhook event.");
-                throw new StripeIntegrationException("Stripe webhook secret is not configured");
+                throw new StripeIntegrationException("STRIPE_WEBHOOK_SECRET_MISSING", "Stripe webhook secret is not configured");
             }
             if (!StringUtils.hasText(signatureHeader)) {
                 log.warn("Stripe webhook signature header missing; rejecting webhook event.");
-                throw new StripeIntegrationException("Stripe webhook signature is missing");
+                throw new StripeIntegrationException("STRIPE_SIGNATURE_MISSING", "Stripe webhook signature is missing");
             }
             Event event = Webhook.constructEvent(payload, signatureHeader, stripeProperties.getWebhookSecret());
             log.info("Stripe webhook event received id={} type={}", event.getId(), event.getType());
             return event;
         } catch (SignatureVerificationException e) {
             log.warn("Stripe signature verification failed: {}", e.getMessage());
-            throw new StripeIntegrationException("Invalid Stripe webhook signature");
+            throw new StripeIntegrationException("STRIPE_SIGNATURE_INVALID", "Stripe signature verification failed.");
         }
     }
 

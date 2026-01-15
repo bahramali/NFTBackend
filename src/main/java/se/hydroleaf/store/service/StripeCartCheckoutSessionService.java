@@ -105,7 +105,7 @@ public class StripeCartCheckoutSessionService {
             log.info("Created Stripe checkout session {} for cartId={}", session.getId(), cart.getId());
             return new StripeCheckoutSessionResult(session.getUrl());
         } catch (StripeException e) {
-            throw new StripeIntegrationException("Unable to create Stripe checkout session: " + e.getMessage());
+            throw StripeIntegrationException.fromStripeException(e);
         }
     }
 

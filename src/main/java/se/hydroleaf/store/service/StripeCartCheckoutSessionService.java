@@ -16,6 +16,8 @@ import se.hydroleaf.common.api.BadRequestException;
 import se.hydroleaf.common.api.StripeIntegrationException;
 import se.hydroleaf.service.AuthenticatedUser;
 import se.hydroleaf.store.api.dto.MoneySummary;
+import se.hydroleaf.store.api.dto.ShippingAddressDto;
+import se.hydroleaf.store.api.dto.StripeCheckoutSessionRequest;
 import se.hydroleaf.store.config.StoreProperties;
 import se.hydroleaf.store.config.StripeProperties;
 import se.hydroleaf.store.model.Cart;
@@ -38,10 +40,13 @@ public class StripeCartCheckoutSessionService {
     private final StoreProperties storeProperties;
     private final PaymentAttemptRepository paymentAttemptRepository;
 
-    public StripeCheckoutSessionResult createCheckoutSession(AuthenticatedUser user, java.util.UUID cartId) {
+    public StripeCheckoutSessionResult createCheckoutSession(
+            AuthenticatedUser user,
+            StripeCheckoutSessionRequest request
+    ) {
         ensureStripeEnabled();
 
-        CartService.CartCheckoutSnapshot snapshot = cartService.loadCartForCheckout(cartId);
+        CartService.CartCheckoutSnapshot snapshot = cartService.loadCartForCheckout(request.getCartId());
         Cart cart = snapshot.cart();
         MoneySummary totals = snapshot.totals();
 
@@ -55,17 +60,37 @@ public class StripeCartCheckoutSessionService {
         }
 
         List<SessionCreateParams.LineItem> lineItems = buildLineItems(cart, totals);
+        ShippingAddressDto shippingAddress = request.getShippingAddress();
+        SessionCreateParams.PaymentIntentData paymentIntentData = SessionCreateParams.PaymentIntentData.builder()
+                .putMetadata("userId", String.valueOf(user.userId()))
+                .putMetadata("cartId", cart.getId().toString())
+                .putMetadata("email", request.getEmail())
+                .putMetadata("ship_name", nullToEmpty(shippingAddress.getName()))
+                .putMetadata("ship_line1", nullToEmpty(shippingAddress.getLine1()))
+                .putMetadata("ship_line2", nullToEmpty(shippingAddress.getLine2()))
+                .putMetadata("ship_postalCode", nullToEmpty(shippingAddress.getPostalCode()))
+                .putMetadata("ship_city", nullToEmpty(shippingAddress.getCity()))
+                .putMetadata("ship_state", nullToEmpty(shippingAddress.getState()))
+                .putMetadata("ship_country", nullToEmpty(shippingAddress.getCountry()))
+                .putMetadata("ship_phone", nullToEmpty(shippingAddress.getPhone()))
+                .build();
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setSuccessUrl(SUCCESS_URL)
                 .setCancelUrl(CANCEL_URL)
                 .addAllLineItem(lineItems)
-                .setPaymentIntentData(SessionCreateParams.PaymentIntentData.builder()
-                        .putMetadata("userId", String.valueOf(user.userId()))
-                        .putMetadata("cartId", cart.getId().toString())
-                        .build())
+                .setPaymentIntentData(paymentIntentData)
                 .putMetadata("userId", String.valueOf(user.userId()))
                 .putMetadata("cartId", cart.getId().toString())
+                .putMetadata("email", request.getEmail())
+                .putMetadata("ship_name", nullToEmpty(shippingAddress.getName()))
+                .putMetadata("ship_line1", nullToEmpty(shippingAddress.getLine1()))
+                .putMetadata("ship_line2", nullToEmpty(shippingAddress.getLine2()))
+                .putMetadata("ship_postalCode", nullToEmpty(shippingAddress.getPostalCode()))
+                .putMetadata("ship_city", nullToEmpty(shippingAddress.getCity()))
+                .putMetadata("ship_state", nullToEmpty(shippingAddress.getState()))
+                .putMetadata("ship_country", nullToEmpty(shippingAddress.getCountry()))
+                .putMetadata("ship_phone", nullToEmpty(shippingAddress.getPhone()))
                 .build();
 
         try {
@@ -148,6 +173,10 @@ public class StripeCartCheckoutSessionService {
             throw new BadRequestException("STRIPE_DISABLED", "Stripe payments are not configured.");
         }
         Stripe.apiKey = stripeProperties.getSecretKey();
+    }
+
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 
     public record StripeCheckoutSessionResult(String checkoutUrl) {}

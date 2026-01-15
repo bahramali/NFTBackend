@@ -19,7 +19,7 @@ public interface OrderRepository extends JpaRepository<StoreOrder, UUID> {
     List<StoreOrder> findByEmailIgnoreCase(String email);
 
     @Query("""
-            select o.id, count(i), coalesce(sum(i.qty), 0)
+            select o.id as id, count(i) as itemsCount, coalesce(sum(i.qty), 0) as itemsQuantity
             from StoreOrder o
             left join o.items i
             where o.id in :orderIds

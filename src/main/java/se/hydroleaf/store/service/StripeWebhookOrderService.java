@@ -325,7 +325,45 @@ public class StripeWebhookOrderService {
                     .build();
         }
 
-        return null;
+        return resolveShippingAddressFromMetadata(session.getMetadata());
+    }
+
+    private ShippingAddress resolveShippingAddressFromMetadata(Map<String, String> metadata) {
+        if (metadata == null || metadata.isEmpty()) {
+            return null;
+        }
+        String name = emptyToNull(metadata.get("ship_name"));
+        String line1 = emptyToNull(metadata.get("ship_line1"));
+        String line2 = emptyToNull(metadata.get("ship_line2"));
+        String postalCode = emptyToNull(metadata.get("ship_postalCode"));
+        String city = emptyToNull(metadata.get("ship_city"));
+        String state = emptyToNull(metadata.get("ship_state"));
+        String country = emptyToNull(metadata.get("ship_country"));
+        String phone = emptyToNull(metadata.get("ship_phone"));
+        if (!StringUtils.hasText(name)
+                && !StringUtils.hasText(line1)
+                && !StringUtils.hasText(line2)
+                && !StringUtils.hasText(postalCode)
+                && !StringUtils.hasText(city)
+                && !StringUtils.hasText(state)
+                && !StringUtils.hasText(country)
+                && !StringUtils.hasText(phone)) {
+            return null;
+        }
+        return ShippingAddress.builder()
+                .name(name)
+                .line1(line1)
+                .line2(line2)
+                .city(city)
+                .state(state)
+                .postalCode(postalCode)
+                .country(country)
+                .phone(phone)
+                .build();
+    }
+
+    private String emptyToNull(String value) {
+        return StringUtils.hasText(value) ? value : null;
     }
 
     private record PricingTotals(long subtotal, long shipping, long tax, long total) {}

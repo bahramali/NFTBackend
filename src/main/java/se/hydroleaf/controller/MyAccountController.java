@@ -75,7 +75,7 @@ public class MyAccountController {
         return myAccountService.listMyOrders(token);
     }
 
-    @GetMapping("/store/orders/{orderId}")
+    @GetMapping({"/store/orders/{orderId}", "/me/orders/{orderId}"})
     public OrderDetailsDTO myOrder(
             @RequestHeader(name = "Authorization", required = false) String token,
             @PathVariable UUID orderId) {

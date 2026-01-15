@@ -5,6 +5,12 @@ import java.util.UUID;
 import se.hydroleaf.store.model.Payment;
 import se.hydroleaf.store.model.StoreOrder;
 
+/**
+ * Order summary for list endpoints.
+ *
+ * <p>itemsCount represents the number of line items on the order. itemsQuantity is the sum of
+ * quantities across all line items.</p>
+ */
 public record OrderSummaryDTO(
         UUID orderId,
         String orderNumber,
@@ -23,11 +29,19 @@ public record OrderSummaryDTO(
         PaymentActionDTO paymentAction
 ) {
 
+    public record ItemCounts(int itemsCount, int itemsQuantity) {
+    }
+
     public static OrderSummaryDTO from(StoreOrder order, Payment payment, PaymentActionDTO paymentAction) {
         int count = order.getItems() != null ? order.getItems().size() : 0;
         int quantity = order.getItems() != null
                 ? order.getItems().stream().mapToInt(item -> item.getQty()).sum()
                 : 0;
+        return from(order, payment, paymentAction, new ItemCounts(count, quantity));
+    }
+
+    public static OrderSummaryDTO from(StoreOrder order, Payment payment, PaymentActionDTO paymentAction,
+                                      ItemCounts counts) {
         Instant lastUpdatedAt = payment != null ? payment.getUpdatedAt() : order.getCreatedAt();
         String paymentStatus = OrderStatusMapper.toPaymentStatus(payment);
         return new OrderSummaryDTO(
@@ -41,8 +55,8 @@ public record OrderSummaryDTO(
                 order.getCurrency(),
                 order.getTotalCents(),
                 order.getTotalAmountCents(),
-                count,
-                quantity,
+                counts.itemsCount(),
+                counts.itemsQuantity(),
                 payment != null ? payment.getProvider().name() : null,
                 deliveryType(order),
                 paymentAction

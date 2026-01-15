@@ -178,7 +178,7 @@ class MyAccountIntegrationTest {
 
         mockMvc.perform(get("/api/store/orders/" + myOrder.getId()).header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(myOrder.getId().toString()))
+                .andExpect(jsonPath("$.orderId").value(myOrder.getId().toString()))
                 .andExpect(jsonPath("$.orderNumber").value("HL-100"))
                 .andExpect(jsonPath("$.status").value(OrderStatus.PAID.name()));
     }

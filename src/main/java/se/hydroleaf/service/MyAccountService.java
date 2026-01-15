@@ -10,6 +10,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.controller.dto.MyDeviceMetricResponse;
 import se.hydroleaf.controller.dto.MyDeviceResponse;
@@ -81,6 +82,7 @@ public class MyAccountService {
         return toDeviceResponse(device);
     }
 
+    @Transactional(readOnly = true)
     public List<OrderSummaryDTO> listMyOrders(String token) {
         AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
         User user = userRepository.findById(authenticatedUser.userId())
@@ -90,6 +92,7 @@ public class MyAccountService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public OrderDetailsDTO getMyOrder(String token, UUID orderId) {
         AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
         User user = userRepository.findById(authenticatedUser.userId())

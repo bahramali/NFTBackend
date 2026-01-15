@@ -22,9 +22,9 @@ public record OrderDetailsDTO(
         List<OrderTimelineDTO> timeline
 ) {
 
-    public static OrderDetailsDTO from(StoreOrder order, Payment payment) {
+    public static OrderDetailsDTO from(StoreOrder order, Payment payment, PaymentActionDTO paymentAction) {
         return new OrderDetailsDTO(
-                OrderSummaryDTO.from(order, payment),
+                OrderSummaryDTO.from(order, payment, paymentAction),
                 order.getEmail(),
                 TotalsDTO.from(order),
                 AddressDTO.from(order.getShippingAddress()),

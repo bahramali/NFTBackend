@@ -1,5 +1,6 @@
 package se.hydroleaf.service;
 
+import com.stripe.exception.StripeException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -15,22 +16,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import se.hydroleaf.common.api.StripeIntegrationException;
 import se.hydroleaf.controller.dto.MyDeviceMetricResponse;
 import se.hydroleaf.controller.dto.MyDeviceResponse;
 import se.hydroleaf.store.api.dto.orders.v1.OrderDetailsDTO;
 import se.hydroleaf.store.api.dto.orders.v1.OrderSummaryDTO;
+import se.hydroleaf.store.api.dto.orders.v1.PaymentActionDTO;
 import se.hydroleaf.controller.dto.MyProfileResponse;
 import se.hydroleaf.controller.dto.UpdateMyProfileRequest;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.LatestSensorValue;
 import se.hydroleaf.model.User;
+import se.hydroleaf.payments.stripe.StripeCheckoutService;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.LatestSensorValueRepository;
 import se.hydroleaf.repository.UserRepository;
+import se.hydroleaf.store.model.OrderStatus;
 import se.hydroleaf.store.model.StoreOrder;
 import se.hydroleaf.store.repository.OrderRepository;
 import se.hydroleaf.store.repository.PaymentRepository;
 import se.hydroleaf.store.model.Payment;
+import se.hydroleaf.store.model.PaymentProvider;
+import se.hydroleaf.store.model.PaymentStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +51,7 @@ public class MyAccountService {
     private final LatestSensorValueRepository latestSensorValueRepository;
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
+    private final StripeCheckoutService stripeCheckoutService;
     private final Clock clock;
 
     public MyProfileResponse getCurrentProfile(String token) {
@@ -103,7 +111,11 @@ public class MyAccountService {
                                 (left, right) -> left.getUpdatedAt().isAfter(right.getUpdatedAt()) ? left : right
                         ));
         return orders.stream()
-                .map(order -> OrderSummaryDTO.from(order, paymentsByOrderId.get(order.getId())))
+                .map(order -> {
+                    Payment payment = paymentsByOrderId.get(order.getId());
+                    PaymentActionDTO paymentAction = resolvePaymentAction(order, payment);
+                    return OrderSummaryDTO.from(order, payment, paymentAction);
+                })
                 .toList();
     }
 
@@ -116,7 +128,46 @@ public class MyAccountService {
                 .filter(o -> o.getEmail().equalsIgnoreCase(user.getEmail()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
         Payment payment = paymentRepository.findTopByOrderIdOrderByUpdatedAtDesc(order.getId()).orElse(null);
-        return OrderDetailsDTO.from(order, payment);
+        return OrderDetailsDTO.from(order, payment, resolvePaymentAction(order, payment));
+    }
+
+    private PaymentActionDTO resolvePaymentAction(StoreOrder order, Payment payment) {
+        if (!isPayable(order, payment)) {
+            return null;
+        }
+        if (payment != null && payment.getProvider() != PaymentProvider.STRIPE) {
+            return null;
+        }
+        try {
+            String idempotencyKey = buildIdempotencyKey(order, payment);
+            String url = stripeCheckoutService.createCheckoutSession(order.getId(), idempotencyKey).url();
+            return new PaymentActionDTO("REDIRECT", "Continue payment", url);
+        } catch (StripeException ex) {
+            throw new StripeIntegrationException("Unable to create Stripe checkout session: " + ex.getMessage());
+        }
+    }
+
+    private boolean isPayable(StoreOrder order, Payment payment) {
+        if (order == null) {
+            return false;
+        }
+        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.CANCELED) {
+            return false;
+        }
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT && order.getStatus() != OrderStatus.FAILED) {
+            return false;
+        }
+        if (payment == null) {
+            return true;
+        }
+        return payment.getStatus() != PaymentStatus.PAID
+                && payment.getStatus() != PaymentStatus.CANCELLED
+                && payment.getStatus() != PaymentStatus.REFUNDED;
+    }
+
+    private String buildIdempotencyKey(StoreOrder order, Payment payment) {
+        Instant updatedAt = payment != null ? payment.getUpdatedAt() : order.getCreatedAt();
+        return order.getId() + ":" + updatedAt.toEpochMilli();
     }
 
     private MyDeviceResponse toDeviceResponse(Device device) {

@@ -15,7 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import se.hydroleaf.controller.dto.AddressRequest;
 import se.hydroleaf.controller.dto.AddressResponse;
 import se.hydroleaf.controller.dto.MyDeviceResponse;
-import se.hydroleaf.controller.dto.MyOrderResponse;
+import se.hydroleaf.store.api.dto.orders.v1.OrderDetailsDTO;
+import se.hydroleaf.store.api.dto.orders.v1.OrderSummaryDTO;
 import se.hydroleaf.controller.dto.MyProfileResponse;
 import se.hydroleaf.controller.dto.UpdateMyProfileRequest;
 import se.hydroleaf.service.AuthenticatedUser;
@@ -70,12 +71,12 @@ public class MyAccountController {
     }
 
     @GetMapping("/store/orders/my")
-    public List<MyOrderResponse> myOrders(@RequestHeader(name = "Authorization", required = false) String token) {
+    public List<OrderSummaryDTO> myOrders(@RequestHeader(name = "Authorization", required = false) String token) {
         return myAccountService.listMyOrders(token);
     }
 
     @GetMapping("/store/orders/{orderId}")
-    public MyOrderResponse myOrder(
+    public OrderDetailsDTO myOrder(
             @RequestHeader(name = "Authorization", required = false) String token,
             @PathVariable UUID orderId) {
         return myAccountService.getMyOrder(token, orderId);

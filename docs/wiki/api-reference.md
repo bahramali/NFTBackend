@@ -50,8 +50,20 @@ This page enumerates every HTTP endpoint exposed by the backend. Unless noted, e
 - `PUT /api/me/profile` — update profile.
 - `GET /api/my/devices` — list devices tied to the current user.
 - `GET /api/my/devices/{deviceId}` — fetch a specific device.
-- `GET /api/store/orders/my` — list store orders for the current user.
-- `GET /api/store/orders/{orderId}` — fetch a specific store order for the current user.
+- `GET /api/store/orders/my` — list store orders for the current user (returns `OrderSummaryDTO[]`).
+- `GET /api/store/orders/{orderId}` — fetch a specific store order for the current user (returns `OrderDetailsDTO`).
+
+### Orders API contract (v1)
+
+These DTOs are stable across environments and should be treated as the canonical contract for the Orders page.
+
+- `OrderSummaryDTO` (list view): `{ orderId, orderNumber, createdAt, status, totalCents, currency, itemsCount, itemsQuantity }`.
+- `OrderDetailsDTO` (details view):
+  `{ orderId, orderNumber, createdAt, status, email, subtotalCents, shippingCents, taxCents, totalCents, currency, shippingAddress, items }`.
+- `ShippingAddressDTO`: `{ name, line1, line2, city, state, postalCode, country, phone }`.
+  `line2`, `state`, and `phone` may be `null` when not supplied at checkout.
+- `OrderItemDTO`: `{ id, productId, variantId, name, unitPriceCents, quantity, lineTotalCents }`.
+  `productId` and `variantId` may be `null` when an item is no longer linked to an active catalog record.
 
 ## Devices & sensors (admin/operator)
 - `GET /api/devices` — list devices.

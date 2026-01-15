@@ -10,10 +10,12 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.controller.dto.MyDeviceMetricResponse;
 import se.hydroleaf.controller.dto.MyDeviceResponse;
-import se.hydroleaf.controller.dto.MyOrderResponse;
+import se.hydroleaf.store.api.dto.orders.v1.OrderDetailsDTO;
+import se.hydroleaf.store.api.dto.orders.v1.OrderSummaryDTO;
 import se.hydroleaf.controller.dto.MyProfileResponse;
 import se.hydroleaf.controller.dto.UpdateMyProfileRequest;
 import se.hydroleaf.model.Device;
@@ -80,23 +82,25 @@ public class MyAccountService {
         return toDeviceResponse(device);
     }
 
-    public List<MyOrderResponse> listMyOrders(String token) {
+    @Transactional(readOnly = true)
+    public List<OrderSummaryDTO> listMyOrders(String token) {
         AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
         User user = userRepository.findById(authenticatedUser.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         return orderRepository.findByEmailIgnoreCase(user.getEmail()).stream()
-                .map(MyOrderResponse::from)
+                .map(OrderSummaryDTO::from)
                 .toList();
     }
 
-    public MyOrderResponse getMyOrder(String token, UUID orderId) {
+    @Transactional(readOnly = true)
+    public OrderDetailsDTO getMyOrder(String token, UUID orderId) {
         AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
         User user = userRepository.findById(authenticatedUser.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         StoreOrder order = orderRepository.findById(orderId)
                 .filter(o -> o.getEmail().equalsIgnoreCase(user.getEmail()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
-        return MyOrderResponse.from(order);
+        return OrderDetailsDTO.from(order);
     }
 
     private MyDeviceResponse toDeviceResponse(Device device) {

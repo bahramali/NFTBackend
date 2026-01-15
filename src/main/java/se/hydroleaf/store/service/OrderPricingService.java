@@ -21,8 +21,14 @@ public class OrderPricingService {
         StoreOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("ORDER_NOT_FOUND", "Order not found"));
 
-        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
-            throw new ConflictException("ORDER_NOT_PENDING", "Order is not pending payment");
+        if (order.getStatus() == OrderStatus.PAID) {
+            throw new ConflictException("ORDER_ALREADY_PAID", "Order is already paid");
+        }
+        if (order.getStatus() == OrderStatus.CANCELED) {
+            throw new ConflictException("ORDER_CANCELED", "Order is canceled");
+        }
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT && order.getStatus() != OrderStatus.FAILED) {
+            throw new ConflictException("ORDER_NOT_PAYABLE", "Order is not payable");
         }
 
         if (order.getItems() == null || order.getItems().isEmpty()) {

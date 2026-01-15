@@ -16,6 +16,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import se.hydroleaf.repository.UserRepository;
+import se.hydroleaf.service.AuthorizationService;
 
 @WebMvcTest(StripePaymentController.class)
 @ActiveProfiles("test")
@@ -29,6 +31,12 @@ class StripePaymentControllerTest {
 
     @MockBean
     private StripeCheckoutService stripeCheckoutService;
+
+    @MockBean
+    private AuthorizationService authorizationService;
+
+    @MockBean
+    private UserRepository userRepository;
 
     @Test
     @WithMockUser

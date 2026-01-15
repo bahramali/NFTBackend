@@ -2,7 +2,6 @@ package se.hydroleaf.store.api.dto.orders.v1;
 
 import java.time.Instant;
 import java.util.UUID;
-import se.hydroleaf.store.model.OrderStatus;
 import se.hydroleaf.store.model.Payment;
 import se.hydroleaf.store.model.StoreOrder;
 
@@ -11,15 +10,15 @@ public record OrderSummaryDTO(
         String orderNumber,
         Instant createdAt,
         Instant lastUpdatedAt,
-        String status,
-        String statusDisplay,
+        String orderStatus,
+        String paymentStatus,
+        String displayStatus,
         String currency,
         long totalCents,
         long totalAmountCents,
         int itemsCount,
         int itemsQuantity,
         String paymentProvider,
-        String paymentStatus,
         String deliveryType,
         PaymentActionDTO paymentAction
 ) {
@@ -30,32 +29,24 @@ public record OrderSummaryDTO(
                 ? order.getItems().stream().mapToInt(item -> item.getQty()).sum()
                 : 0;
         Instant lastUpdatedAt = payment != null ? payment.getUpdatedAt() : order.getCreatedAt();
+        String paymentStatus = OrderStatusMapper.toPaymentStatus(payment);
         return new OrderSummaryDTO(
                 order.getId(),
                 order.getOrderNumber(),
                 order.getCreatedAt(),
                 lastUpdatedAt,
                 order.getStatus().name(),
-                statusDisplay(order.getStatus()),
+                paymentStatus,
+                OrderStatusMapper.toDisplayStatus(order.getStatus(), paymentStatus),
                 order.getCurrency(),
                 order.getTotalCents(),
                 order.getTotalAmountCents(),
                 count,
                 quantity,
                 payment != null ? payment.getProvider().name() : null,
-                payment != null ? payment.getStatus().name() : null,
                 deliveryType(order),
                 paymentAction
         );
-    }
-
-    private static String statusDisplay(OrderStatus status) {
-        return switch (status) {
-            case PENDING_PAYMENT -> "Pending payment";
-            case PAID -> "Paid";
-            case FAILED -> "Failed";
-            case CANCELED -> "Canceled";
-        };
     }
 
     private static String deliveryType(StoreOrder order) {

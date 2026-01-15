@@ -72,15 +72,10 @@ public class PaymentWebhookService {
             payment.setCurrency(event.currency());
         }
 
-        switch (newStatus) {
-            case PAID -> payment.getOrder().setStatus(OrderStatus.PAID);
-            case FAILED -> payment.getOrder().setStatus(OrderStatus.FAILED);
-            case CANCELLED -> payment.getOrder().setStatus(OrderStatus.CANCELED);
-            default -> {
-            }
+        if (newStatus == PaymentStatus.PAID && payment.getOrder().getStatus() == OrderStatus.OPEN) {
+            payment.getOrder().setStatus(OrderStatus.PROCESSING);
+            orderRepository.save(payment.getOrder());
         }
-
-        orderRepository.save(payment.getOrder());
         log.info("Processed webhook provider={} paymentId={} orderId={} status={}",
                 payment.getProvider(),
                 event.providerPaymentId(),

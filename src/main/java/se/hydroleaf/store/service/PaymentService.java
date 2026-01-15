@@ -34,8 +34,10 @@ public class PaymentService {
 
         payment.setStatus(PaymentStatus.PAID);
         StoreOrder order = payment.getOrder();
-        order.setStatus(OrderStatus.PAID);
-        orderRepository.save(order);
+        if (order.getStatus() == OrderStatus.OPEN) {
+            order.setStatus(OrderStatus.PROCESSING);
+            orderRepository.save(order);
+        }
         log.info("Marked order as paid orderId={} providerRef={}", order.getId(), providerRef);
     }
 }

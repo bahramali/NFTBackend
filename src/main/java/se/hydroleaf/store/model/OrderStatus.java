@@ -1,8 +1,9 @@
 package se.hydroleaf.store.model;
 
 public enum OrderStatus {
-    PENDING_PAYMENT,
-    PAID,
-    FAILED,
-    CANCELED
+    OPEN,
+    PROCESSING,
+    SHIPPED,
+    DELIVERED,
+    CANCELLED
 }

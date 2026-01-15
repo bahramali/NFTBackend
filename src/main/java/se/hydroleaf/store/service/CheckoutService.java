@@ -150,7 +150,7 @@ public class CheckoutService {
                 .orderNumber(generateOrderNumber())
                 .userId(userId)
                 .email(request.getEmail())
-                .status(OrderStatus.PENDING_PAYMENT)
+                .status(OrderStatus.OPEN)
                 .subtotalCents(totals.subtotal())
                 .shippingCents(totals.shipping())
                 .taxCents(totals.tax())

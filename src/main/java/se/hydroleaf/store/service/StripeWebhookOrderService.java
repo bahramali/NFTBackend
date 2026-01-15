@@ -189,8 +189,8 @@ public class StripeWebhookOrderService {
             payment.setProviderReference(paymentIntent);
         }
         StoreOrder order = payment.getOrder();
-        if (order.getStatus() != OrderStatus.PAID) {
-            order.setStatus(OrderStatus.PAID);
+        if (order.getStatus() == OrderStatus.OPEN) {
+            order.setStatus(OrderStatus.PROCESSING);
             orderRepository.save(order);
         }
         paymentRepository.save(payment);
@@ -258,7 +258,7 @@ public class StripeWebhookOrderService {
                 .orderNumber(generateOrderNumber())
                 .userId(cart.getUserId())
                 .email(email)
-                .status(OrderStatus.PAID)
+                .status(OrderStatus.PROCESSING)
                 .subtotalCents(totals.subtotal())
                 .shippingCents(totals.shipping())
                 .taxCents(totals.tax())

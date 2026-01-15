@@ -180,7 +180,7 @@ class MyAccountIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.orderId").value(myOrder.getId().toString()))
                 .andExpect(jsonPath("$.orderNumber").value("HL-100"))
-                .andExpect(jsonPath("$.status").value(OrderStatus.PAID.name()));
+                .andExpect(jsonPath("$.orderStatus").value(OrderStatus.PROCESSING.name()));
     }
 
     @Test
@@ -398,7 +398,7 @@ class MyAccountIntegrationTest {
         StoreOrder order = StoreOrder.builder()
                 .orderNumber(orderNumber)
                 .email(email)
-                .status(OrderStatus.PAID)
+                .status(OrderStatus.PROCESSING)
                 .subtotalCents(totalCents)
                 .shippingCents(0)
                 .taxCents(0)

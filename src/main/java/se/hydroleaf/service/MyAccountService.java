@@ -151,10 +151,7 @@ public class MyAccountService {
         if (order == null) {
             return false;
         }
-        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.CANCELED) {
-            return false;
-        }
-        if (order.getStatus() != OrderStatus.PENDING_PAYMENT && order.getStatus() != OrderStatus.FAILED) {
+        if (order.getStatus() != OrderStatus.OPEN) {
             return false;
         }
         if (payment == null) {

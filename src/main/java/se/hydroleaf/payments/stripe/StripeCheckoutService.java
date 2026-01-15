@@ -56,7 +56,7 @@ public class StripeCheckoutService {
         Payment existingPayment = paymentRepository.findByOrderIdAndProvider(orderId, PaymentProvider.STRIPE)
                 .orElse(null);
         if (existingPayment != null) {
-            if (existingPayment.getStatus() == PaymentStatus.PAID || order.getStatus() == OrderStatus.PAID) {
+            if (existingPayment.getStatus() == PaymentStatus.PAID) {
                 throw new ConflictException("ORDER_ALREADY_PAID", "Order is already paid");
             }
 
@@ -132,13 +132,10 @@ public class StripeCheckoutService {
         if (!stripeProperties.isEnabled() || !StringUtils.hasText(stripeProperties.getSecretKey())) {
             throw new BadRequestException("STRIPE_DISABLED", "Stripe payments are not configured.");
         }
-        if (order.getStatus() == OrderStatus.PAID) {
-            throw new ConflictException("ORDER_ALREADY_PAID", "Order is already paid");
-        }
-        if (order.getStatus() == OrderStatus.CANCELED) {
+        if (order.getStatus() == OrderStatus.CANCELLED) {
             throw new ConflictException("ORDER_CANCELED", "Order is canceled");
         }
-        if (order.getStatus() != OrderStatus.PENDING_PAYMENT && order.getStatus() != OrderStatus.FAILED) {
+        if (order.getStatus() != OrderStatus.OPEN) {
             throw new ConflictException("ORDER_NOT_PAYABLE", "Order is not payable");
         }
         if (order.getTotalCents() <= 0) {
@@ -293,7 +290,7 @@ public class StripeCheckoutService {
             return;
         }
 
-        if (order.getStatus() == OrderStatus.PAID || (payment != null && payment.getStatus() == PaymentStatus.PAID)) {
+        if (order.getStatus() != OrderStatus.OPEN || (payment != null && payment.getStatus() == PaymentStatus.PAID)) {
             log.info("Stripe webhook already processed for sessionId={} orderId={}", sessionId, order.getId());
             return;
         }
@@ -321,8 +318,10 @@ public class StripeCheckoutService {
         }
         paymentRepository.save(payment);
 
-        order.setStatus(OrderStatus.PAID);
-        orderRepository.save(order);
+        if (order.getStatus() == OrderStatus.OPEN) {
+            order.setStatus(OrderStatus.PROCESSING);
+            orderRepository.save(order);
+        }
 
         log.info("Marked order paid from Stripe webhook orderId={} sessionId={}", order.getId(), sessionId);
     }
@@ -346,7 +345,7 @@ public class StripeCheckoutService {
             return;
         }
 
-        if (order.getStatus() == OrderStatus.PAID) {
+        if (order.getStatus() != OrderStatus.OPEN) {
             log.info("Stripe checkout expired for already paid orderId={} sessionId={}", order.getId(), sessionId);
             return;
         }
@@ -354,11 +353,6 @@ public class StripeCheckoutService {
         if (payment != null && payment.getStatus() != PaymentStatus.CANCELLED) {
             payment.setStatus(PaymentStatus.CANCELLED);
             paymentRepository.save(payment);
-        }
-
-        if (order.getStatus() != OrderStatus.CANCELED) {
-            order.setStatus(OrderStatus.CANCELED);
-            orderRepository.save(order);
         }
 
         log.info("Marked order canceled after Stripe checkout expired orderId={} sessionId={}", order.getId(), sessionId);
@@ -383,7 +377,7 @@ public class StripeCheckoutService {
             return;
         }
 
-        if (order.getStatus() == OrderStatus.PAID) {
+        if (order.getStatus() != OrderStatus.OPEN) {
             log.info("Stripe payment failed for already paid orderId={} paymentIntent={}", order.getId(), paymentIntentId);
             return;
         }
@@ -392,11 +386,6 @@ public class StripeCheckoutService {
             payment.setStatus(PaymentStatus.FAILED);
             payment.setProviderReference(paymentIntentId);
             paymentRepository.save(payment);
-        }
-
-        if (order.getStatus() != OrderStatus.FAILED) {
-            order.setStatus(OrderStatus.FAILED);
-            orderRepository.save(order);
         }
 
         log.info("Marked order failed after Stripe payment failure orderId={} paymentIntent={}", order.getId(), paymentIntentId);

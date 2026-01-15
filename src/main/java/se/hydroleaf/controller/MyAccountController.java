@@ -70,7 +70,7 @@ public class MyAccountController {
         return myAccountService.getMyDevice(token, deviceId);
     }
 
-    @GetMapping("/store/orders/my")
+    @GetMapping({"/store/orders/my", "/me/orders"})
     public List<OrderSummaryDTO> myOrders(@RequestHeader(name = "Authorization", required = false) String token) {
         return myAccountService.listMyOrders(token);
     }

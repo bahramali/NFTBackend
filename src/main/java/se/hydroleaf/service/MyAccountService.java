@@ -5,8 +5,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,8 @@ import se.hydroleaf.repository.LatestSensorValueRepository;
 import se.hydroleaf.repository.UserRepository;
 import se.hydroleaf.store.model.StoreOrder;
 import se.hydroleaf.store.repository.OrderRepository;
+import se.hydroleaf.store.repository.PaymentRepository;
+import se.hydroleaf.store.model.Payment;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +43,7 @@ public class MyAccountService {
     private final DeviceRepository deviceRepository;
     private final LatestSensorValueRepository latestSensorValueRepository;
     private final OrderRepository orderRepository;
+    private final PaymentRepository paymentRepository;
     private final Clock clock;
 
     public MyProfileResponse getCurrentProfile(String token) {
@@ -87,8 +93,17 @@ public class MyAccountService {
         AuthenticatedUser authenticatedUser = authorizationService.requireAuthenticated(token);
         User user = userRepository.findById(authenticatedUser.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return orderRepository.findByEmailIgnoreCase(user.getEmail()).stream()
-                .map(OrderSummaryDTO::from)
+        List<StoreOrder> orders = orderRepository.findByEmailIgnoreCase(user.getEmail());
+        Map<UUID, Payment> paymentsByOrderId = orders.isEmpty()
+                ? Map.of()
+                : paymentRepository.findByOrderIdIn(orders.stream().map(StoreOrder::getId).toList()).stream()
+                        .collect(Collectors.toMap(
+                                payment -> payment.getOrder().getId(),
+                                Function.identity(),
+                                (left, right) -> left.getUpdatedAt().isAfter(right.getUpdatedAt()) ? left : right
+                        ));
+        return orders.stream()
+                .map(order -> OrderSummaryDTO.from(order, paymentsByOrderId.get(order.getId())))
                 .toList();
     }
 

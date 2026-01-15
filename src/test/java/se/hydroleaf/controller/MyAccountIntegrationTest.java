@@ -174,7 +174,7 @@ class MyAccountIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].orderNumber").value("HL-100"))
-                .andExpect(jsonPath("$[0].totalCents").value(1500));
+                .andExpect(jsonPath("$[0].totalAmountCents").value(1500));
 
         mockMvc.perform(get("/api/store/orders/" + myOrder.getId()).header("Authorization", token))
                 .andExpect(status().isOk())

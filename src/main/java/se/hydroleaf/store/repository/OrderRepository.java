@@ -19,6 +19,18 @@ public interface OrderRepository extends JpaRepository<StoreOrder, UUID> {
     List<StoreOrder> findByEmailIgnoreCase(String email);
 
     @Query("""
+            select o as order, p as payment, count(i) as itemsCount, coalesce(sum(i.qty), 0) as itemsQuantity
+            from StoreOrder o
+            left join Payment p
+                on p.order = o
+                and p.updatedAt = (select max(p2.updatedAt) from Payment p2 where p2.order = o)
+            left join o.items i
+            where lower(o.email) = lower(:email)
+            group by o, p
+            """)
+    List<OrderSummaryRow> findOrderSummariesByEmail(@Param("email") String email);
+
+    @Query("""
             select o.id as id, count(i) as itemsCount, coalesce(sum(i.qty), 0) as itemsQuantity
             from StoreOrder o
             left join o.items i
@@ -35,6 +47,16 @@ public interface OrderRepository extends JpaRepository<StoreOrder, UUID> {
 
     interface OrderItemCounts {
         UUID getId();
+
+        long getItemsCount();
+
+        long getItemsQuantity();
+    }
+
+    interface OrderSummaryRow {
+        StoreOrder getOrder();
+
+        se.hydroleaf.store.model.Payment getPayment();
 
         long getItemsCount();
 

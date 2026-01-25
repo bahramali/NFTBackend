@@ -15,13 +15,9 @@ import se.hydroleaf.model.TopicName;
 import se.hydroleaf.repository.ActuatorStatusRepository;
 import se.hydroleaf.repository.DeviceRepository;
 import se.hydroleaf.repository.SensorValueHistoryRepository;
-import se.hydroleaf.repository.LatestSensorValueAggregationRepository;
 import se.hydroleaf.repository.LatestSensorValueRepository;
-import se.hydroleaf.model.DeviceType;
-import se.hydroleaf.repository.dto.snapshot.LiveNowRow;
 
 import java.time.Instant;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,7 +32,6 @@ class RecordServiceDeviceTests {
     @Autowired SensorValueHistoryRepository sensorValueHistoryRepository;
     @Autowired ActuatorStatusRepository actuatorStatusRepository;
     @Autowired LatestSensorValueRepository latestSensorValueRepository;
-    @Autowired LatestSensorValueAggregationRepository latestAggregationRepository;
     @Autowired SensorValueBuffer sensorValueBuffer;
 
     @BeforeEach
@@ -74,16 +69,18 @@ class RecordServiceDeviceTests {
 
         String json = """
                   {
-                "timestamp": "2025-01-01T00:00:00Z",
-                "sensors": [
-                  {"sensorName": "lightSensor", "sensorType": "light", "value": 549.3, "unit": "lx"},
-                  {"sensorName": "tempSensor",  "sensorType": "temperature", "value": 26.2, "unit": "°C"},
-                  {"sensorName": "humSensor",   "sensorType": "humidity", "value": 42.4, "unit": "%"},
-                  {"sensorType": "ph", "value": 6.5}
-                ],
-                "controllers": [
-                  {"name": "airPump", "state": false}
-                ]
+                    "timestamp": "2025-01-01T00:00:00Z",
+                    "lux": 549.3,
+                    "layer_temp_c": 26.2,
+                    "rh_pct": 42.4,
+                    "co2_ppm": 812,
+                    "as7343_counts": {
+                      "405nm": 101.0,
+                      "VIS1": 202.0
+                    },
+                    "controllers": [
+                      {"name": "airPump", "state": false}
+                    ]
                   }
                 """;
         JsonNode node = objectMapper.readTree(json);
@@ -100,17 +97,15 @@ class RecordServiceDeviceTests {
         assertEquals("L02", saved.getLayer());
         assertEquals(compositeId, saved.getCompositeId());
 
-        List<LiveNowRow> rows = latestAggregationRepository.fetchLatestSensorAverages(List.of(DeviceType.LIGHT.getName()));
-        LiveNowRow lightAvg = rows.stream()
-                .filter(r -> "S02".equals(r.system()) && "L02".equals(r.layer()))
-                .findFirst().orElse(null);
-        assertNotNull(lightAvg);
-        assertNotNull(lightAvg.getAvgValue());
-        assertTrue(lightAvg.getDeviceCount() >= 1);
+        LatestSensorValue luxValue = latestSensorValueRepository
+                .findByDevice_CompositeIdAndSensorType(compositeId, "lux")
+                .orElseThrow();
+        assertEquals(549.3, luxValue.getValue());
+        assertEquals("lux", luxValue.getUnit());
 
         sensorValueBuffer.flush();
         assertTrue(sensorValueHistoryRepository.findAll().stream()
-                .anyMatch(d -> "ph".equals(d.getSensorType())));
+                .anyMatch(d -> "as7343_counts_405nm".equals(d.getSensorType())));
 
         long pumpAfter = actuatorStatusRepository.count();
         assertTrue(pumpAfter > pumpBefore);
@@ -127,10 +122,10 @@ class RecordServiceDeviceTests {
         ensureDevice(compositeId);
 
         String first = """
-                {"timestamp":"2025-01-01T00:00:00Z","sensors":[{"sensorType":"ph","value":6.0}]}
+                {"timestamp":"2025-01-01T00:00:00Z","lux":6.0}
                 """;
         String second = """
-                {"timestamp":"2025-01-01T00:00:30Z","sensors":[{"sensorType":"ph","value":8.0}]}
+                {"timestamp":"2025-01-01T00:00:30Z","lux":8.0}
                 """;
         recordService.saveRecord(compositeId, objectMapper.readTree(first), TopicName.growSensors);
         recordService.saveRecord(compositeId, objectMapper.readTree(second), TopicName.growSensors);
@@ -142,6 +137,7 @@ class RecordServiceDeviceTests {
 
         var all = sensorValueHistoryRepository.findAll();
         assertEquals(1, all.size());
+        assertEquals("lux", all.get(0).getSensorType());
         assertEquals(7.0, all.get(0).getSensorValue());
         assertEquals(Instant.parse("2025-01-01T00:00:00Z"), all.get(0).getValueTime());
     }
@@ -154,28 +150,28 @@ class RecordServiceDeviceTests {
         String first = """
                 {
                   "timestamp":"2025-05-05T05:05:05Z",
-                  "sensors":[{"sensorName":"t1","sensorType":"temperature","value":21.5,"unit":"°C"}]
+                  "air_temp_c": 21.5
                 }
                 """;
         recordService.saveRecord(compositeId, objectMapper.readTree(first), TopicName.growSensors);
 
         LatestSensorValue v1 = latestSensorValueRepository
-                .findByDevice_CompositeIdAndSensorType(compositeId, "temperature")
+                .findByDevice_CompositeIdAndSensorType(compositeId, "air_temp_c")
                 .orElseThrow();
         assertEquals(21.5, v1.getValue());
-        assertEquals("°C", v1.getUnit());
+        assertEquals("C", v1.getUnit());
         assertEquals(Instant.parse("2025-05-05T05:05:05Z"), v1.getValueTime());
 
         String second = """
                 {
                   "timestamp":"2025-05-06T06:06:06Z",
-                  "sensors":[{"sensorName":"t1","sensorType":"temperature","value":22.0,"unit":"°C"}]
+                  "air_temp_c": 22.0
                 }
                 """;
         recordService.saveRecord(compositeId, objectMapper.readTree(second), TopicName.growSensors);
 
         LatestSensorValue v2 = latestSensorValueRepository
-                .findByDevice_CompositeIdAndSensorType(compositeId, "temperature")
+                .findByDevice_CompositeIdAndSensorType(compositeId, "air_temp_c")
                 .orElseThrow();
         assertEquals(22.0, v2.getValue());
         assertEquals(Instant.parse("2025-05-06T06:06:06Z"), v2.getValueTime());

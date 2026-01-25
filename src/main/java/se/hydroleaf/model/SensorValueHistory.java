@@ -60,9 +60,9 @@ public class SensorValueHistory {
     @PreUpdate
     private void fillParts() {
         if (compositeId != null) {
-            String[] parts = compositeId.split("-", 3);
+            String[] parts = compositeId.split("-", 4);
             systemPart = parts.length > 0 ? parts[0] : null;
-            layerPart = parts.length > 1 ? parts[1] : null;
+            layerPart = parts.length > 2 ? parts[2] : null;
         } else {
             systemPart = null;
             layerPart = null;

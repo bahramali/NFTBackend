@@ -49,7 +49,7 @@ class MqttMessageHandlerHydroleafTopicTest {
 
         handler.handle(topic, payload);
 
-        verify(recordService).saveRecord(eq("S01-L04-LAYER_S01_R01_L04_01"), any(), isNull());
+        verify(recordService).saveRecord(eq("S01-R01-L04-LAYER_S01_R01_L04_01"), any(), isNull());
         verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
     }
 }

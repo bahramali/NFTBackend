@@ -37,7 +37,7 @@ class MqttMessageHandlerGerminationTopicTest {
         String topic = "germinationTopic/S01/L02/sensor";
         String payload = """
                 {
-                  "composite_id": "S01-L02-G03",
+                  "composite_id": "S01-R01-L02-G03",
                   "timestamp": "2025-01-01T00:00:00Z",
                   "sensors": [
                     {
@@ -50,7 +50,7 @@ class MqttMessageHandlerGerminationTopicTest {
 
         handler.handle(topic, payload);
 
-        verify(recordService).saveRecord(eq("S01-L02-G03"), any(), eq(TopicName.germinationTopic));
+        verify(recordService).saveRecord(eq("S01-R01-L02-G03"), any(), eq(TopicName.germinationTopic));
         verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
     }
 
@@ -59,7 +59,7 @@ class MqttMessageHandlerGerminationTopicTest {
         String topic = "GeRmInAtIoNToPiC/device";
         String payload = """
                 {
-                  "compositeId": "S01-L02-G03",
+                  "compositeId": "S01-R01-L02-G03",
                   "timestamp": "2025-01-01T00:00:00Z",
                   "sensors": []
                 }
@@ -67,7 +67,7 @@ class MqttMessageHandlerGerminationTopicTest {
 
         handler.handle(topic, payload);
 
-        verify(recordService).saveRecord(eq("S01-L02-G03"), any(), eq(TopicName.germinationTopic));
+        verify(recordService).saveRecord(eq("S01-R01-L02-G03"), any(), eq(TopicName.germinationTopic));
         verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
     }
 }

@@ -33,16 +33,18 @@ class DeviceServiceTest {
     @Test
     void getCompositeIdsFiltersByDeviceIdWhenProvided() {
         Device d1 = new Device();
-        d1.setCompositeId("S01-L01-A1");
+        d1.setCompositeId("S01-R01-L01-A1");
         d1.setDeviceId("A1");
+        d1.setRack("R01");
         Device d2 = new Device();
-        d2.setCompositeId("S01-L01-B1");
+        d2.setCompositeId("S01-R01-L01-B1");
         d2.setDeviceId("B1");
-        when(deviceRepository.findBySystemAndLayer("S01", "L01"))
+        d2.setRack("R01");
+        when(deviceRepository.findBySystemAndRackAndLayer("S01", "R01", "L01"))
                 .thenReturn(List.of(d1, d2));
 
-        List<String> result = deviceService.getCompositeIds("S01", "L01", "B1");
+        List<String> result = deviceService.getCompositeIds("S01", "R01", "L01", "B1");
 
-        assertEquals(List.of("S01-L01-B1"), result);
+        assertEquals(List.of("S01-R01-L01-B1"), result);
     }
 }

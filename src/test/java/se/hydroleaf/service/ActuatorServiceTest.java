@@ -39,12 +39,12 @@ class ActuatorServiceTest {
 
     @Test
     void saves_status_when_payload_has_airPump_controller_with_string_state() {
-        String compositeId = "S01-L02-G01";
+        String compositeId = "S01-R01-L02-G01";
         when(deviceRepo.findById(compositeId)).thenReturn(Optional.of(device(compositeId)));
 
         String json = """
                 {
-                  "composite_id":"S01-L02-G01",
+                  "composite_id":"S01-R01-L02-G01",
                   "timestamp":"2023-01-01T00:00:00Z",
                   "sensors":[{"sensorName":"tempSensor","sensorType":"temperature","value":22.5}],
                   "health":{"tempSensor":true},
@@ -66,12 +66,12 @@ class ActuatorServiceTest {
 
     @Test
     void saves_status_when_payload_has_boolean_and_numeric_values() {
-        String compositeId = "S02-L01-X1";
+        String compositeId = "S02-R01-L01-X1";
         when(deviceRepo.findById(compositeId)).thenReturn(Optional.of(device(compositeId)));
 
         String jsonTrue = """
                 {
-                  "composite_id":"S02-L01-X1",
+                  "composite_id":"S02-R01-L01-X1",
                   "sensors":[{"sensorName":"s1","sensorType":"temperature","value":25.0}],
                   "health":{"s1":true},
                   "controllers":[{"name":"airPump","state":true,"timestamp":"2024-02-02T12:00:00Z"}]
@@ -79,7 +79,7 @@ class ActuatorServiceTest {
                 """;
         String jsonNum  = """
                 {
-                  "composite_id":"S02-L01-X1",
+                  "composite_id":"S02-R01-L01-X1",
                   "sensors":[{"sensorName":"s1","sensorType":"temperature","value":25.0}],
                   "health":{"s1":true},
                   "controllers":[{"name":"airPump","state":1,"timestamp":"2024-02-02T12:01:00Z"}]
@@ -122,4 +122,3 @@ class ActuatorServiceTest {
         verifyNoInteractions(actuatorRepo);
 }
 }
-

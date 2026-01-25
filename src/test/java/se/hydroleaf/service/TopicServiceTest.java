@@ -37,8 +37,22 @@ class TopicServiceTest {
 
     @Test
     void getSensorTypesByTopicAggregatesAndSortsSensors() {
-        Device growDevice = Device.builder().compositeId("GROW-1").topic(TopicName.growSensors).build();
-        Device waterDevice = Device.builder().compositeId("WATER-1").topic(TopicName.waterTank).build();
+        Device growDevice = Device.builder()
+                .compositeId("S01-R01-L01-GROW1")
+                .system("S01")
+                .rack("R01")
+                .layer("L01")
+                .deviceId("GROW1")
+                .topic(TopicName.growSensors)
+                .build();
+        Device waterDevice = Device.builder()
+                .compositeId("S01-R01-L02-WATER1")
+                .system("S01")
+                .rack("R01")
+                .layer("L02")
+                .deviceId("WATER1")
+                .topic(TopicName.waterTank)
+                .build();
         LatestSensorValue ph = LatestSensorValue.builder().device(growDevice).sensorType("ph").build();
         LatestSensorValue temp = LatestSensorValue.builder().device(growDevice).sensorType("temperature").build();
         LatestSensorValue duplicatePh = LatestSensorValue.builder().device(growDevice).sensorType("ph").build();

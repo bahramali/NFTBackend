@@ -59,8 +59,10 @@ public class RecordService {
     public void saveRecord(String compositeId, JsonNode json, TopicName topic) {
         Objects.requireNonNull(compositeId, "compositeId is required");
 
-        final Device device = deviceRepository.findById(compositeId)
-                .orElseGet(() -> autoRegisterDevice(compositeId, topic));
+        String normalizedId = normalizeCompositeId(compositeId);
+
+        final Device device = deviceRepository.findById(normalizedId)
+                .orElseGet(() -> autoRegisterDevice(normalizedId, topic));
 
         final Instant ts = parseTimestamp(json.path("timestamp")).orElseGet(Instant::now);
 
@@ -83,10 +85,10 @@ public class RecordService {
                 }
                 if (num == null) continue;
 
-                sensorValueBuffer.add(compositeId, sensorType, num, ts);
+                sensorValueBuffer.add(normalizedId, sensorType, num, ts);
 
                 LatestSensorValue lsv = latestSensorValueRepository
-                        .findByDevice_CompositeIdAndSensorType(compositeId, sensorType)
+                        .findByDevice_CompositeIdAndSensorType(normalizedId, sensorType)
                         .orElseGet(() -> {
                             LatestSensorValue n = new LatestSensorValue();
                             n.setDevice(device);
@@ -127,19 +129,31 @@ public class RecordService {
     }
 
     private Device autoRegisterDevice(String compositeId, TopicName topic) {
-        String[] parts = compositeId.split("-", 3);
-        if (parts.length < 3) {
+        String[] parts = compositeId.split("-", 4);
+        if (parts.length < 4) {
             throw new IllegalArgumentException("Invalid compositeId: " + compositeId);
         }
         Device device = new Device();
         device.setCompositeId(compositeId);
         device.setSystem(parts[0]);
-        device.setLayer(parts[1]);
-        device.setDeviceId(parts[2]);
+        device.setRack(parts[1]);
+        device.setLayer(parts[2]);
+        device.setDeviceId(parts[3]);
         device.setTopic(topic != null ? topic : TopicName.growSensors);
         deviceRepository.save(device);
         log.info("Auto-registered unknown device {}", compositeId);
         return device;
+    }
+
+    private String normalizeCompositeId(String compositeId) {
+        String[] parts = compositeId.split("-", 4);
+        if (parts.length == 4) {
+            return compositeId;
+        }
+        if (parts.length == 3) {
+            return String.format("%s-UNKNOWN-%s-%s", parts[0], parts[1], parts[2]);
+        }
+        throw new IllegalArgumentException("Invalid compositeId: " + compositeId);
     }
 
     @Transactional(readOnly = true)

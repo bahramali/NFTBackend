@@ -28,12 +28,12 @@ public class DeviceService {
 
     public List<DeviceResponse> getAllDevices() {
         return deviceRepository.findAll().stream()
-                .map(d -> new DeviceResponse(d.getCompositeId(), d.getSystem(), d.getLayer(), d.getDeviceId()))
+                .map(d -> new DeviceResponse(d.getCompositeId(), d.getSystem(), d.getRack(), d.getLayer(), d.getDeviceId()))
                 .toList();
     }
 
-    public List<String> getCompositeIds(String system, String layer, String deviceId) {
-        List<Device> devices = deviceRepository.findBySystemAndLayer(system, layer);
+    public List<String> getCompositeIds(String system, String rack, String layer, String deviceId) {
+        List<Device> devices = deviceRepository.findBySystemAndRackAndLayer(system, rack, layer);
         if (deviceId != null && !deviceId.isBlank()) {
             devices = devices.stream()
                     .filter(d -> d.getDeviceId().equals(deviceId))
@@ -62,6 +62,7 @@ public class DeviceService {
         List<DeviceSensorsResponse.DeviceInfo> deviceInfos = devices.stream()
                 .map(d -> new DeviceSensorsResponse.DeviceInfo(
                         d.getSystem(),
+                        d.getRack(),
                         d.getLayer(),
                         d.getDeviceId(),
                         sensorsByDevice.getOrDefault(d.getCompositeId(), Set.of()).stream().toList()))

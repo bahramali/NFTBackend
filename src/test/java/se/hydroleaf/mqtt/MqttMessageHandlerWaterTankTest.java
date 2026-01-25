@@ -38,10 +38,10 @@ class MqttMessageHandlerWaterTankTest {
         String topic = "waterTank";
         String payload = """
                 {
-                   "system": "S01",
+                    "system": "S01",
                     "deviceId": "G02",
                     "location": "L01",
-                    "compositeId": "S01-L01-G02",
+                    "compositeId": "S01-R01-L01-G02",
                     "timestamp": "2025-08-09T11:41:18Z",
                       "sensors": [
                         {
@@ -61,7 +61,7 @@ class MqttMessageHandlerWaterTankTest {
 
         handler.handle(topic, payload);
 
-        verify(recordService).saveRecord(eq("S01-L01-G02"), any(), eq(TopicName.waterTank));
+        verify(recordService).saveRecord(eq("S01-R01-L01-G02"), any(), eq(TopicName.waterTank));
         verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
     }
 

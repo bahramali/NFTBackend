@@ -58,7 +58,7 @@ public final class MqttTopicParser {
 
     public record ParsedTopic(String site, String rack, String layer, String deviceId, String kind) {
         public String compositeId() {
-            return String.format("%s-%s-%s", site, layer, deviceId);
+            return String.format("%s-%s-%s-%s", site, rack, layer, deviceId);
         }
     }
 }

@@ -73,8 +73,9 @@ class GerminationControllerTest {
         deviceRepository.deleteAllInBatch();
 
         device = Device.builder()
-                .compositeId("S01-L02-G03")
+                .compositeId("S01-R01-L02-G03")
                 .system("S01")
+                .rack("R01")
                 .layer("L02")
                 .deviceId("G03")
                 .topic(TopicName.germinationTopic)
@@ -97,11 +98,11 @@ class GerminationControllerTest {
         mockMvc.perform(post("/api/germination/start")
                         .header("Authorization", "Bearer admin"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.compositeId").value("S01-L02-G03"))
+                .andExpect(jsonPath("$.compositeId").value("S01-R01-L02-G03"))
                 .andExpect(jsonPath("$.startTime").value(start.toString()))
                 .andExpect(jsonPath("$.elapsedSeconds").value(60));
 
-        assertThat(germinationCycleRepository.findById("S01-L02-G03"))
+        assertThat(germinationCycleRepository.findById("S01-R01-L02-G03"))
                 .isPresent()
                 .get()
                 .extracting(GerminationCycle::getStartTime)
@@ -125,7 +126,7 @@ class GerminationControllerTest {
                 .andExpect(jsonPath("$.startTime").value(newStart.toString()))
                 .andExpect(jsonPath("$.elapsedSeconds").value(120));
 
-        assertThat(germinationCycleRepository.findById("S01-L02-G03"))
+        assertThat(germinationCycleRepository.findById("S01-R01-L02-G03"))
                 .isPresent()
                 .get()
                 .extracting(GerminationCycle::getStartTime)

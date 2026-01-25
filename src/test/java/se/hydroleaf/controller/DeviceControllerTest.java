@@ -56,14 +56,14 @@ class DeviceControllerTest {
         when(authorizationService.requireAdminOrOperator(anyString())).thenReturn(adminUser());
         DeviceSensorsResponse response = new DeviceSensorsResponse(
                 "2025-08-22T09:05Z",
-                List.of(new DeviceSensorsResponse.SystemInfo("S01", List.of("L01"), List.of("S01:L01:G01"))),
-                List.of(new DeviceSensorsResponse.DeviceInfo("S01", "L01", "G01", List.of("ph", "tds")))
+                List.of(new DeviceSensorsResponse.SystemInfo("S01", List.of("L01"), List.of("S01-R01-L01-G01"))),
+                List.of(new DeviceSensorsResponse.DeviceInfo("S01", "R01", "L01", "G01", List.of("ph", "tds")))
         );
-        when(deviceService.getSensorsForDevices(List.of("S01:L01:G01"))).thenReturn(response);
+        when(deviceService.getSensorsForDevices(List.of("S01-R01-L01-G01"))).thenReturn(response);
 
         mockMvc.perform(get("/api/devices/sensors")
                         .header("Authorization", "Bearer admin")
-                        .param("compositeIds", "S01:L01:G01"))
+                        .param("compositeIds", "S01-R01-L01-G01"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.devices[0].systemId").value("S01"))
                 .andExpect(jsonPath("$.devices[0].sensors[0]").value("ph"));
@@ -86,29 +86,30 @@ class DeviceControllerTest {
         when(authorizationService.requireAdminOrOperator(anyString())).thenReturn(adminUser());
         DeviceSensorsResponse response = new DeviceSensorsResponse(
                 "2025-08-22T09:05Z",
-                List.of(new DeviceSensorsResponse.SystemInfo("S01", List.of("L01"), List.of("S01:L01:G01"))),
-                List.of(new DeviceSensorsResponse.DeviceInfo("S01", "L01", "G01", List.of("ph")))
+                List.of(new DeviceSensorsResponse.SystemInfo("S01", List.of("L01"), List.of("S01-R01-L01-G01"))),
+                List.of(new DeviceSensorsResponse.DeviceInfo("S01", "R01", "L01", "G01", List.of("ph")))
         );
         when(deviceService.getAllDevicesWithSensors()).thenReturn(response);
 
         mockMvc.perform(get("/api/devices/all").header("Authorization", "Bearer admin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.devices[0].deviceId").value("G01"))
-                .andExpect(jsonPath("$.systems[0].compositeIds[0]").value("S01:L01:G01"));
+                .andExpect(jsonPath("$.systems[0].compositeIds[0]").value("S01-R01-L01-G01"));
     }
 
     @Test
     void getCompositeIdsReturnsIds() throws Exception {
         when(authorizationService.requireAdminOrOperator(anyString())).thenReturn(adminUser());
-        when(deviceService.getCompositeIds("S01", "L01", "D01"))
-                .thenReturn(List.of("S01-L01-D01"));
+        when(deviceService.getCompositeIds("S01", "R01", "L01", "D01"))
+                .thenReturn(List.of("S01-R01-L01-D01"));
 
         mockMvc.perform(get("/api/devices/composite-ids")
                         .header("Authorization", "Bearer admin")
                         .param("system", "S01")
+                        .param("rack", "R01")
                         .param("layer", "L01")
                         .param("deviceId", "D01"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0]").value("S01-L01-D01"));
+                .andExpect(jsonPath("$[0]").value("S01-R01-L01-D01"));
     }
 }

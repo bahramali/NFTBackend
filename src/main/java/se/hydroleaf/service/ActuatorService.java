@@ -48,8 +48,9 @@ public class ActuatorService {
                 throw new IllegalArgumentException("composite_id is required in payload");
             }
 
-            Device device = deviceRepo.findById(compositeId)
-                    .orElseThrow(() -> new IllegalArgumentException("Unknown device composite_id: " + compositeId));
+            String normalizedId = normalizeCompositeId(compositeId);
+            Device device = deviceRepo.findById(normalizedId)
+                    .orElseThrow(() -> new IllegalArgumentException("Unknown device composite_id: " + normalizedId));
 
             // 2) Base timestamp (optional)
             Instant baseTs = readTimestamp(node);
@@ -96,6 +97,17 @@ public class ActuatorService {
         if (node.hasNonNull("composite_id")) return node.get("composite_id").asText();
         if (node.hasNonNull("compositeId"))  return node.get("compositeId").asText();
         return null;
+    }
+
+    private static String normalizeCompositeId(String compositeId) {
+        String[] parts = compositeId.split("-", 4);
+        if (parts.length == 4) {
+            return compositeId;
+        }
+        if (parts.length == 3) {
+            return String.format("%s-UNKNOWN-%s-%s", parts[0], parts[1], parts[2]);
+        }
+        throw new IllegalArgumentException("Invalid composite_id: " + compositeId);
     }
 
     private static Instant readTimestamp(JsonNode node) {

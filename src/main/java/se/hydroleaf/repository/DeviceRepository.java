@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface DeviceRepository extends JpaRepository<Device, String> {
 
-    List<Device> findBySystemAndLayer(String system, String layer);
+    List<Device> findBySystemAndRackAndLayer(String system, String rack, String layer);
 
     List<Device> findByOwnerUserId(Long ownerUserId);
 

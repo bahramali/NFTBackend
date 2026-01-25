@@ -56,10 +56,11 @@ class RecordServiceDeviceTests {
             Device d = new Device();
             d.setCompositeId(compositeId);
             String[] parts = compositeId.split("-");
-            if (parts.length >= 2) {
+            if (parts.length >= 4) {
                 d.setSystem(parts[0]);
-                d.setLayer(parts[1]);
-                d.setDeviceId(parts[2]);
+                d.setRack(parts[1]);
+                d.setLayer(parts[2]);
+                d.setDeviceId(parts[3]);
             }
             d.setTopic(TopicName.growSensors);
             return deviceRepository.save(d);
@@ -68,7 +69,7 @@ class RecordServiceDeviceTests {
 
     @Test
     void saveRecord_persists_values_and_pump_for_existing_device() throws Exception {
-        final String compositeId = "S02-L02-G01";
+        final String compositeId = "S02-R01-L02-G01";
         ensureDevice(compositeId);
 
         String json = """
@@ -95,6 +96,7 @@ class RecordServiceDeviceTests {
 
         Device saved = deviceRepository.findById(compositeId).orElseThrow();
         assertEquals("S02", saved.getSystem());
+        assertEquals("R01", saved.getRack());
         assertEquals("L02", saved.getLayer());
         assertEquals(compositeId, saved.getCompositeId());
 
@@ -121,7 +123,7 @@ class RecordServiceDeviceTests {
 
     @Test
     void buffered_readings_are_averaged_on_flush() throws Exception {
-        final String compositeId = "S10-L10-AVG";
+        final String compositeId = "S10-R01-L10-AVG";
         ensureDevice(compositeId);
 
         String first = """
@@ -146,7 +148,7 @@ class RecordServiceDeviceTests {
 
     @Test
     void saveRecord_upserts_latest_sensor_value() throws Exception {
-        final String compositeId = "S08-L01-LSV";
+        final String compositeId = "S08-R01-L01-LSV";
         ensureDevice(compositeId);
 
         String first = """
@@ -181,7 +183,7 @@ class RecordServiceDeviceTests {
 
     @Test
     void unknown_device_is_auto_registered() throws Exception {
-        final String compositeId = "S20-L20-NEW";
+        final String compositeId = "S20-R01-L20-NEW";
         assertTrue(deviceRepository.findById(compositeId).isEmpty());
 
         JsonNode json = objectMapper.readTree("{}\n");
@@ -190,6 +192,7 @@ class RecordServiceDeviceTests {
         Device saved = deviceRepository.findById(compositeId).orElse(null);
         assertNotNull(saved);
         assertEquals("S20", saved.getSystem());
+        assertEquals("R01", saved.getRack());
         assertEquals("L20", saved.getLayer());
         assertEquals("NEW", saved.getDeviceId());
         assertEquals(TopicName.waterTank, saved.getTopic());

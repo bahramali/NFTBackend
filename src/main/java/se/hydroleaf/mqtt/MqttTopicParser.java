@@ -1,7 +1,5 @@
 package se.hydroleaf.mqtt;
 
-import se.hydroleaf.model.TopicName;
-
 import java.util.Locale;
 import java.util.Optional;
 
@@ -52,26 +50,6 @@ public final class MqttTopicParser {
         }
 
         return Optional.of(new ParsedTopic(site, rack, layer, deviceId, normalizedKind));
-    }
-
-    public static TopicName resolveLegacyTopicName(String topic) {
-        if (topic == null || topic.isBlank()) {
-            return null;
-        }
-
-        String prefix = topic;
-        int slash = topic.indexOf('/');
-        if (slash >= 0) {
-            prefix = topic.substring(0, slash);
-        }
-
-        for (TopicName value : TopicName.values()) {
-            if (value.name().equalsIgnoreCase(prefix)) {
-                return value;
-            }
-        }
-
-        return null;
     }
 
     private static boolean isBlank(String value) {

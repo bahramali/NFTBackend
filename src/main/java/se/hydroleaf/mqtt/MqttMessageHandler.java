@@ -64,7 +64,7 @@ public class MqttMessageHandler {
                 return;
             }
 
-            TopicName topicName = parsedTopic != null ? null : MqttTopicParser.resolveLegacyTopicName(topic);
+            TopicName topicName = parsedTopic != null ? null : TopicName.fromMqttTopic(topic);
 
             recordService.saveRecord(compositeId, node, topicName);
         } catch (Exception ex) {

@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import se.hydroleaf.model.TopicName;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * MQTT bridge:
@@ -23,16 +25,25 @@ import java.util.Arrays;
 @ConditionalOnProperty(prefix = "mqtt", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class MqttService implements MqttCallbackExtended {
 
-    @Value("${mqtt.brokerUri}")
-    private String brokerUri;
+    @Value("${mqtt.host:mqtt}")
+    private String host;
+
+    @Value("${mqtt.port:1883}")
+    private int port;
 
     @Value("${mqtt.clientId:hydroleaf-backend}")
     private String clientId;
 
+    @Value("${mqtt.username:backend}")
+    private String username;
+
+    @Value("${mqtt.password:}")
+    private String password;
+
     @Value("${mqtt.qos:1}")
     private int qos;
 
-    @Value("${mqtt.topics:growSensors/#,waterTank/#,germinationTopic/#,actuator/oxygenPump/#,water_flow}")
+    @Value("${mqtt.topics:hydroleaf/v1/#}")
     private String[] topics;
 
     private MqttClient client;
@@ -51,6 +62,13 @@ public class MqttService implements MqttCallbackExtended {
         connectOptions.setAutomaticReconnect(true);
         connectOptions.setCleanSession(true);
         connectOptions.setConnectionTimeout(10);
+        if (username != null && !username.isBlank()) {
+            connectOptions.setUserName(username);
+        }
+        if (password != null && !password.isBlank()) {
+            connectOptions.setPassword(password.toCharArray());
+        }
+        String brokerUri = String.format("tcp://%s:%d", host, port);
 
         try {
             client = new MqttClient(brokerUri, clientId, persistence);
@@ -80,6 +98,7 @@ public class MqttService implements MqttCallbackExtended {
 
     @Override
     public void connectComplete(boolean reconnect, String serverURI) {
+        log.info("MQTT connected to {}:{}", host, port);
         log.info("MQTT connection complete (reconnect={})", reconnect);
 
         if (client == null) {
@@ -92,17 +111,20 @@ public class MqttService implements MqttCallbackExtended {
             return;
         }
 
+        List<String> subscribedTopics = new ArrayList<>();
         for (String t : topics) {
             String topic = t.trim();
             if (!topic.isEmpty()) {
                 try {
                     client.subscribe(topic, qos);
+                    subscribedTopics.add(topic);
                     log.info("MQTT subscribed: {} (qos={})", topic, qos);
                 } catch (MqttException e) {
                     log.warn("MQTT subscribe failed for {}", topic, e);
                 }
             }
         }
+        log.info("MQTT subscribed topics: {}", subscribedTopics);
     }
 
     @Override

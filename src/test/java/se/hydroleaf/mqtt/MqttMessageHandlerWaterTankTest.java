@@ -61,7 +61,7 @@ class MqttMessageHandlerWaterTankTest {
 
         handler.handle(topic, payload);
 
-        verify(recordService).saveRecord(eq("S01-R01-L01-G02"), any(), eq(TopicName.waterTank));
+        verify(recordService).saveRecord(eq("S01-R01-L01-G02"), any(), eq(TopicName.waterTank), eq(topic), any());
         verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
     }
 

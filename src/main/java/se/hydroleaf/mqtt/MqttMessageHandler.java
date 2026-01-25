@@ -66,7 +66,7 @@ public class MqttMessageHandler {
 
             TopicName topicName = parsedTopic != null ? null : TopicName.fromMqttTopic(topic);
 
-            recordService.saveRecord(compositeId, node, topicName);
+            recordService.saveRecord(compositeId, node, topicName, topic, parsedTopic);
         } catch (Exception ex) {
             log.error("MQTT handle error for topic {}: {}", topic, ex.getMessage(), ex);
         }

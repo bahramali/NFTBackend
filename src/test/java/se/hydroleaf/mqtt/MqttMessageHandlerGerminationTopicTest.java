@@ -50,7 +50,7 @@ class MqttMessageHandlerGerminationTopicTest {
 
         handler.handle(topic, payload);
 
-        verify(recordService).saveRecord(eq("S01-R01-L02-G03"), any(), eq(TopicName.germinationTopic));
+        verify(recordService).saveRecord(eq("S01-R01-L02-G03"), any(), eq(TopicName.germinationTopic), eq(topic), any());
         verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
     }
 
@@ -67,7 +67,7 @@ class MqttMessageHandlerGerminationTopicTest {
 
         handler.handle(topic, payload);
 
-        verify(recordService).saveRecord(eq("S01-R01-L02-G03"), any(), eq(TopicName.germinationTopic));
+        verify(recordService).saveRecord(eq("S01-R01-L02-G03"), any(), eq(TopicName.germinationTopic), eq(topic), any());
         verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
     }
 }

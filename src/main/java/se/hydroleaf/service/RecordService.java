@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import se.hydroleaf.mqtt.MqttTopicParser;
 import se.hydroleaf.repository.dto.history.AggregatedHistoryResponse;
 import se.hydroleaf.repository.dto.history.AggregatedSensorData;
 import se.hydroleaf.repository.dto.history.TimestampValue;
@@ -57,6 +58,12 @@ public class RecordService {
 
     @Transactional
     public void saveRecord(String compositeId, JsonNode json, TopicName topic) {
+        saveRecord(compositeId, json, topic, null, null);
+    }
+
+    @Transactional
+    public void saveRecord(String compositeId, JsonNode json, TopicName topic, String mqttTopic,
+                           MqttTopicParser.ParsedTopic parsedTopic) {
         Objects.requireNonNull(compositeId, "compositeId is required");
 
         String normalizedId = normalizeCompositeId(compositeId);
@@ -66,44 +73,45 @@ public class RecordService {
 
         final Instant ts = parseTimestamp(json.path("timestamp")).orElseGet(Instant::now);
 
-        // Parse sensor readings from sensors array and buffer them for aggregation
-        JsonNode sensors = json.path("sensors");
-        if (sensors.isArray()) {
-            Set<String> seenTypes = new HashSet<>();
-            for (JsonNode s : sensors) {
-                String sensorType = s.path("sensorType").asText(null);
-                if (sensorType == null || sensorType.isBlank() || !seenTypes.add(sensorType)) {
-                    continue;
-                }
+        String messageKind = parsedTopic != null ? parsedTopic.kind() : readText(json, "kind");
+        boolean isTelemetry = messageKind == null || "telemetry".equalsIgnoreCase(messageKind);
+        String deviceId = parsedTopic != null ? parsedTopic.deviceId() : readText(json, "deviceId");
+        if (deviceId == null) {
+            deviceId = device.getDeviceId();
+        }
 
-                JsonNode valueNode = s.path("value");
-                Double num;
-                if (valueNode.isObject()) {
-                    num = readDouble(valueNode.path("value")).orElse(null);
-                } else {
-                    num = readDouble(valueNode).orElse(null);
-                }
-                if (num == null) continue;
+        boolean storedMetric = false;
+        if (isTelemetry) {
+            storedMetric |= storeNumericMetric(json.get("lux"), normalizedId, device, "lux", "lux", ts);
+            storedMetric |= storeNumericMetric(json.get("rh_pct"), normalizedId, device, "rh_pct", "%", ts);
+            storedMetric |= storeNumericMetric(json.get("co2_ppm"), normalizedId, device, "co2_ppm", "ppm", ts);
 
-                sensorValueBuffer.add(normalizedId, sensorType, num, ts);
+            storedMetric |= storeNumericMetric(json.get("layer_temp_c"), normalizedId, device,
+                    "layer_temp_c", "C", ts);
+            storedMetric |= storeNumericMetric(json.get("air_temp_c"), normalizedId, device,
+                    "air_temp_c", "C", ts);
+            storedMetric |= storeNumericMetric(json.get("solution_temp_c"), normalizedId, device,
+                    "solution_temp_c", "C", ts);
 
-                LatestSensorValue lsv = latestSensorValueRepository
-                        .findByDevice_CompositeIdAndSensorType(normalizedId, sensorType)
-                        .orElseGet(() -> {
-                            LatestSensorValue n = new LatestSensorValue();
-                            n.setDevice(device);
-                            n.setSensorType(sensorType);
-                            return n;
-                        });
-                lsv.setValue(num);
-                if (valueNode.isObject() && valueNode.hasNonNull("unit")) {
-                    lsv.setUnit(valueNode.get("unit").asText());
-                } else if (s.hasNonNull("unit")) {
-                    lsv.setUnit(s.get("unit").asText());
+            JsonNode counts = json.get("as7343_counts");
+            if (counts != null && counts.isObject()) {
+                Iterator<Map.Entry<String, JsonNode>> fields = counts.fields();
+                while (fields.hasNext()) {
+                    Map.Entry<String, JsonNode> entry = fields.next();
+                    String key = entry.getKey();
+                    if (key == null || key.isBlank()) {
+                        continue;
+                    }
+                    String sensorType = "as7343_counts_" + key;
+                    storedMetric |= storeNumericMetric(entry.getValue(), normalizedId, device,
+                            sensorType, "counts", ts);
                 }
-                lsv.setValueTime(ts);
-                latestSensorValueRepository.save(lsv);
             }
+        }
+
+        if (isTelemetry && !storedMetric) {
+            String topicLabel = mqttTopic != null ? mqttTopic : (topic != null ? topic.name() : "unknown");
+            log.warn("Telemetry payload contains no supported metrics (topic={}, deviceId={})", topicLabel, deviceId);
         }
 
         // Optional controllers array for actuator statuses
@@ -126,6 +134,52 @@ public class RecordService {
                 actuatorStatusRepository.saveAll(statuses);
             }
         }
+    }
+
+    private boolean storeNumericMetric(JsonNode valueNode,
+                                       String compositeId,
+                                       Device device,
+                                       String sensorType,
+                                       String unit,
+                                       Instant ts) {
+        Double num = readDouble(valueNode).orElse(null);
+        if (num == null) {
+            return false;
+        }
+
+        sensorValueBuffer.add(compositeId, sensorType, num, ts);
+
+        LatestSensorValue lsv = latestSensorValueRepository
+                .findByDevice_CompositeIdAndSensorType(compositeId, sensorType)
+                .orElseGet(() -> {
+                    LatestSensorValue n = new LatestSensorValue();
+                    n.setDevice(device);
+                    n.setSensorType(sensorType);
+                    return n;
+                });
+        lsv.setValue(num);
+        lsv.setUnit(unit);
+        lsv.setValueTime(ts);
+        latestSensorValueRepository.save(lsv);
+        return true;
+    }
+
+    private String readText(JsonNode node, String... fieldNames) {
+        if (node == null || fieldNames == null) {
+            return null;
+        }
+
+        for (String fieldName : fieldNames) {
+            if (fieldName == null) {
+                continue;
+            }
+            JsonNode field = node.get(fieldName);
+            if (field != null && field.isTextual()) {
+                return field.asText();
+            }
+        }
+
+        return null;
     }
 
     private Device autoRegisterDevice(String compositeId, TopicName topic) {

@@ -36,7 +36,15 @@ public class MqttMessageHandler {
     public void handle(String topic, String payload) {
         try {
             JsonNode node = objectMapper.readTree(payload);
-            String compositeId = readCompositeId(node);
+            MqttTopicParser.ParsedTopic parsedTopic = MqttTopicParser.parse(topic).orElse(null);
+            String compositeId = parsedTopic != null ? parsedTopic.compositeId() : readCompositeId(node);
+            if (parsedTopic != null) {
+                String payloadCompositeId = readCompositeId(node);
+                if (payloadCompositeId != null && !payloadCompositeId.isBlank()
+                        && !payloadCompositeId.equals(compositeId)) {
+                    log.warn("MQTT payload composite_id {} does not match topic-derived {}", payloadCompositeId, compositeId);
+                }
+            }
 
             if (topic != null && !topic.isBlank()) {
                 topicPublisher.publish("/topic/" + topic, payload);
@@ -56,7 +64,7 @@ public class MqttMessageHandler {
                 return;
             }
 
-            TopicName topicName = TopicName.fromMqttTopic(topic);
+            TopicName topicName = parsedTopic != null ? null : MqttTopicParser.resolveLegacyTopicName(topic);
 
             recordService.saveRecord(compositeId, node, topicName);
         } catch (Exception ex) {
@@ -134,4 +142,3 @@ public class MqttMessageHandler {
     }
 
 }
-

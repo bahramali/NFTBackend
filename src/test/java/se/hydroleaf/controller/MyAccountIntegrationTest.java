@@ -148,7 +148,7 @@ class MyAccountIntegrationTest {
     @Test
     void customerAccessingDeviceEndpointsIsForbidden() throws Exception {
         User customer = createCustomer("owner@example.com", "Owner");
-        Device owned = saveDevice("SYS-L1-D1", "SYS", "L1", "D1", customer.getId());
+        Device owned = saveDevice("SYS-R01-L1-D1", "SYS", "R01", "L1", "D1", customer.getId());
         saveSensorSnapshot(owned, "temperature", 20.5, Instant.now());
 
         String token = bearerToken(customer.getEmail(), "password123");
@@ -372,10 +372,11 @@ class MyAccountIntegrationTest {
         ));
     }
 
-    private Device saveDevice(String compositeId, String system, String layer, String deviceId, Long ownerId) {
+    private Device saveDevice(String compositeId, String system, String rack, String layer, String deviceId, Long ownerId) {
         Device device = Device.builder()
                 .compositeId(compositeId)
                 .system(system)
+                .rack(rack)
                 .layer(layer)
                 .deviceId(deviceId)
                 .ownerUserId(ownerId)

@@ -23,7 +23,7 @@ class MqttTopicParserTest {
         assertEquals("L04", result.layer());
         assertEquals("LAYER_S01_R01_L04_01", result.deviceId());
         assertEquals("telemetry", result.kind());
-        assertEquals("S01-L04-LAYER_S01_R01_L04_01", result.compositeId());
+        assertEquals("S01-R01-L04-LAYER_S01_R01_L04_01", result.compositeId());
     }
 
     @Test

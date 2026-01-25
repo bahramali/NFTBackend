@@ -28,12 +28,12 @@ import lombok.ToString;
         name = "device",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "ux_device_system_layer_deviceid",
-                        columnNames = {"system", "layer", "device_id"}
+                        name = "ux_device_system_rack_layer_deviceid",
+                        columnNames = {"system", "rack", "layer", "device_id"}
                 )
         },
         indexes = {
-                @Index(name = "ix_device_system_layer", columnList = "system,layer"),
+                @Index(name = "ix_device_system_rack_layer", columnList = "system,rack,layer"),
                 @Index(name = "ix_device_device_id", columnList = "device_id")
         }
 )
@@ -45,6 +45,9 @@ public class Device {
 
     @Column(name = "system", length = 16, nullable = false)
     private String system;
+
+    @Column(name = "rack", length = 16, nullable = false)
+    private String rack;
 
     @Column(name = "layer", length = 16, nullable = false)
     private String layer;

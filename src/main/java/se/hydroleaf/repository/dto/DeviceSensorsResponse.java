@@ -8,5 +8,5 @@ public record DeviceSensorsResponse(
         List<DeviceInfo> devices
 ) {
     public record SystemInfo(String id, List<String> layers, List<String> compositeIds) {}
-    public record DeviceInfo(String systemId, String layerId, String deviceId, List<String> sensors) {}
+    public record DeviceInfo(String systemId, String rackId, String layerId, String deviceId, List<String> sensors) {}
 }

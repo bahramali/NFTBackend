@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import se.hydroleaf.service.RecordService;
 import se.hydroleaf.model.TopicName;
+import se.hydroleaf.service.DeviceStatusEventService;
 import se.hydroleaf.service.WaterFlowStatusService;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -24,13 +25,15 @@ class MqttMessageHandlerWaterTankTest {
     TopicPublisher topicPublisher;
     @Mock
     WaterFlowStatusService waterFlowStatusService;
+    @Mock
+    DeviceStatusEventService deviceStatusEventService;
     ObjectMapper objectMapper;
     MqttMessageHandler handler;
 
     @BeforeEach
     void setup() {
         objectMapper = new ObjectMapper();
-        handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher, waterFlowStatusService);
+        handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher, waterFlowStatusService, deviceStatusEventService);
     }
 
     @Test

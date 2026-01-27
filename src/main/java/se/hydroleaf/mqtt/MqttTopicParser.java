@@ -45,7 +45,9 @@ public final class MqttTopicParser {
         }
 
         String normalizedKind = kind.trim().toLowerCase(Locale.ROOT);
-        if (!"telemetry".equals(normalizedKind) && !"status".equals(normalizedKind)) {
+        if (!"telemetry".equals(normalizedKind)
+                && !"status".equals(normalizedKind)
+                && !"event".equals(normalizedKind)) {
             return Optional.empty();
         }
 

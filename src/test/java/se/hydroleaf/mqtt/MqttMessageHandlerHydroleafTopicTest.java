@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import se.hydroleaf.service.DeviceStatusEventService;
 import se.hydroleaf.service.RecordService;
 import se.hydroleaf.service.WaterFlowStatusService;
 
@@ -23,13 +24,15 @@ class MqttMessageHandlerHydroleafTopicTest {
     TopicPublisher topicPublisher;
     @Mock
     WaterFlowStatusService waterFlowStatusService;
+    @Mock
+    DeviceStatusEventService deviceStatusEventService;
     ObjectMapper objectMapper;
     MqttMessageHandler handler;
 
     @BeforeEach
     void setup() {
         objectMapper = new ObjectMapper();
-        handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher, waterFlowStatusService);
+        handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher, waterFlowStatusService, deviceStatusEventService);
     }
 
     @Test

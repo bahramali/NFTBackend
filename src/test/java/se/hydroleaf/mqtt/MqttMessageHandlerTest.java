@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import se.hydroleaf.service.DeviceStatusEventService;
 import se.hydroleaf.service.RecordService;
 import se.hydroleaf.service.WaterFlowStatusService;
 
@@ -23,7 +24,13 @@ class MqttMessageHandlerTest {
     private final SimpMessagingTemplate messagingTemplate = mock(SimpMessagingTemplate.class);
     private final TopicPublisher topicPublisher = new TopicPublisher(true, messagingTemplate);
     private final WaterFlowStatusService waterFlowStatusService = mock(WaterFlowStatusService.class);
-    private final MqttMessageHandler handler = new MqttMessageHandler(objectMapper, recordService, topicPublisher, waterFlowStatusService);
+    private final DeviceStatusEventService deviceStatusEventService = mock(DeviceStatusEventService.class);
+    private final MqttMessageHandler handler = new MqttMessageHandler(
+            objectMapper,
+            recordService,
+            topicPublisher,
+            waterFlowStatusService,
+            deviceStatusEventService);
 
     @Test
     void handleWaterFlowTimestampWithoutTimezoneAssumesUtc() {

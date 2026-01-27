@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import se.hydroleaf.service.RecordService;
 import se.hydroleaf.service.WaterFlowStatusService;
+import se.hydroleaf.service.DeviceStatusEventService;
 import se.hydroleaf.model.TopicName;
 
 import java.time.Instant;
@@ -22,15 +23,18 @@ public class MqttMessageHandler {
     private final RecordService recordService;
     private final TopicPublisher topicPublisher;
     private final WaterFlowStatusService waterFlowStatusService;
+    private final DeviceStatusEventService deviceStatusEventService;
 
     public MqttMessageHandler(ObjectMapper objectMapper,
                               RecordService recordService,
                               TopicPublisher topicPublisher,
-                              WaterFlowStatusService waterFlowStatusService) {
+                              WaterFlowStatusService waterFlowStatusService,
+                              DeviceStatusEventService deviceStatusEventService) {
         this.objectMapper = objectMapper;
         this.recordService = recordService;
         this.topicPublisher = topicPublisher;
         this.waterFlowStatusService = waterFlowStatusService;
+        this.deviceStatusEventService = deviceStatusEventService;
     }
 
     public void handle(String topic, String payload) {
@@ -71,6 +75,22 @@ public class MqttMessageHandler {
             }
 
             TopicName topicName = parsedTopic != null ? null : TopicName.fromMqttTopic(topic);
+
+            String messageKind = parsedTopic != null ? parsedTopic.kind() : readText(node, "kind");
+            if (messageKind != null && "status".equalsIgnoreCase(messageKind)) {
+                String statusValue = readText(node, "status", "value");
+                Instant statusTime = parseTimestamp(node.path("timestamp"), node.path("status_time"), node.path("ts"));
+                deviceStatusEventService.recordStatus(compositeId, statusValue, statusTime);
+                return;
+            }
+            if (messageKind != null && "event".equalsIgnoreCase(messageKind)) {
+                Instant eventTime = parseTimestamp(node.path("timestamp"), node.path("event_time"), node.path("ts"));
+                String level = readText(node, "level");
+                String code = readText(node, "code");
+                String msg = readText(node, "msg", "message");
+                deviceStatusEventService.recordEvent(compositeId, eventTime, level, code, msg, payload);
+                return;
+            }
 
             recordService.saveRecord(compositeId, node, topicName, topic, parsedTopic);
         } catch (Exception ex) {
@@ -119,25 +139,37 @@ public class MqttMessageHandler {
         return null;
     }
 
-    private Instant parseTimestamp(JsonNode tsNode) {
-        if (!tsNode.isTextual()) {
+    private Instant parseTimestamp(JsonNode... timestampNodes) {
+        if (timestampNodes == null) {
             return null;
         }
+        for (JsonNode tsNode : timestampNodes) {
+            if (tsNode == null || tsNode.isMissingNode() || tsNode.isNull()) {
+                continue;
+            }
+            if (tsNode.isNumber()) {
+                return Instant.ofEpochMilli(tsNode.asLong());
+            }
+            if (!tsNode.isTextual()) {
+                continue;
+            }
 
-        String tsValue = tsNode.asText();
-        try {
-            return Instant.parse(tsValue);
-        } catch (DateTimeParseException ignored) {
-            // Fall through to attempt parsing without timezone information.
-        }
+            String tsValue = tsNode.asText();
+            try {
+                return Instant.parse(tsValue);
+            } catch (DateTimeParseException ignored) {
+                // Fall through to attempt parsing without timezone information.
+            }
 
-        try {
-            LocalDateTime dateTime = LocalDateTime.parse(tsValue, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-            return dateTime.toInstant(ZoneOffset.UTC);
-        } catch (DateTimeParseException ex) {
-            log.warn("Unable to parse timestamp '{}' in water_flow payload", tsValue, ex);
-            return null;
+            try {
+                LocalDateTime dateTime = LocalDateTime.parse(tsValue, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                return dateTime.toInstant(ZoneOffset.UTC);
+            } catch (DateTimeParseException ex) {
+                log.warn("Unable to parse timestamp '{}' in payload", tsValue, ex);
+                return null;
+            }
         }
+        return null;
     }
 
     private static String readCompositeId(JsonNode n) {

@@ -50,6 +50,12 @@ public class MqttMessageHandler {
                 topicPublisher.publish("/topic/" + topic, payload);
             }
 
+            if (parsedTopic != null) {
+                String envelopePayload = buildEnvelopePayload(topic, parsedTopic, node);
+                String aggregateTopic = "/topic/hydroleaf/" + parsedTopic.kind();
+                topicPublisher.publish(aggregateTopic, envelopePayload);
+            }
+
             if (isWaterFlowTopic(topic)) {
                 handleWaterFlow(node);
                 return;
@@ -139,6 +145,19 @@ public class MqttMessageHandler {
         if (n.hasNonNull("composite_id")) return n.get("composite_id").asText();
         if (n.hasNonNull("compositeId")) return n.get("compositeId").asText();
         return null;
+    }
+
+    private String buildEnvelopePayload(String topic, MqttTopicParser.ParsedTopic parsedTopic, JsonNode payload) {
+        var envelope = objectMapper.createObjectNode();
+        envelope.put("mqttTopic", topic);
+        envelope.put("site", parsedTopic.site());
+        envelope.put("rack", parsedTopic.rack());
+        envelope.put("layer", parsedTopic.layer());
+        envelope.put("deviceId", parsedTopic.deviceId());
+        envelope.put("kind", parsedTopic.kind());
+        envelope.put("compositeId", parsedTopic.compositeId());
+        envelope.set("payload", payload);
+        return envelope.toString();
     }
 
 }

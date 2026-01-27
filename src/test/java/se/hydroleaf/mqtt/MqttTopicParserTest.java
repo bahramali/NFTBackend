@@ -32,4 +32,14 @@ class MqttTopicParserTest {
 
         assertFalse(MqttTopicParser.parse(topic).isPresent());
     }
+
+    @Test
+    void parsesEventKind() {
+        String topic = "hydroleaf/v1/S01/R01/L04/LAYER_S01_R01_L04_01/event";
+
+        Optional<MqttTopicParser.ParsedTopic> parsed = MqttTopicParser.parse(topic);
+
+        assertTrue(parsed.isPresent());
+        assertEquals("event", parsed.get().kind());
+    }
 }

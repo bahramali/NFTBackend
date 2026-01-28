@@ -30,7 +30,7 @@ public final class MqttTopicParser {
 
         String remainder = trimmed.substring(PREFIX.length());
         String[] parts = remainder.split("/");
-        if (parts.length < 5) {
+        if (parts.length != 5) {
             return Optional.empty();
         }
 

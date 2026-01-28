@@ -34,6 +34,13 @@ class MqttTopicParserTest {
     }
 
     @Test
+    void rejectsExtraSegments() {
+        String topic = "hydroleaf/v1/S01/R01/L04/LAYER_S01_R01_L04_01/event/extra";
+
+        assertFalse(MqttTopicParser.parse(topic).isPresent());
+    }
+
+    @Test
     void parsesEventKind() {
         String topic = "hydroleaf/v1/S01/R01/L04/LAYER_S01_R01_L04_01/event";
 

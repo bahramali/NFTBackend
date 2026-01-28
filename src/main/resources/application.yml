@@ -21,6 +21,18 @@ spring:
           starttls:
             enable: ${SPRING_MAIL_SMTP_STARTTLS_ENABLE:true}
 
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: public
+    default-schema: public
+    table: flyway_schema_history
+    validate-on-migrate: true
+
 app:
   demo-seed:
     enabled: ${APP_DEMO_SEED_ENABLED:false}

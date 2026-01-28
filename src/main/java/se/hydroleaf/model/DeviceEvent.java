@@ -7,7 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -46,8 +45,7 @@ public class DeviceEvent {
     @Column(name = "code", length = 64)
     private String code;
 
-    @Lob
-    @Column(name = "msg")
+    @Column(name = "msg", columnDefinition = "text")
     private String msg;
 
     @Column(name = "raw", columnDefinition = "jsonb")

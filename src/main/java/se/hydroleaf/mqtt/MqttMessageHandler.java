@@ -65,6 +65,23 @@ public class MqttMessageHandler {
                 return;
             }
 
+            TopicName topicName = parsedTopic != null ? null : TopicName.fromMqttTopic(topic);
+
+            String messageKind = parsedTopic != null ? parsedTopic.kind() : readText(node, "kind");
+            if (messageKind == null && topic != null) {
+                String trimmedTopic = topic.trim();
+                if (trimmedTopic.equalsIgnoreCase("event") || trimmedTopic.equalsIgnoreCase("/event")
+                        || trimmedTopic.toLowerCase().endsWith("/event")) {
+                    messageKind = "event";
+                }
+            }
+            if (messageKind != null && "event".equalsIgnoreCase(messageKind)) {
+                log.info("MQTT event received (topic={}, compositeId={})", topic, compositeId);
+                if (parsedTopic == null) {
+                    topicPublisher.publish("/topic/hydroleaf/event", payload);
+                }
+            }
+
             if (compositeId == null || compositeId.isBlank()) {
                 if (topic == null || !topic.contains("/")) {
                     log.warn("Ignoring MQTT message on topic {} without composite_id", topic);
@@ -74,9 +91,6 @@ public class MqttMessageHandler {
                 return;
             }
 
-            TopicName topicName = parsedTopic != null ? null : TopicName.fromMqttTopic(topic);
-
-            String messageKind = parsedTopic != null ? parsedTopic.kind() : readText(node, "kind");
             if (messageKind != null && "status".equalsIgnoreCase(messageKind)) {
                 String statusValue = readText(node, "status", "value");
                 Instant statusTime = parseTimestamp(node.path("timestamp"), node.path("status_time"), node.path("ts"));

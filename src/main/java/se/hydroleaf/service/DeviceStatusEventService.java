@@ -117,8 +117,10 @@ public class DeviceStatusEventService {
     }
 
     private Device resolveDevice(String compositeId) {
-        return deviceRepository.findById(compositeId)
+        Device device = deviceRepository.findById(compositeId)
                 .orElseGet(() -> autoRegisterDevice(compositeId));
+        ensureTopicForRack(device, device.getRack());
+        return device;
     }
 
     private void requireDevice(String compositeId) {
@@ -138,10 +140,28 @@ public class DeviceStatusEventService {
         device.setRack(parts[1]);
         device.setLayer(parts[2]);
         device.setDeviceId(parts[3]);
-        device.setTopic(TopicName.growSensors);
+        device.setTopic(resolveTopicForRack(parts[1], TopicName.growSensors));
         deviceRepository.save(device);
         log.info("Auto-registered unknown device {}", compositeId);
         return device;
+    }
+
+    private void ensureTopicForRack(Device device, String rack) {
+        if (device == null || rack == null) {
+            return;
+        }
+        TopicName desired = resolveTopicForRack(rack, device.getTopic());
+        if (desired != null && desired != device.getTopic()) {
+            device.setTopic(desired);
+            deviceRepository.save(device);
+        }
+    }
+
+    private TopicName resolveTopicForRack(String rack, TopicName fallback) {
+        if (rack != null && rack.equalsIgnoreCase("germination")) {
+            return TopicName.germinationTopic;
+        }
+        return fallback;
     }
 
     private String normalizeCompositeId(String compositeId) {

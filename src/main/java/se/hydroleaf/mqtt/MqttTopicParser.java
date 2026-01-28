@@ -15,12 +15,12 @@ public final class MqttTopicParser {
 
     public static Optional<ParsedTopic> parse(String topic) {
         if (topic == null) {
-            return warnAndEmpty("null");
+            return warnAndEmpty("topic is null", "null");
         }
 
         String trimmed = topic.trim();
         if (trimmed.isEmpty()) {
-            return warnAndEmpty(topic);
+            return warnAndEmpty("topic is empty", topic);
         }
 
         if (trimmed.startsWith("/")) {
@@ -29,11 +29,11 @@ public final class MqttTopicParser {
 
         String[] parts = trimmed.split("/");
         if (parts.length != EXPECTED_PARTS) {
-            return warnAndEmpty(trimmed);
+            return warnAndEmpty("expected 7 segments but got " + parts.length, trimmed);
         }
 
         if (!"hydroleaf".equals(parts[0]) || !"v1".equals(parts[1])) {
-            return warnAndEmpty(trimmed);
+            return warnAndEmpty("unexpected prefix (expected hydroleaf/v1)", trimmed);
         }
 
         String site = parts[2];
@@ -43,14 +43,14 @@ public final class MqttTopicParser {
         String kind = parts[6];
 
         if (isBlank(site) || isBlank(rack) || isBlank(layer) || isBlank(deviceId) || isBlank(kind)) {
-            return warnAndEmpty(trimmed);
+            return warnAndEmpty("blank segment", trimmed);
         }
 
         String normalizedKind = kind.trim().toLowerCase(Locale.ROOT);
         if (!"telemetry".equals(normalizedKind)
                 && !"status".equals(normalizedKind)
                 && !"event".equals(normalizedKind)) {
-            return warnAndEmpty(trimmed);
+            return warnAndEmpty("unsupported kind: " + kind, trimmed);
         }
 
         return Optional.of(new ParsedTopic(site, rack, layer, deviceId, normalizedKind));
@@ -60,8 +60,8 @@ public final class MqttTopicParser {
         return value == null || value.trim().isEmpty();
     }
 
-    private static Optional<ParsedTopic> warnAndEmpty(String topic) {
-        log.warn("Unparseable MQTT topic: {}", topic);
+    private static Optional<ParsedTopic> warnAndEmpty(String reason, String topic) {
+        log.warn("Unparseable MQTT topic (reason={}): {}", reason, topic);
         return Optional.empty();
     }
 

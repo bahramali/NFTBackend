@@ -75,6 +75,7 @@ public class MqttService implements MqttCallbackExtended {
             client.setCallback(this);
 
             log.info("MQTT connecting to {} with clientId={} topics={}", brokerUri, clientId, Arrays.toString(topics));
+            log.info("MQTT subscription config host={} qos={} filters={}", host, qos, Arrays.toString(topics));
             client.connect(connectOptions);
         } catch (MqttException e) {
             log.error("MQTT initial connection failed; will rely on reconnect/publish attempts", e);
@@ -111,6 +112,7 @@ public class MqttService implements MqttCallbackExtended {
             return;
         }
 
+        log.info("MQTT subscribing with qos={} filters={}", qos, Arrays.toString(topics));
         List<String> subscribedTopics = new ArrayList<>();
         for (String t : topics) {
             String topic = t.trim();

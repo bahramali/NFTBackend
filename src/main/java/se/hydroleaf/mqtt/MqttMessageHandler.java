@@ -39,6 +39,8 @@ public class MqttMessageHandler {
 
     public void handle(String topic, String payload) {
         try {
+            int payloadLength = payload != null ? payload.length() : 0;
+            log.debug("MQTT received message (topic={}, payloadLength={})", topic, payloadLength);
             JsonNode node = objectMapper.readTree(payload);
             MqttTopicParser.ParsedTopic parsedTopic = MqttTopicParser.parse(topic).orElse(null);
             String compositeId = parsedTopic != null ? parsedTopic.compositeId() : readCompositeId(node);
@@ -56,6 +58,9 @@ public class MqttMessageHandler {
                         && !payloadCompositeId.equals(compositeId)) {
                     log.warn("MQTT payload composite_id {} does not match topic-derived {}", payloadCompositeId, compositeId);
                 }
+                log.debug("MQTT parsed topic site={} rack={} layer={} deviceId={} kind={} compositeId={}",
+                        parsedTopic.site(), parsedTopic.rack(), parsedTopic.layer(), parsedTopic.deviceId(),
+                        parsedTopic.kind(), parsedTopic.compositeId());
             }
 
             if (topic != null && !topic.isBlank()) {
@@ -65,6 +70,7 @@ public class MqttMessageHandler {
             if (parsedTopic != null) {
                 JsonNode envelopePayload = buildEnvelopePayload(topic, parsedTopic, node);
                 String aggregateTopic = "/topic/hydroleaf/" + parsedTopic.kind();
+                log.debug("MQTT publishing aggregate destination={}", aggregateTopic);
                 topicPublisher.publish(aggregateTopic, envelopePayload, parsedTopic.compositeId(), parsedTopic.kind());
             }
 

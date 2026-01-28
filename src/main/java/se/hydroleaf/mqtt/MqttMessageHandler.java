@@ -42,6 +42,14 @@ public class MqttMessageHandler {
             JsonNode node = objectMapper.readTree(payload);
             MqttTopicParser.ParsedTopic parsedTopic = MqttTopicParser.parse(topic).orElse(null);
             String compositeId = parsedTopic != null ? parsedTopic.compositeId() : readCompositeId(node);
+            String messageKind = parsedTopic != null ? parsedTopic.kind() : readText(node, "kind");
+            if (messageKind == null && topic != null) {
+                String trimmedTopic = topic.trim();
+                if (trimmedTopic.equalsIgnoreCase("event") || trimmedTopic.equalsIgnoreCase("/event")
+                        || trimmedTopic.toLowerCase().endsWith("/event")) {
+                    messageKind = "event";
+                }
+            }
             if (parsedTopic != null) {
                 String payloadCompositeId = readCompositeId(node);
                 if (payloadCompositeId != null && !payloadCompositeId.isBlank()
@@ -51,13 +59,13 @@ public class MqttMessageHandler {
             }
 
             if (topic != null && !topic.isBlank()) {
-                topicPublisher.publish("/topic/" + topic, payload);
+                topicPublisher.publish("/topic/" + topic, payload, compositeId, messageKind);
             }
 
             if (parsedTopic != null) {
-                String envelopePayload = buildEnvelopePayload(topic, parsedTopic, node);
+                JsonNode envelopePayload = buildEnvelopePayload(topic, parsedTopic, node);
                 String aggregateTopic = "/topic/hydroleaf/" + parsedTopic.kind();
-                topicPublisher.publish(aggregateTopic, envelopePayload);
+                topicPublisher.publish(aggregateTopic, envelopePayload, parsedTopic.compositeId(), parsedTopic.kind());
             }
 
             if (isWaterFlowTopic(topic)) {
@@ -67,18 +75,10 @@ public class MqttMessageHandler {
 
             TopicName topicName = parsedTopic != null ? null : TopicName.fromMqttTopic(topic);
 
-            String messageKind = parsedTopic != null ? parsedTopic.kind() : readText(node, "kind");
-            if (messageKind == null && topic != null) {
-                String trimmedTopic = topic.trim();
-                if (trimmedTopic.equalsIgnoreCase("event") || trimmedTopic.equalsIgnoreCase("/event")
-                        || trimmedTopic.toLowerCase().endsWith("/event")) {
-                    messageKind = "event";
-                }
-            }
             if (messageKind != null && "event".equalsIgnoreCase(messageKind)) {
                 log.info("MQTT event received (topic={}, compositeId={})", topic, compositeId);
                 if (parsedTopic == null) {
-                    topicPublisher.publish("/topic/hydroleaf/event", payload);
+                    topicPublisher.publish("/topic/hydroleaf/event", payload, compositeId, messageKind);
                 }
             }
 
@@ -193,7 +193,7 @@ public class MqttMessageHandler {
         return null;
     }
 
-    private String buildEnvelopePayload(String topic, MqttTopicParser.ParsedTopic parsedTopic, JsonNode payload) {
+    private JsonNode buildEnvelopePayload(String topic, MqttTopicParser.ParsedTopic parsedTopic, JsonNode payload) {
         var envelope = objectMapper.createObjectNode();
         envelope.put("mqttTopic", topic);
         envelope.put("site", parsedTopic.site());
@@ -203,7 +203,7 @@ public class MqttMessageHandler {
         envelope.put("kind", parsedTopic.kind());
         envelope.put("compositeId", parsedTopic.compositeId());
         envelope.set("payload", payload);
-        return envelope.toString();
+        return envelope;
     }
 
 }

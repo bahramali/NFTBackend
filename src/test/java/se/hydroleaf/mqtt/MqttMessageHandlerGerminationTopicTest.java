@@ -13,6 +13,7 @@ import se.hydroleaf.service.WaterFlowStatusService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,7 +55,7 @@ class MqttMessageHandlerGerminationTopicTest {
         handler.handle(topic, payload);
 
         verify(recordService).saveRecord(eq("S01-R01-L02-G03"), any(), eq(TopicName.germinationTopic), eq(topic), any());
-        verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
+        verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload), eq("S01-R01-L02-G03"), isNull());
     }
 
     @Test
@@ -71,6 +72,6 @@ class MqttMessageHandlerGerminationTopicTest {
         handler.handle(topic, payload);
 
         verify(recordService).saveRecord(eq("S01-R01-L02-G03"), any(), eq(TopicName.germinationTopic), eq(topic), any());
-        verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload));
+        verify(topicPublisher).publish(eq("/topic/" + topic), eq(payload), eq("S01-R01-L02-G03"), isNull());
     }
 }

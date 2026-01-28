@@ -1,7 +1,9 @@
 package se.hydroleaf.service;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.model.Device;
 import se.hydroleaf.model.GerminationCycle;
 import se.hydroleaf.model.TopicName;
@@ -83,7 +85,7 @@ public class GerminationService {
 
     private Device getGerminationDevice() {
         return deviceRepository.findFirstByTopic(TopicName.germinationTopic)
-                .orElseThrow(() -> new IllegalStateException("No germination device configured"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No germination device configured"));
     }
 }
-

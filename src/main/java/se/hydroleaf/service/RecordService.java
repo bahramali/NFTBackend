@@ -70,6 +70,10 @@ public class RecordService {
 
         final Device device = deviceRepository.findById(normalizedId)
                 .orElseGet(() -> autoRegisterDevice(normalizedId, topic));
+        String rack = parsedTopic != null ? parsedTopic.rack() : device.getRack();
+        if (rack != null) {
+            ensureTopicForRack(device, rack, topic);
+        }
 
         final Instant ts = parseTimestamp(json.path("timestamp")).orElseGet(Instant::now);
 
@@ -193,10 +197,29 @@ public class RecordService {
         device.setRack(parts[1]);
         device.setLayer(parts[2]);
         device.setDeviceId(parts[3]);
-        device.setTopic(topic != null ? topic : TopicName.growSensors);
+        TopicName fallback = topic != null ? topic : TopicName.growSensors;
+        device.setTopic(resolveTopicForRack(parts[1], fallback));
         deviceRepository.save(device);
         log.info("Auto-registered unknown device {}", compositeId);
         return device;
+    }
+
+    private void ensureTopicForRack(Device device, String rack, TopicName fallback) {
+        if (device == null || rack == null) {
+            return;
+        }
+        TopicName desired = resolveTopicForRack(rack, fallback != null ? fallback : device.getTopic());
+        if (desired != null && desired != device.getTopic()) {
+            device.setTopic(desired);
+            deviceRepository.save(device);
+        }
+    }
+
+    private TopicName resolveTopicForRack(String rack, TopicName fallback) {
+        if (rack != null && rack.equalsIgnoreCase("germination")) {
+            return TopicName.germinationTopic;
+        }
+        return fallback;
     }
 
     private String normalizeCompositeId(String compositeId) {

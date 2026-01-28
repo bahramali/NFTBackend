@@ -2,53 +2,55 @@ package se.hydroleaf.mqtt;
 
 import java.util.Locale;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class MqttTopicParser {
 
-    private static final String PREFIX = "hydroleaf/v1/";
+    private static final Logger log = LoggerFactory.getLogger(MqttTopicParser.class);
+    private static final int EXPECTED_PARTS = 7;
 
     private MqttTopicParser() {
     }
 
     public static Optional<ParsedTopic> parse(String topic) {
         if (topic == null) {
-            return Optional.empty();
+            return warnAndEmpty("null");
         }
 
         String trimmed = topic.trim();
         if (trimmed.isEmpty()) {
-            return Optional.empty();
+            return warnAndEmpty(topic);
         }
 
         if (trimmed.startsWith("/")) {
             trimmed = trimmed.substring(1);
         }
 
-        if (!trimmed.regionMatches(true, 0, PREFIX, 0, PREFIX.length())) {
-            return Optional.empty();
+        String[] parts = trimmed.split("/");
+        if (parts.length != EXPECTED_PARTS) {
+            return warnAndEmpty(trimmed);
         }
 
-        String remainder = trimmed.substring(PREFIX.length());
-        String[] parts = remainder.split("/");
-        if (parts.length != 5) {
-            return Optional.empty();
+        if (!"hydroleaf".equals(parts[0]) || !"v1".equals(parts[1])) {
+            return warnAndEmpty(trimmed);
         }
 
-        String site = parts[0];
-        String rack = parts[1];
-        String layer = parts[2];
-        String deviceId = parts[3];
-        String kind = parts[4];
+        String site = parts[2];
+        String rack = parts[3];
+        String layer = parts[4];
+        String deviceId = parts[5];
+        String kind = parts[6];
 
         if (isBlank(site) || isBlank(rack) || isBlank(layer) || isBlank(deviceId) || isBlank(kind)) {
-            return Optional.empty();
+            return warnAndEmpty(trimmed);
         }
 
         String normalizedKind = kind.trim().toLowerCase(Locale.ROOT);
         if (!"telemetry".equals(normalizedKind)
                 && !"status".equals(normalizedKind)
                 && !"event".equals(normalizedKind)) {
-            return Optional.empty();
+            return warnAndEmpty(trimmed);
         }
 
         return Optional.of(new ParsedTopic(site, rack, layer, deviceId, normalizedKind));
@@ -56,6 +58,11 @@ public final class MqttTopicParser {
 
     private static boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private static Optional<ParsedTopic> warnAndEmpty(String topic) {
+        log.warn("Unparseable MQTT topic: {}", topic);
+        return Optional.empty();
     }
 
     public record ParsedTopic(String site, String rack, String layer, String deviceId, String kind) {

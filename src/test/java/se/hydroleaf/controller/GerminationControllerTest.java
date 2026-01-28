@@ -35,6 +35,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.nullValue;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -147,8 +148,11 @@ class GerminationControllerTest {
     }
 
     @Test
-    void getStatusReturns404WhenMissing() throws Exception {
+    void getStatusReturnsEmptyPayloadWhenMissing() throws Exception {
         mockMvc.perform(get("/api/germination").header("Authorization", "Bearer admin"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.compositeId").value("S01-R01-L02-G03"))
+                .andExpect(jsonPath("$.startTime").value(nullValue()))
+                .andExpect(jsonPath("$.elapsedSeconds").value(0));
     }
 }

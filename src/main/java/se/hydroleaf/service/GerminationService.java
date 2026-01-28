@@ -43,6 +43,14 @@ public class GerminationService {
         return getStatus(getGerminationDevice().getCompositeId());
     }
 
+    @Transactional(readOnly = true)
+    public GerminationStatusResponse getStatusOrDefault() {
+        Device device = getGerminationDevice();
+        return germinationCycleRepository.findById(device.getCompositeId())
+                .map(this::toResponse)
+                .orElseGet(() -> new GerminationStatusResponse(device.getCompositeId(), null, 0L));
+    }
+
     @Transactional
     public GerminationStatusResponse triggerStart(String compositeId) {
         return updateStart(compositeId, Instant.now(clock));

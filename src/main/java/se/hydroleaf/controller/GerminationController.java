@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import se.hydroleaf.controller.dto.GerminationStartRequest;
 import se.hydroleaf.repository.dto.GerminationStatusResponse;
 import se.hydroleaf.service.AuthorizationService;
@@ -33,9 +32,7 @@ public class GerminationController {
     public GerminationStatusResponse getStatus(
             @RequestHeader(name = "Authorization", required = false) String token) {
         authorizationService.requireMonitoringView(token);
-        return germinationService.getStatus()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Germination start time not found"));
+        return germinationService.getStatusOrDefault();
     }
 
     @PostMapping("/start")

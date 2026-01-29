@@ -13,6 +13,8 @@ public interface DeviceRepository extends JpaRepository<Device, String> {
 
     List<Device> findBySystemAndRackAndLayer(String system, String rack, String layer);
 
+    List<Device> findByRack(String rack);
+
     List<Device> findByOwnerUserId(Long ownerUserId);
 
     Optional<Device> findByOwnerUserIdAndDeviceId(Long ownerUserId, String deviceId);

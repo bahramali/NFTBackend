@@ -72,6 +72,12 @@ public class ShellyRegistry {
                 .toList();
     }
 
+    public List<Rack> getRacks() {
+        return racksById.values().stream()
+                .sorted(Comparator.comparing(Rack::getId))
+                .toList();
+    }
+
     public List<SocketDevice> getSocketsByRack(String rackId) {
         return socketsById.values().stream()
                 .filter(socket -> socket.getRackId().equals(rackId))

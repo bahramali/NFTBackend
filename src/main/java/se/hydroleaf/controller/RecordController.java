@@ -43,20 +43,27 @@ public class RecordController {
     @GetMapping("/history/aggregated")
     public AggregatedHistoryResponse getHistoryAggregated(
             @RequestHeader(name = "Authorization", required = false) String token,
-            @RequestParam("compositeId") String compositeId,
+            @RequestParam(name = "compositeId", required = false) String compositeId,
+            @RequestParam(name = "nodeId", required = false) String nodeId,
             @RequestParam("from") String from,
             @RequestParam("to") String to,
             @RequestParam(name = "bucket", defaultValue = "5m") String bucket,
             @RequestParam(name = "sensorType", required = false) List<String> sensorTypes,
+            @RequestParam(name = "metric", required = false) String metric,
             @RequestParam(name = "bucketLimit", required = false) Integer bucketLimit,
             @RequestParam(name = "bucketOffset", required = false) Integer bucketOffset,
             @RequestParam(name = "sensorLimit", required = false) Integer sensorLimit,
             @RequestParam(name = "sensorOffset", required = false) Integer sensorOffset
     ) {
         authorizationService.requireMonitoringView(token);
+        String resolvedCompositeId = resolveCompositeId(compositeId, nodeId);
+        List<String> resolvedSensorTypes = resolveSensorTypes(sensorTypes, metric);
         if (log.isDebugEnabled()) {
             log.debug("Aggregated history request: compositeId={} from={} to={} bucket={} sensorTypes={} bucketLimit={} bucketOffset={} sensorLimit={} sensorOffset={} tokenPresent={}",
-                    compositeId, from, to, bucket, sensorTypes, bucketLimit, bucketOffset, sensorLimit, sensorOffset, token != null);
+                    resolvedCompositeId, from, to, bucket, resolvedSensorTypes, bucketLimit, bucketOffset, sensorLimit, sensorOffset, token != null);
+        }
+        if (resolvedCompositeId == null || resolvedCompositeId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing compositeId");
         }
         Instant fromInst = parseInstant(from);
         Instant toInst = parseInstant(to);
@@ -70,9 +77,9 @@ public class RecordController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Range exceeds " + MAX_RANGE_DAYS + " days");
         }
         List<String> normalizedSensorTypes = null;
-        if (sensorTypes != null) {
-            normalizedSensorTypes = new ArrayList<>(sensorTypes.size());
-            for (String st : sensorTypes) {
+        if (resolvedSensorTypes != null) {
+            normalizedSensorTypes = new ArrayList<>(resolvedSensorTypes.size());
+            for (String st : resolvedSensorTypes) {
                 if (st == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sensorType");
                 }
@@ -85,7 +92,7 @@ public class RecordController {
         }
         try {
             return recordService.aggregatedHistory(
-                    compositeId, fromInst, toInst, bucket, normalizedSensorTypes,
+                    resolvedCompositeId, fromInst, toInst, bucket, normalizedSensorTypes,
                     bucketLimit, bucketOffset, sensorLimit, sensorOffset);
         } catch (IllegalArgumentException iae) {
             if (log.isDebugEnabled()) {
@@ -98,11 +105,13 @@ public class RecordController {
     @PostMapping("/history/aggregated")
     public AggregatedHistoryResponse postHistoryAggregated(
             @RequestHeader(name = "Authorization", required = false) String token,
-            @RequestParam("compositeId") String compositeId,
+            @RequestParam(name = "compositeId", required = false) String compositeId,
+            @RequestParam(name = "nodeId", required = false) String nodeId,
             @RequestParam("from") String from,
             @RequestParam("to") String to,
             @RequestParam(name = "bucket", defaultValue = "5m") String bucket,
             @RequestParam(name = "sensorType", required = false) List<String> sensorTypes,
+            @RequestParam(name = "metric", required = false) String metric,
             @RequestParam(name = "bucketLimit", required = false) Integer bucketLimit,
             @RequestParam(name = "bucketOffset", required = false) Integer bucketOffset,
             @RequestParam(name = "sensorLimit", required = false) Integer sensorLimit,
@@ -112,14 +121,36 @@ public class RecordController {
         return getHistoryAggregated(
                 token,
                 compositeId,
+                nodeId,
                 from,
                 to,
                 bucket,
                 sensorTypes,
+                metric,
                 bucketLimit,
                 bucketOffset,
                 sensorLimit,
                 sensorOffset);
+    }
+
+    private static String resolveCompositeId(String compositeId, String nodeId) {
+        if (compositeId != null && !compositeId.isBlank()) {
+            return compositeId.trim();
+        }
+        if (nodeId != null && !nodeId.isBlank()) {
+            return nodeId.trim();
+        }
+        return compositeId;
+    }
+
+    private static List<String> resolveSensorTypes(List<String> sensorTypes, String metric) {
+        if (sensorTypes != null && !sensorTypes.isEmpty()) {
+            return sensorTypes;
+        }
+        if (metric != null && !metric.isBlank()) {
+            return List.of(metric.trim());
+        }
+        return sensorTypes;
     }
 
     private static Instant parseInstant(String s) {

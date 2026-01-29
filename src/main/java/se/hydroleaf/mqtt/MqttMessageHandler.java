@@ -72,6 +72,9 @@ public class MqttMessageHandler {
                 String aggregateTopic = "/topic/hydroleaf/" + parsedTopic.kind();
                 log.debug("MQTT publishing aggregate destination={}", aggregateTopic);
                 topicPublisher.publish(aggregateTopic, envelopePayload, parsedTopic.compositeId(), parsedTopic.kind());
+                String rackTopic = String.format("/topic/hydroleaf/rack/%s/%s", parsedTopic.rack(), parsedTopic.kind());
+                log.debug("MQTT publishing rack destination={}", rackTopic);
+                topicPublisher.publish(rackTopic, envelopePayload, parsedTopic.compositeId(), parsedTopic.kind());
             }
 
             if (isWaterFlowTopic(topic)) {

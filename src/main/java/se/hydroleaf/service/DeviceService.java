@@ -32,6 +32,12 @@ public class DeviceService {
                 .toList();
     }
 
+    public List<DeviceResponse> getDevicesByRack(String rack) {
+        return deviceRepository.findByRack(rack).stream()
+                .map(d -> new DeviceResponse(d.getCompositeId(), d.getSystem(), d.getRack(), d.getLayer(), d.getDeviceId()))
+                .toList();
+    }
+
     public List<String> getCompositeIds(String system, String rack, String layer, String deviceId) {
         List<Device> devices = deviceRepository.findBySystemAndRackAndLayer(system, rack, layer);
         if (deviceId != null && !deviceId.isBlank()) {

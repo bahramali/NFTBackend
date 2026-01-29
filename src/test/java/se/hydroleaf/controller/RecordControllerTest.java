@@ -56,7 +56,7 @@ class RecordControllerTest {
 
     @Test
     void aggregatedHistoryReturnsTemperatureData() throws Exception {
-        when(authorizationService.requireAdminOrOperator(anyString())).thenReturn(adminUser());
+        when(authorizationService.requireMonitoringView(anyString())).thenReturn(adminUser());
         AggregatedSensorData tempData = new AggregatedSensorData(
                 "temperature",
                 "°C",
@@ -83,7 +83,7 @@ class RecordControllerTest {
 
     @Test
     void aggregatedHistoryReturnsMultipleSensors() throws Exception {
-        when(authorizationService.requireAdminOrOperator(anyString())).thenReturn(adminUser());
+        when(authorizationService.requireMonitoringView(anyString())).thenReturn(adminUser());
         AggregatedSensorData tempData = new AggregatedSensorData(
                 "temperature",
                 "°C",
@@ -113,5 +113,33 @@ class RecordControllerTest {
                         .header("Authorization", "Bearer admin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sensors.length()" ).value(2));
+    }
+
+    @Test
+    void aggregatedHistoryMapsNodeIdAndMetric() throws Exception {
+        when(authorizationService.requireMonitoringView(anyString())).thenReturn(adminUser());
+        AggregatedSensorData tempData = new AggregatedSensorData(
+                "temp",
+                "°C",
+                List.of(new TimestampValue(Instant.parse("2023-01-01T00:00:00Z"), 21.0))
+        );
+        AggregatedHistoryResponse response = new AggregatedHistoryResponse(
+                Instant.parse("2023-01-01T00:00:00Z"),
+                Instant.parse("2023-01-02T00:00:00Z"),
+                List.of(tempData)
+        );
+        when(recordService.aggregatedHistory(eq("node-1"), any(), any(), eq("5m"),
+                eq(List.of("temp")), isNull(), isNull(), isNull(), isNull()))
+                .thenReturn(response);
+
+        mockMvc.perform(get("/api/records/history/aggregated")
+                        .param("nodeId", "node-1")
+                        .param("metric", "temp")
+                        .param("from", "2023-01-01T00:00:00Z")
+                        .param("to", "2023-01-02T00:00:00Z")
+                        .param("bucket", "5m")
+                        .header("Authorization", "Bearer admin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sensors[0].sensorType").value("temp"));
     }
 }

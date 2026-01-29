@@ -206,8 +206,11 @@ public class MqttMessageHandler {
         var envelope = objectMapper.createObjectNode();
         envelope.put("mqttTopic", topic);
         envelope.put("site", parsedTopic.site());
+        envelope.put("systemId", parsedTopic.site());
         envelope.put("rack", parsedTopic.rack());
+        envelope.put("rackId", parsedTopic.rack());
         envelope.put("layer", parsedTopic.layer());
+        envelope.put("layerId", parsedTopic.layer());
         envelope.put("deviceId", parsedTopic.deviceId());
         envelope.put("kind", parsedTopic.kind());
         envelope.put("compositeId", parsedTopic.compositeId());

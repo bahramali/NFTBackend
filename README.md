@@ -2,6 +2,58 @@
 
 This project is a Spring Boot application that connects to an MQTT broker and stores incoming messages in a PostgreSQL database. It also forwards the data to WebSocket subscribers.
 
+## Live data WebSocket contract
+
+The backend exposes a SockJS-compatible STOMP endpoint for live telemetry/status/event updates. This section standardizes the contract used by the frontend and backend.
+
+### Endpoint
+
+- WebSocket endpoint: `/ws`
+- Secure endpoint: `wss://<host>:<port>/ws` (when SSL is enabled)
+- STOMP broker destinations use the `/topic` prefix
+- Application (client-to-server) destinations use the `/app` prefix
+
+### Channel naming
+
+The backend publishes to the following STOMP topics:
+
+- Aggregated by kind (all racks): `/topic/hydroleaf/{kind}`
+- Rack-scoped by kind: `/topic/hydroleaf/rack/{rackId}/{kind}`
+
+Where `{kind}` is one of `telemetry`, `status`, or `event` and `{rackId}` is the rack segment parsed from the MQTT topic (e.g., `rack-01`).
+
+### Subscribe message schema
+
+The backend uses a brokered STOMP topology; clients subscribe directly to topic destinations and do not need to send an application message to start streaming.
+
+Example:
+
+```json
+SUBSCRIBE
+destination:/topic/hydroleaf/rack/rack-01/telemetry
+```
+
+### Telemetry payload schema
+
+The backend publishes a JSON envelope for rack-scoped and aggregated topics with the following structure:
+
+```json
+{
+  "mqttTopic": "hydroleaf/v1/site-01/rack-01/layer-01/device-01/telemetry",
+  "site": "site-01",
+  "rack": "rack-01",
+  "layer": "layer-01",
+  "deviceId": "device-01",
+  "kind": "telemetry",
+  "compositeId": "site-01-rack-01-layer-01-device-01",
+  "payload": {
+    "...": "original MQTT JSON payload"
+  }
+}
+```
+
+The `payload` field contains the raw MQTT JSON payload (for example the sensor array described above).
+
 ## MQTT Message Format
 
 Sensor data is published as JSON where each entry in the `sensors` array includes a `sensorType` describing the logical sensor. An optional `sensorName` may identify the hardware instance when multiple sensors of the same type exist, but the backend currently ignores this value. Examples:

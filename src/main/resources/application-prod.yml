@@ -72,7 +72,7 @@ logging:
     se:
       hydroleaf:
         scheduler: DEBUG
-        mqtt: DEBUG
+        mqtt: INFO
     org:
       springframework:
         web:

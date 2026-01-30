@@ -297,19 +297,20 @@ public class MqttMessageHandler {
             return payload;
         }
         var cleaned = payload.deepCopy();
-        cleaned.remove("site");
-        cleaned.remove("rack");
-        cleaned.remove("layer");
-        cleaned.remove("deviceId");
-        cleaned.remove("timestamp");
-        cleaned.remove("siteId");
-        cleaned.remove("rackId");
-        cleaned.remove("layerId");
-        cleaned.remove("systemId");
-        cleaned.remove("system");
-        cleaned.remove("compositeId");
-        cleaned.remove("composite_id");
-        cleaned.remove("kind");
+        var cleanedObject = (com.fasterxml.jackson.databind.node.ObjectNode) cleaned;
+        cleanedObject.remove("site");
+        cleanedObject.remove("rack");
+        cleanedObject.remove("layer");
+        cleanedObject.remove("deviceId");
+        cleanedObject.remove("timestamp");
+        cleanedObject.remove("siteId");
+        cleanedObject.remove("rackId");
+        cleanedObject.remove("layerId");
+        cleanedObject.remove("systemId");
+        cleanedObject.remove("system");
+        cleanedObject.remove("compositeId");
+        cleanedObject.remove("composite_id");
+        cleanedObject.remove("kind");
         return cleaned;
     }
 

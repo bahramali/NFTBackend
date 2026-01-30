@@ -161,6 +161,30 @@ These DTOs are stable across environments and should be treated as the canonical
 - `POST /api/records/history/aggregated` — same as above via POST.
 - `GET /api/topics/sensors` — sensor types grouped by topic.
 
+### Telemetry payloads (MQTT) — AS7343 counts
+- The backend expects AS7343 data under `as7343_counts` in telemetry payloads.
+- Each entry is stored as a separate sensor type with the prefix `as7343_counts_` and the original key appended.
+- Values are stored as numeric `counts` without aggregation or renaming at ingest time.
+
+Example payload fragment:
+```json
+{
+  "timestamp": "2025-01-01T00:00:00Z",
+  "as7343_counts": {
+    "405nm": 101.0,
+    "VIS1": 202.0
+  }
+}
+```
+
+Resulting sensor types stored by the backend:
+- `as7343_counts_405nm`
+- `as7343_counts_VIS1`
+
+Frontend contract:
+- Use the key names exactly as emitted by the device when querying history or live sensor lists.
+- The backend does **not** normalize `nm` naming today (e.g., `405nm` vs `nm405`), so consistency must be handled at the device/ingest layer if needed.
+
 ## Germination (admin/operator)
 - `GET /api/germination` — current germination status.
 - `POST /api/germination/start` — trigger start time to now.

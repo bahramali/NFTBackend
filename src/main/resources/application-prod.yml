@@ -52,11 +52,6 @@ mqtt:
   topicPrefix: ""
   enabled: true
   publishEnabled: true
-  publish:
-    raw-topic-enabled: false
-    aggregate-enabled: false
-    rack-enabled: false
-    event-enabled: false
 
 livefeed:
   rate: 2000

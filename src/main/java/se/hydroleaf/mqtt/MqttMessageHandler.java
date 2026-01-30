@@ -3,7 +3,6 @@ package se.hydroleaf.mqtt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import se.hydroleaf.service.RecordService;
 import se.hydroleaf.service.WaterFlowStatusService;
@@ -25,14 +24,6 @@ public class MqttMessageHandler {
     private final TopicPublisher topicPublisher;
     private final WaterFlowStatusService waterFlowStatusService;
     private final DeviceStatusEventService deviceStatusEventService;
-    @Value("${mqtt.publish.raw-topic-enabled:true}")
-    private boolean publishRawTopicEnabled = true;
-    @Value("${mqtt.publish.aggregate-enabled:true}")
-    private boolean publishAggregateEnabled = true;
-    @Value("${mqtt.publish.rack-enabled:true}")
-    private boolean publishRackEnabled = true;
-    @Value("${mqtt.publish.event-enabled:true}")
-    private boolean publishEventEnabled = true;
 
     public MqttMessageHandler(ObjectMapper objectMapper,
                               RecordService recordService,
@@ -72,22 +63,18 @@ public class MqttMessageHandler {
                         parsedTopic.kind(), parsedTopic.compositeId());
             }
 
-            if (publishRawTopicEnabled && topic != null && !topic.isBlank()) {
+            if (topic != null && !topic.isBlank()) {
                 topicPublisher.publish("/topic/" + topic, payload, compositeId, messageKind);
             }
 
             if (parsedTopic != null) {
                 JsonNode envelopePayload = buildEnvelopePayload(parsedTopic, node);
-                if (publishAggregateEnabled) {
-                    String aggregateTopic = "/topic/hydroleaf/" + parsedTopic.kind();
-                    log.debug("MQTT publishing aggregate destination={}", aggregateTopic);
-                    topicPublisher.publish(aggregateTopic, envelopePayload, parsedTopic.compositeId(), parsedTopic.kind());
-                }
-                if (publishRackEnabled) {
-                    String rackTopic = String.format("/topic/hydroleaf/rack/%s/%s", parsedTopic.rack(), parsedTopic.kind());
-                    log.debug("MQTT publishing rack destination={}", rackTopic);
-                    topicPublisher.publish(rackTopic, envelopePayload, parsedTopic.compositeId(), parsedTopic.kind());
-                }
+                String aggregateTopic = "/topic/hydroleaf/" + parsedTopic.kind();
+                log.debug("MQTT publishing aggregate destination={}", aggregateTopic);
+                topicPublisher.publish(aggregateTopic, envelopePayload, parsedTopic.compositeId(), parsedTopic.kind());
+                String rackTopic = String.format("/topic/hydroleaf/rack/%s/%s", parsedTopic.rack(), parsedTopic.kind());
+                log.debug("MQTT publishing rack destination={}", rackTopic);
+                topicPublisher.publish(rackTopic, envelopePayload, parsedTopic.compositeId(), parsedTopic.kind());
             }
 
             if (isWaterFlowTopic(topic)) {
@@ -99,7 +86,7 @@ public class MqttMessageHandler {
 
             if (messageKind != null && "event".equalsIgnoreCase(messageKind)) {
                 log.info("MQTT event received (topic={}, compositeId={})", topic, compositeId);
-                if (publishEventEnabled && parsedTopic == null) {
+                if (parsedTopic == null) {
                     topicPublisher.publish("/topic/hydroleaf/event", payload, compositeId, messageKind);
                 }
             }

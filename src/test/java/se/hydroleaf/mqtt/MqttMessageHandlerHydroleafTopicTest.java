@@ -67,6 +67,10 @@ class MqttMessageHandlerHydroleafTopicTest {
         String payload = """
                 {
                   "timestamp": "2025-01-01T00:00:00Z",
+                  "site": "S01",
+                  "rack": "germination",
+                  "layer": "L00",
+                  "deviceId": "GER_S01_01",
                   "sensors": []
                 }
                 """;
@@ -89,11 +93,19 @@ class MqttMessageHandlerHydroleafTopicTest {
         assertNotNull(envelope);
         assertTrue(envelope instanceof com.fasterxml.jackson.databind.JsonNode);
         com.fasterxml.jackson.databind.JsonNode node = (com.fasterxml.jackson.databind.JsonNode) envelope;
-        assertEquals("S01", node.path("site").asText());
-        assertEquals("germination", node.path("rack").asText());
-        assertEquals("L00", node.path("layer").asText());
+        assertEquals(2, node.path("schemaVersion").asInt());
+        assertEquals("S01", node.path("siteId").asText());
+        assertEquals("germination", node.path("rackId").asText());
+        assertEquals("GER", node.path("nodeType").asText());
+        assertEquals("GER_S01_01", node.path("nodeId").asText());
+        assertEquals(1, node.path("nodeInstance").asInt());
         assertEquals("GER_S01_01", node.path("deviceId").asText());
+        assertEquals("2025-01-01T00:00:00Z", node.path("timestamp").asText());
         assertEquals("telemetry", node.path("kind").asText());
-        assertEquals("S01-germination-L00-GER_S01_01", node.path("compositeId").asText());
+        assertTrue(node.path("payload").path("site").isMissingNode());
+        assertTrue(node.path("payload").path("rack").isMissingNode());
+        assertTrue(node.path("payload").path("layer").isMissingNode());
+        assertTrue(node.path("payload").path("deviceId").isMissingNode());
+        assertTrue(node.path("payload").path("timestamp").isMissingNode());
     }
 }

@@ -68,7 +68,7 @@ public class MqttMessageHandler {
             }
 
             if (parsedTopic != null) {
-                JsonNode envelopePayload = buildEnvelopePayload(topic, parsedTopic, node);
+                JsonNode envelopePayload = buildEnvelopePayload(parsedTopic, node);
                 String aggregateTopic = "/topic/hydroleaf/" + parsedTopic.kind();
                 log.debug("MQTT publishing aggregate destination={}", aggregateTopic);
                 topicPublisher.publish(aggregateTopic, envelopePayload, parsedTopic.compositeId(), parsedTopic.kind());
@@ -202,20 +202,116 @@ public class MqttMessageHandler {
         return null;
     }
 
-    private JsonNode buildEnvelopePayload(String topic, MqttTopicParser.ParsedTopic parsedTopic, JsonNode payload) {
+    private JsonNode buildEnvelopePayload(MqttTopicParser.ParsedTopic parsedTopic, JsonNode payload) {
         var envelope = objectMapper.createObjectNode();
-        envelope.put("mqttTopic", topic);
-        envelope.put("site", parsedTopic.site());
-        envelope.put("systemId", parsedTopic.site());
-        envelope.put("rack", parsedTopic.rack());
-        envelope.put("rackId", parsedTopic.rack());
-        envelope.put("layer", parsedTopic.layer());
-        envelope.put("layerId", parsedTopic.layer());
-        envelope.put("deviceId", parsedTopic.deviceId());
+        envelope.put("schemaVersion", 2);
         envelope.put("kind", parsedTopic.kind());
-        envelope.put("compositeId", parsedTopic.compositeId());
-        envelope.set("payload", payload);
+        envelope.put("deviceId", parsedTopic.deviceId());
+        String timestampText = resolveTimestampText(payload);
+        if (timestampText != null) {
+            envelope.put("timestamp", timestampText);
+        } else {
+            envelope.putNull("timestamp");
+        }
+        envelope.put("siteId", parsedTopic.site());
+        envelope.put("rackId", parsedTopic.rack());
+
+        String nodeType = extractNodeType(parsedTopic.deviceId());
+        envelope.put("nodeType", nodeType);
+        envelope.put("nodeId", resolveNodeId(nodeType, parsedTopic));
+        envelope.put("nodeInstance", resolveNodeInstance(nodeType, parsedTopic.deviceId()));
+
+        envelope.set("payload", normalizePayload(payload));
         return envelope;
+    }
+
+    private String resolveTimestampText(JsonNode payload) {
+        if (payload == null) {
+            return null;
+        }
+        JsonNode tsNode = payload.path("timestamp");
+        Instant instant = parseTimestamp(tsNode);
+        if (instant != null) {
+            return instant.toString();
+        }
+        if (tsNode.isTextual()) {
+            return tsNode.asText();
+        }
+        return null;
+    }
+
+    private static String extractNodeType(String deviceId) {
+        if (deviceId == null || deviceId.isBlank()) {
+            return null;
+        }
+        int underscoreIndex = deviceId.indexOf('_');
+        String prefix = underscoreIndex > 0 ? deviceId.substring(0, underscoreIndex) : deviceId;
+        return prefix.toUpperCase();
+    }
+
+    private static String resolveNodeId(String nodeType, MqttTopicParser.ParsedTopic parsedTopic) {
+        if ("LAYER".equalsIgnoreCase(nodeType)) {
+            return parsedTopic.layer();
+        }
+        if ("TANK".equalsIgnoreCase(nodeType)) {
+            return extractSuffixIndex(parsedTopic.deviceId());
+        }
+        return parsedTopic.deviceId();
+    }
+
+    private static int resolveNodeInstance(String nodeType, String deviceId) {
+        if ("LAYER".equalsIgnoreCase(nodeType)) {
+            Integer parsed = extractNumericSuffix(deviceId);
+            if (parsed != null) {
+                return parsed;
+            }
+        }
+        return 1;
+    }
+
+    private static String extractSuffixIndex(String deviceId) {
+        if (deviceId == null) {
+            return null;
+        }
+        int lastUnderscore = deviceId.lastIndexOf('_');
+        if (lastUnderscore < 0 || lastUnderscore >= deviceId.length() - 1) {
+            return deviceId;
+        }
+        return deviceId.substring(lastUnderscore + 1);
+    }
+
+    private static Integer extractNumericSuffix(String deviceId) {
+        if (deviceId == null) {
+            return null;
+        }
+        String suffix = extractSuffixIndex(deviceId);
+        try {
+            return Integer.parseInt(suffix);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private JsonNode normalizePayload(JsonNode payload) {
+        if (payload == null || !payload.isObject()) {
+            return payload;
+        }
+        var cleaned = payload.deepCopy();
+        var cleanedObject = (com.fasterxml.jackson.databind.node.ObjectNode) cleaned;
+        cleanedObject.remove("site");
+        cleanedObject.remove("rack");
+        cleanedObject.remove("layer");
+        cleanedObject.remove("deviceId");
+        cleanedObject.remove("timestamp");
+        cleanedObject.remove("siteId");
+        cleanedObject.remove("rackId");
+        cleanedObject.remove("layerId");
+        cleanedObject.remove("systemId");
+        cleanedObject.remove("system");
+        cleanedObject.remove("compositeId");
+        cleanedObject.remove("composite_id");
+        cleanedObject.remove("kind");
+        return cleaned;
     }
 
 }

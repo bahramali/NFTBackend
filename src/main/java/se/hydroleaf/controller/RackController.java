@@ -36,8 +36,8 @@ public class RackController {
     @GetMapping("/racks/{rackId}/nodes")
     public List<DeviceResponse> getRackNodes(
             @RequestHeader(name = "Authorization", required = false) String token,
-            @PathVariable String rackId) {
+            @PathVariable("rackId") String telemetryRackId) {
         authorizationService.requireMonitoringView(token);
-        return deviceService.getDevicesByRack(rackId);
+        return deviceService.getDevicesByTelemetryRackId(telemetryRackId);
     }
 }

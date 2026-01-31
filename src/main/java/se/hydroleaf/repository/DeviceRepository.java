@@ -11,9 +11,11 @@ import java.util.Optional;
 
 public interface DeviceRepository extends JpaRepository<Device, String> {
 
-    List<Device> findBySystemAndRackAndLayer(String system, String rack, String layer);
+    @Query("SELECT d FROM Device d WHERE d.system = :system AND d.rack = :telemetryRackId AND d.layer = :layer")
+    List<Device> findBySystemAndTelemetryRackIdAndLayer(String system, String telemetryRackId, String layer);
 
-    List<Device> findByRack(String rack);
+    @Query("SELECT d FROM Device d WHERE d.rack = :telemetryRackId")
+    List<Device> findByTelemetryRackId(String telemetryRackId);
 
     List<Device> findByOwnerUserId(Long ownerUserId);
 

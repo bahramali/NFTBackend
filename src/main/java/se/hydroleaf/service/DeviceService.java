@@ -32,14 +32,14 @@ public class DeviceService {
                 .toList();
     }
 
-    public List<DeviceResponse> getDevicesByRack(String rack) {
-        return deviceRepository.findByRack(rack).stream()
+    public List<DeviceResponse> getDevicesByTelemetryRackId(String telemetryRackId) {
+        return deviceRepository.findByTelemetryRackId(telemetryRackId).stream()
                 .map(d -> new DeviceResponse(d.getCompositeId(), d.getSystem(), d.getRack(), d.getLayer(), d.getDeviceId()))
                 .toList();
     }
 
-    public List<String> getCompositeIds(String system, String rack, String layer, String deviceId) {
-        List<Device> devices = deviceRepository.findBySystemAndRackAndLayer(system, rack, layer);
+    public List<String> getCompositeIds(String system, String telemetryRackId, String layer, String deviceId) {
+        List<Device> devices = deviceRepository.findBySystemAndTelemetryRackIdAndLayer(system, telemetryRackId, layer);
         if (deviceId != null && !deviceId.isBlank()) {
             devices = devices.stream()
                     .filter(d -> d.getDeviceId().equals(deviceId))

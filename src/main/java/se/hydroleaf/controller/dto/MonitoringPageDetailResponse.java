@@ -5,6 +5,7 @@ public record MonitoringPageDetailResponse(
         String title,
         String slug,
         String rackId,
+        String telemetryRackId,
         int sortOrder,
         boolean enabled
 ) {

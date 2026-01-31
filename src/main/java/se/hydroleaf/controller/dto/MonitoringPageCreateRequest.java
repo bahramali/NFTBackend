@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public record MonitoringPageCreateRequest(
         @NotBlank String rackId,
+        String telemetryRackId,
         @NotBlank String title,
         @NotBlank
         @Size(max = 64)

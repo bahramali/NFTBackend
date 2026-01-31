@@ -31,6 +31,9 @@ public class MonitoringPage {
     @Column(name = "rack_id", length = 64, nullable = false, unique = true)
     private String rackId;
 
+    @Column(name = "telemetry_rack_id", length = 64)
+    private String telemetryRackId;
+
     @Column(name = "title", length = 128, nullable = false)
     private String title;
 

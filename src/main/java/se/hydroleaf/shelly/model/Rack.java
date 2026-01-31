@@ -9,4 +9,5 @@ public class Rack {
     String id;
     String name;
     String roomId;
+    String telemetryRackId;
 }

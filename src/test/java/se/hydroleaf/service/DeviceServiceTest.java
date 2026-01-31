@@ -40,7 +40,7 @@ class DeviceServiceTest {
         d2.setCompositeId("S01-R01-L01-B1");
         d2.setDeviceId("B1");
         d2.setRack("R01");
-        when(deviceRepository.findBySystemAndRackAndLayer("S01", "R01", "L01"))
+        when(deviceRepository.findBySystemAndTelemetryRackIdAndLayer("S01", "R01", "L01"))
                 .thenReturn(List.of(d1, d2));
 
         List<String> result = deviceService.getCompositeIds("S01", "R01", "L01", "B1");

@@ -36,11 +36,11 @@ public class DeviceController {
     @GetMapping("/composite-ids")
     public List<String> getCompositeIds(@RequestHeader(name = "Authorization", required = false) String token,
                                         @RequestParam String system,
-                                        @RequestParam String rack,
+                                        @RequestParam(name = "telemetryRackId") String telemetryRackId,
                                         @RequestParam String layer,
                                         @RequestParam(required = false) String deviceId) {
         authorizationService.requireMonitoringView(token);
-        return deviceService.getCompositeIds(system, rack, layer, deviceId);
+        return deviceService.getCompositeIds(system, telemetryRackId, layer, deviceId);
     }
 
     @GetMapping("/all")

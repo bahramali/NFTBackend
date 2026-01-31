@@ -106,7 +106,7 @@ class DeviceControllerTest {
         mockMvc.perform(get("/api/devices/composite-ids")
                         .header("Authorization", "Bearer admin")
                         .param("system", "S01")
-                        .param("rack", "R01")
+                        .param("telemetryRackId", "R01")
                         .param("layer", "L01")
                         .param("deviceId", "D01"))
                 .andExpect(status().isOk())

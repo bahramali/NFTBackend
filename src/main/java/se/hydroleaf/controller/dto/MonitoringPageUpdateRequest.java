@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Size;
 
 public record MonitoringPageUpdateRequest(
         @NotBlank String title,
+        @NotBlank
+        @Pattern(regexp = "^R\\d+$")
         String telemetryRackId,
         @NotBlank
         @Size(max = 64)

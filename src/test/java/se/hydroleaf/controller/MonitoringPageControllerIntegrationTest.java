@@ -110,6 +110,7 @@ class MonitoringPageControllerIntegrationTest {
                         .content("""
                                 {
                                   "rackId": "rack-a",
+                                  "telemetryRackId": "R1",
                                   "title": "Another",
                                   "slug": "rack-another",
                                   "sortOrder": 1,
@@ -130,6 +131,7 @@ class MonitoringPageControllerIntegrationTest {
                         .content("""
                                 {
                                   "rackId": "rack-b",
+                                  "telemetryRackId": "R2",
                                   "title": "Beta",
                                   "slug": "rack-alpha",
                                   "sortOrder": 1,

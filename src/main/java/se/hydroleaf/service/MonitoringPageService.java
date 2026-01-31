@@ -49,6 +49,7 @@ public class MonitoringPageService {
         boolean enabled = request.enabled() == null || request.enabled();
         MonitoringPage page = MonitoringPage.builder()
                 .rackId(request.rackId())
+                .telemetryRackId(request.telemetryRackId())
                 .title(request.title())
                 .slug(request.slug())
                 .sortOrder(sortOrder)
@@ -64,6 +65,9 @@ public class MonitoringPageService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Monitoring page slug already exists");
         }
         page.setTitle(request.title());
+        if (request.telemetryRackId() != null) {
+            page.setTelemetryRackId(request.telemetryRackId());
+        }
         page.setSlug(request.slug());
         page.setSortOrder(request.sortOrder() != null ? request.sortOrder() : page.getSortOrder());
         if (request.enabled() != null) {
@@ -84,6 +88,7 @@ public class MonitoringPageService {
                 page.getTitle(),
                 page.getSlug(),
                 page.getRackId(),
+                page.getTelemetryRackId(),
                 page.getSortOrder()
         );
     }
@@ -94,6 +99,7 @@ public class MonitoringPageService {
                 page.getTitle(),
                 page.getSlug(),
                 page.getRackId(),
+                page.getTelemetryRackId(),
                 page.getSortOrder(),
                 page.isEnabled()
         );

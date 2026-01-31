@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
+import se.hydroleaf.service.RackTelemetryMapper;
 import se.hydroleaf.shelly.model.Rack;
 import se.hydroleaf.shelly.model.Room;
 import se.hydroleaf.shelly.model.SocketDevice;
@@ -17,17 +18,34 @@ import se.hydroleaf.shelly.model.SocketDevice;
 @Component
 public class ShellyRegistry {
 
+    private final RackTelemetryMapper rackTelemetryMapper;
     private final Map<String, Room> roomsById = new ConcurrentHashMap<>();
     private final Map<String, Rack> racksById = new ConcurrentHashMap<>();
     private final Map<String, SocketDevice> socketsById = new ConcurrentHashMap<>();
+
+    public ShellyRegistry(RackTelemetryMapper rackTelemetryMapper) {
+        this.rackTelemetryMapper = rackTelemetryMapper;
+    }
 
     @PostConstruct
     public void init() {
         Room mainRoom = Room.builder().id("MAIN_ROOM").name("Main Room").build();
         roomsById.put(mainRoom.getId(), mainRoom);
 
-        Rack rack01 = Rack.builder().id("RACK_01").name("Rack 01").roomId(mainRoom.getId()).build();
-        Rack rack02 = Rack.builder().id("RACK_02").name("Rack 02").roomId(mainRoom.getId()).build();
+        String rack01Id = "RACK_01";
+        String rack02Id = "RACK_02";
+        Rack rack01 = Rack.builder()
+                .id(rack01Id)
+                .name("Rack 01")
+                .roomId(mainRoom.getId())
+                .telemetryRackId(rackTelemetryMapper.resolveTelemetryRackId(rack01Id, null))
+                .build();
+        Rack rack02 = Rack.builder()
+                .id(rack02Id)
+                .name("Rack 02")
+                .roomId(mainRoom.getId())
+                .telemetryRackId(rackTelemetryMapper.resolveTelemetryRackId(rack02Id, null))
+                .build();
         racksById.put(rack01.getId(), rack01);
         racksById.put(rack02.getId(), rack02);
 

@@ -78,6 +78,28 @@ class MonitoringPageControllerIntegrationTest {
     }
 
     @Test
+    void publicGetPageFallsBackTelemetryRackIdForLegacyRackIds() throws Exception {
+        String token = loginAdmin(Set.of(Permission.MONITORING_VIEW));
+        monitoringPageRepository.save(createPage("RACK_01", "Legacy Rack", "legacy-rack", 0, true));
+
+        mockMvc.perform(get("/api/monitoring-pages/legacy-rack")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.telemetryRackId").value("R01"));
+    }
+
+    @Test
+    void publicGetPageFallsBackTelemetryRackIdToRackIdWhenNoMatch() throws Exception {
+        String token = loginAdmin(Set.of(Permission.MONITORING_VIEW));
+        monitoringPageRepository.save(createPage("rack-alpha", "Alpha", "rack-alpha", 0, true));
+
+        mockMvc.perform(get("/api/monitoring-pages/rack-alpha")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.telemetryRackId").value("rack-alpha"));
+    }
+
+    @Test
     void adminCreateDuplicateRackIdReturnsConflict() throws Exception {
         String token = loginAdmin(Set.of(Permission.MONITORING_CONFIG));
         monitoringPageRepository.save(createPage("rack-a", "Alpha", "rack-alpha", 0, true));

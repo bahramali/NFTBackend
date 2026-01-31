@@ -1,6 +1,8 @@
 package se.hydroleaf.service;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import se.hydroleaf.repository.MonitoringPageRepository;
 public class MonitoringPageService {
 
     private final MonitoringPageRepository monitoringPageRepository;
+    private static final Pattern LEGACY_RACK_PATTERN = Pattern.compile("^RACK_(\\d+)$");
 
     public List<MonitoringPageResponse> listEnabledPages() {
         return monitoringPageRepository.findAllByEnabledTrueOrderBySortOrderAscTitleAsc()
@@ -28,7 +31,7 @@ public class MonitoringPageService {
     public MonitoringPageDetailResponse getEnabledPageBySlug(String slug) {
         MonitoringPage page = monitoringPageRepository.findBySlugAndEnabledTrue(slug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Monitoring page not found"));
-        return toDetailResponse(page);
+        return toDetailResponse(page, resolveTelemetryRackId(page));
     }
 
     public List<MonitoringPageDetailResponse> listAllPages() {
@@ -94,14 +97,33 @@ public class MonitoringPageService {
     }
 
     private MonitoringPageDetailResponse toDetailResponse(MonitoringPage page) {
+        return toDetailResponse(page, page.getTelemetryRackId());
+    }
+
+    private MonitoringPageDetailResponse toDetailResponse(MonitoringPage page, String telemetryRackId) {
         return new MonitoringPageDetailResponse(
                 page.getId(),
                 page.getTitle(),
                 page.getSlug(),
                 page.getRackId(),
-                page.getTelemetryRackId(),
+                telemetryRackId,
                 page.getSortOrder(),
                 page.isEnabled()
         );
+    }
+
+    private String resolveTelemetryRackId(MonitoringPage page) {
+        if (page.getTelemetryRackId() != null) {
+            return page.getTelemetryRackId();
+        }
+        String rackId = page.getRackId();
+        if (rackId == null) {
+            return null;
+        }
+        Matcher matcher = LEGACY_RACK_PATTERN.matcher(rackId);
+        if (matcher.matches()) {
+            return "R" + matcher.group(1);
+        }
+        return rackId;
     }
 }
